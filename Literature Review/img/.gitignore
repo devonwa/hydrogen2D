@@ -1,0 +1,6 @@
+# Ignore directory
+*
+
+# Exceptions
+!.gitignore
+!README.org

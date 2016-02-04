@@ -1,0 +1,142 @@
+#+STARTUP: content
+#+TAGS: Hydrogen_2D
+#+TITLE: Literature review of hydrogen transport across 2D materials
+#+AUTHOR: Devon Walker
+#+EMAIL: devonw@andrew.cmu.edu
+
+
+* 2D materials
+- Proton conductivities have temperature dependence and exhibit Arrhenius-type behaviour $exp(-E / k_B T)$, where $k_B$ is the Boltzmann constant cite:Hu2014.
+
+
+** Graphene
+- Electrical conductivity: either a shallow-gap semiconductor or a small-overlap semimetal cite:Novoselov2005.
+- Proton conductivity: monolayer is lower than hBN. Bilayer is nonexistant cite:Hu2014.
+- Stable up to 400 \deg{}C cite:Hu2014. 
+
+
+*** Structure
+- A hexagonal 2D atomic structure composed purely of carbon.
+- AB stacking - layer 2 is offset from layer 1 cite:Hu2014. Bernal stacked configuration.
+- Each carbon is sp2 hybridized. Each carbon bonds to three other carbons and a free electon is left in the p-orbital. This free electron leads to the various interesting properties of graphene, name its electical and thermal conductance.
+
+
+*** Transport
+- A perfect monolayer is impermeable to all but accelerated atoms cite:Hu2014.
+
+
+*** Production
+- Monolayer process: High Strength Metallurgical Graphene. [[https://en.wikipedia.org/wiki/HSMG][Wiki]].
+- Bilayer process: 
+
+
+*** Graphene Oxide (GO)
+- Can be made such that water will permeate through a stack cite:Nair2012. While not immediately relevant, it's good to keep in mind some of the unexpected physics that could be exploited.
+
+#+CAPTION: Possible physics of water permeation through graphene oxide layers cite:Nair2012.
+#+NAME: Nair2012-Fig1c
+[[./img/Nair2012-Fig1c.png]]
+
+- See larger ion transport section.
+
+**** Reduced Graphene Oxide (rGO)
+An attempt to obtain something close to graphene.
+
+
+** Boron Nitride (hexagonal) (hBN)
+- Electrical conductivity: insulating cite:Novoselov2005
+- Proton conductivity: Best tested cite:Hu2014.
+
+- "Monolayer hBN is more ¡®porous¡¯ than graphene, reflecting that the BN bond is strongly polarized, with valence electrons concentrated around N atoms." cite:Hu2014
+
+
+*** Structure
+- AA stacking - layer 2 directly on top of layer 1 cite:Hu2014.
+
+
+** Bi2Sr2CaCu2Ox
+- Electrical conductivity: insulating cite:Novoselov2005
+
+
+** Molybdenum disulfide (MoS2)
+- Electrical conductivity: heavily doped semiconductor >= 0.6 eV cite:Novoselov2005
+- Proton conductivity: far less than even graphene cite:Hu2014.
+
+
+** Niobium Selenide (NbSe2)
+- Electrical conductivity: semimetal cite:Novoselov2005
+
+
+* Transport
+
+** Proton
+
+- Graphene with platinum was shown to allow for hydrogen-exclusive flux accros the membrane cite:Hu2014. 
+
+#+CAPTION: Current-controlled hydrogen flux cite:Hu2014.
+#+NAME: Hu2014-Fig3
+[[./img/Hu2014-Fig3.png]]
+
+- Naturally occuring defects in monolayer graphene can lead to proton transfer. If OH terminations: Grotthuss mechansim leads to proton transfer at room temperature. If ether terminations (pyrylium-like): no proton transfer, but still more energetically more favorable than no defect. cite:Achtyl2015a 
+  - No vacancies: 3.9 eV
+  - Ether capped: 2.5 eV
+  - Hydroxyl cap: 0.7 eV
+  - Aq. solution: <0.2 eV (activation energy of shuttling protons through aqueous solution)
+
+#+CAPTION: Naturally occuring defects in monolay graphene affect proton transfer cite:Achtyl2015a.
+#+NAME: Achtyl2015a-Fig2
+[[./img/Achtyl2015a-Fig2.png]]
+
+
+** Protium Deuterium Separation
+
+- Shown that H2, HD, and D2 can be separated using graphene cite:Lozada-Hidalgo2016.
+  - $\sigma_H / \sigma_D \approx \exp(\Delta/k_BT)$
+  - showed separation factor of ~10.
+#+CAPTION: Isotope separation of hydrogen through graphene cite:Lozada-Hidalgo2016.
+#+NAME: Lozada-Hidalgo2016-Fig2
+[[./img/Lozada-Hidalgo2016-Fig2.png]]
+
+
+** Larger Ions
+
+- Separation differences through layers of graphene oxide cite:Joshi2014.
+
+#+CAPTION: Ion permeation through graphene oxide laminates cite:Joshi2014.
+#+NAME: Joshi2014-Fig1
+[[./img/Joshi2014-Fig1.png]]
+
+#+CAPTION: Ion permeation based on radius of the molecule cite:Joshi2014.
+#+NAME: Joshi2014-Fig2
+[[./img/Joshi2014-Fig2.png]]
+
+
+* Misc
+
+
+** Variables
+- $\sigma_H$ - areal conductivity of hydrogen. $\sigma = I / SV$, where S is the area of the membrane cite:Lozada-Hidalgo2016.
+- $k_B$ - Boltzmann's constant
+
+
+** Terminology
+- c-BN - cubic boron nitride. [[https://en.wikipedia.org/wiki/Boron_nitride][Wiki]].
+- Chalcogenide - chemical elements in group 16 on the periodic table. Examples: O, S, Se. [[https://en.wikipedia.org/wiki/Chalcogenide][Wiki]].
+- Chemical vapor deposition (CVD) - one method of graphene production that has scale-up potential cite:Lozada-Hidalgo2016. [[https://en.wikipedia.org/wiki/Chemical_vapor_deposition][Wiki]].
+- Chemisorption - In reference to hydrogen chemisorption between Nafion and graphene (could be any 2D crystal) cite:Lozada-Hidalgo2016. [[https://en.wikipedia.org/wiki/Chemisorption][Wiki]].
+- Deuterons - nuclei of the heavier hydrogen isotope, deuterium cite:Lozada-Hidalgo2016.
+- Grotthuss mechanism - method of proton transfer. [[https://en.wikipedia.org/wiki/Grotthuss_mechanism][Wiki]].
+- hBN - hexagonal boron nitride. [[https://en.wikipedia.org/wiki/Boron_nitride][Wiki]].
+- Nafion - a material with high proton conductivity and relatively low electron conductivity cite:Hu2014. [[https://en.wikipedia.org/wiki/Nafion][Wiki]]. 
+- Palladium-hydrogen electrode - can absorb molecular hydrogen. [[https://en.wikipedia.org/wiki/Palladium-hydrogen_electrode][Wiki]].
+- Protium deutride - HD. 1 hydrogen (protium) and 1 deuterium. [[https://en.wikipedia.org/wiki/Hydrogen_deuteride][Wiki]].
+- Pyrylium - Used in denoting a type of graphene defect termination cite:Achtyl2015a. [[https://en.wikipedia.org/wiki/Pyrylium_salt][Wiki]].
+
+
+** Questions
+- Can neutral H atoms pass through graphene?
+
+
+** Bibliography
+
+bibliography:./Hydrogen_2D.bib
