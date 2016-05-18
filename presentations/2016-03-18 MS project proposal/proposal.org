@@ -1,0 +1,402 @@
+# -*- mode: org -*-
+#+TITLE: MS Project Proposal
+#+MACRO: subtitle Predicting selectivity and permeance of gas transport through 2D materials using an artificial neural network.
+#+AUTHOR: Devon Walker
+#+EMAIL: devonw@andrew.cmu.edu
+#+DATE: 2016-03-18
+
+* 2D material introduction: Polyphenylene (Porous graphene (PG))
+
+#+ATTR_HTML: :width 35% :height 35%
+[[./img/bieri-2009-porous-graph-fig1a.png]]
+#+ATTR_HTML: :width 35% :height 35%
+[[./img/bieri-2009-porous-graph-fig1c.png]]
+
+#+BEGIN_NOTES
+First, let's introduce a new material.
+Advantage: Direct synthesis
+Graphene disadvantage: electron beam lithography
+#+END_NOTES
+
+** References
+
+- Bieri, M., Treier, M., Cai, J., Aït-Mansour, K., Ruffieux, P.,
+  Oliver Gr\"oning, Pierangelo Gr\"oning, Kastler, M., Rieger, R.,
+  Feng, X., Klaus M\"ullen, Fasel, R., .. (2009). Porous graphenes:
+  two-dimensional polymer synthesis with atomic precision. Chemical
+  Communications, nil(45), 6919. http://dx.doi.org/10.1039/b915190g
+
+#+BEGIN_NOTES
+#+END_NOTES
+
+* What do we care about in a membrane separation?
+- *Selectivity* - Ratio describing the preference of one species to diffuse across a barrier vs another species.
+  - Informs efficiency
+- *Permeance* - The rate of that diffusion across the barrier.
+  - Informs speed
+
+-----
+
+Industrial applications aim to increase both.
+
+Increasing one typically decreases the other.
+
+#+BEGIN_NOTES
+In other words, we want separations that the target species permeates our membrane as fast as possible, while the unwanted species do not permeate at all.
+Trying to increase one tends to decrease the other.
+
+Computational, synthesis and reactivity constraints limit the exploring the others.
+#+END_NOTES
+
+* Barrier energy
+
+We want to determine the difference between the maximum and minimum energy as a molecule approaches and permeates a membrane.
+
+[[./img/blankenburg-2010-porous-graph-fig3.png]]
+
+#+BEGIN_NOTES
+Lennard-Jones potential
+#+END_NOTES
+
+** Lennard-Jones potential
+
+\(V_{LJ} = 4 \varepsilon [(\frac{\sigma}{r})^{12} - (\frac{\sigma}{r})^6]\)
+
+[[./img/ucd-chemwiki-lennard-jones.jpg]]
+
+#+BEGIN_NOTES
+#+END_NOTES
+
+** References
+
+- Blankenburg, S., Bieri, M., Fasel, R., Klaus M\"ullen, Pignedoli,
+  C. A., & Passerone, D. (2010). Porous graphene as an atmospheric
+  nanofilter. Small, 6(20),
+  2266–2271. http://dx.doi.org/10.1002/smll.201001126
+- Lennard-Jones potential: [[http://chemwiki.ucdavis.edu/Core/Physical_Chemistry/Physical_Properties_of_Matter/Atomic_and_Molecular_Properties/Intermolecular_Forces/Specific_Interactions/Lennard-Jones_Potential][UC Davis - ChemWiki]]
+
+#+BEGIN_NOTES
+#+END_NOTES
+
+* Selectivity
+Diffusion rate:
+
+\(A = A_0 e^{-\frac{\Delta E}{k_B T}}\)
+- $A_0$ is the prefactor. Literature assumes it to be the same magnitude for all species
+- $\Delta E$ is the barrier energy from the minimum to the max
+- $k_B$ is the Boltzmann constant
+- $T$ is the temperature (absolute)
+
+#+REVEAL_HTML: <br><br><br>
+
+*Selectivity*:
+
+\(S = \frac{A_X}{A_Y}\)
+- for species X and Y
+- [unitless]
+
+#+BEGIN_NOTES
+#+END_NOTES
+
+** References
+- Blankenburg, S., Bieri, M., Fasel, R., Klaus M\"ullen, Pignedoli,
+  C. A., & Passerone, D. (2010). Porous graphene as an atmospheric
+  nanofilter. Small, 6(20),
+  2266–2271. http://dx.doi.org/10.1002/smll.201001126
+
+#+BEGIN_NOTES
+#+END_NOTES
+
+* Permeance
+Number of collisions with the wall (ideal gas):
+
+\(A = \frac{\rho}{4} \sqrt{\frac{8 k_B T}{\pi m}}\)
+- $\rho$ is the gas density
+- $m$ is the mass of the molecule
+- $k_B$ is the Boltzmann constant
+- $T$ is the temperature (absolute)
+
+#+REVEAL_HTML: <br><br><br>
+
+Probability that the particle has the velocity to diffuse through the pore:
+
+\(P = \int_{\nu_B}^{\infty} f(\nu) d \nu\)
+- $f(\nu)$ is the Maxwell-Boltzmann distribution
+- $\nu_B$ is the kinetic energy of the diffusion barrier
+
+#+BEGIN_NOTES
+Maxwell distribution:
+Distribution of molecule speed probability at a given temperature
+#+END_NOTES
+
+** Number of collisions with the wall (ideal gas)
+
+\(A = \frac{\rho}{4} \sqrt{\frac{8 k_B T}{\pi m}}\)
+- $\rho$ is the gas density [kg/m^3]
+- $m$ is particle mass [kg]
+- $k_B$ is the Boltzmann constant [m^2*kg/s^2/K^1]
+- $T$ is the temperature [K]
+
+#+BEGIN_NOTES
+#+END_NOTES
+
+** Maxwell-Boltzmann distribution
+\(f(\nu) =  4 \pi \nu^2 \sqrt{(\frac{m}{2\ pi k_B T})^3} e^{-\frac{m \nu^2}{2kT}}\)
+
+- $\nu$ is the particle speed (m/s)
+- $m$ is particle mass [kg]
+- $k_B$ is the Boltzmann constant [m^2*kg/s^2/K^1]
+- $T$ is the temperature [K]
+
+#+BEGIN_NOTES
+#+END_NOTES
+
+** References
+- Blankenburg, S., Bieri, M., Fasel, R., Klaus M\"ullen, Pignedoli,
+  C. A., & Passerone, D. (2010). Porous graphene as an atmospheric
+  nanofilter. Small, 6(20),
+  2266–2271. http://dx.doi.org/10.1002/smll.201001126
+  
+#+BEGIN_NOTES
+#+END_NOTES
+
+* Permeance
+Flux is then defined as:
+
+\(F = A P\)
+- [m^2/s]
+
+#+REVEAL_HTML: <br><br><br>
+
+*Permeance*, with relation to pressure, is calculated as:
+
+\(Q = \frac{F}{\Delta p}\)
+- [m^2/s/Pa]
+
+#+BEGIN_NOTES
+Flux accross the pore for a given pressure
+#+END_NOTES
+
+** References
+- Blankenburg, S., Bieri, M., Fasel, R., Klaus M\"ullen, Pignedoli,
+  C. A., & Passerone, D. (2010). Porous graphene as an atmospheric
+  nanofilter. Small, 6(20),
+  2266–2271. http://dx.doi.org/10.1002/smll.201001126
+- Maxwell-Boltzmann distribution: [[http://chemwiki.ucdavis.edu/Core/Physical_Chemistry/Kinetics/Rate_Laws/Gas_Phase_Kinetics/Maxwell-Boltzmann_Distributions][UC Davis - ChemWiki]]
+
+#+BEGIN_NOTES
+#+END_NOTES
+
+* How do we manipulate selectivity and permeance?
+- *Pore functional groups*
+- *Membrane pore size*
+- Temperature
+- Pressure difference
+
+#+REVEAL_HTML: <br><br>
+-----
+
+This proposal will cover *graphene* and *polyphenylene* derivatives.
+
+What materials are being left out?
+- Graphene oxide
+- Hexagonal boron nitride
+- Molybdenum disulfide
+- Graphydiene
+- CxNy
+#+BEGIN_NOTES
+For this experiment: hold temperature and pressure constant at STP.
+
+Graphene oxide: too many atoms and random configurations
+hBN: Large pores in synthesis of monolayer (~2nm) cite:corso-2004-boron-nitrid-nanom
+MoS2: Non-reactive to dilute acids and O2. This study will probably push this limit too far. ([[https://en.wikipedia.org/wiki/Molybdenum_disulfide#Intercalation_reactions][Wiki]] overview)
+Others: not much literature
+#+END_NOTES
+
+* Pore functional groups on graphene
+
+#+ATTR_HTML: :width 32.5% :height 32.5%
+[[./img/jiang-2009-porous-graph-fig2.png]]
+
+#+ATTR_HTML: :width 32.5% :height 32.5%
+[[./img/jiang-2009-porous-graph-fig6b.png]]
+
+#+BEGIN_NOTES
+N/H vs H pore passivation
+Pore electron densities with different functional groups.
+Electron beam lithography
+#+END_NOTES
+
+** References
+
+- Jiang, D., Cooper, V. R., & Dai, S. (2009). Porous graphene as the
+  ultimate membrane for gas separation. Nano Letters, 9(12),
+  4019–4024. http://dx.doi.org/10.1021/nl9021946
+
+#+BEGIN_NOTES
+#+END_NOTES
+
+* PG degrees of freedom: PG-ESX (X=0,1,2,3)
+PG with X number of (E)-stillbine-like groups.
+
+
+#+ATTR_HTML: :height 50%
+[[./img/brockway-2013-noble-gas-fig1abcd.png]]
+
+
+#+BEGIN_NOTES
+Note that the pore size is increasing.
+#+END_NOTES
+
+** (E)-Stilbene
+
+[[./img/wiki-e-stilbene.png]]
+
+#+BEGIN_NOTES
+#+END_NOTES
+
+** References
+
+- Brockway, A. M., & Schrier, J. (2013). Noble gas separation using
+  pg-es x ( x = 1, 2, 3) nanoporous two-dimensional
+  polymers. J. Phys. Chem. C, 117(1),
+  393–402. http://dx.doi.org/10.1021/jp3101865
+
+#+BEGIN_NOTES
+#+END_NOTES
+
+* Atmospheric molecule separations
+Sorting by *kinetic diameter*
+
+| 2D Material      | He | Ne | CO2 | Ar | O2 | N2 | CH4 |
+|------------------+----+----+-----+----+----+----+-----|
+| Graphene w/ pore |    |    | a   | b  |    | b  | b   |
+| Graphene w/ pore |    |    |     |    | a  | b  |     |
+| Graphene w/ pore |    |    | a   | b  |    | b  | b   |
+| Graphene w/ pore |    |    | a   |    |    | a  | b   |
+| PG               | a  | a  | b   | d  | b  | c  |     |
+| PG-ES1           |    |    | a   |    | b  | b  |     |
+| PG-ES1           | a  | a  | b   | b  | b  | b  | c   |
+
+Pore attributes (size, functional groups) included in complete table in org file.
+
+#+BEGIN_NOTES
+Unsuprisingly, selectivity is strongly correlated.
+Noble gas exception: argon. Large electrostatic effect.
+#+END_NOTES
+
+*** Whole table :noexport:
+
+| Reference                          | Methods | 2D             | Stack   | Features | Func.  | He | Ne | CO2 | Ar | O2 | N2 | CH4 |
+|                                    |         | Material       |         |          | Groups |    |    |     |    |    |    |     |
+|------------------------------------+---------+----------------+---------+----------+--------+----+----+-----+----+----+----+-----|
+| cite:koenig-2012-selec-molec       | Exp     | Graphene       | Bilayer | Porous   |        |    |    | a   | b  |    | b  | b   |
+| cite:kim-2013-selec-gas            | Exp     | Graphene       | Multi   | Defects  |        |    |    |     |    | a  | b  |     |
+| cite:liu-2015-selec-trend          | MD      | Graphene       | Mono    | Porous   | N/H    |    |    | a   | b  |    | b  | b   |
+| cite:sun-2015-applic-nanop         | MD      | Graphene       | Mono    | Porous   | N/H    |    |    | a   |    |    | a  | b   |
+|------------------------------------+---------+----------------+---------+----------+--------+----+----+-----+----+----+----+-----|
+| cite:blankenburg-2010-porous-graph | DFT, MD | PG             | Mono    |          |        | a  | a  | b   | d  | b  | c  |     |
+| cite:schrier-2012-carbon-dioxid    | MD      | PG-ES1         | Mono    |          |        |    |    | a   |    | b  | b  |     |
+| cite:brockway-2013-noble-gas       | DFT, MD | PG-ES1         | Mono    |          |        | a  | a  | b   | b  | b  | b  | c   |
+|------------------------------------+---------+----------------+---------+----------+--------+----+----+-----+----+----+----+-----|
+| cite:li-2013-ultrat-molec          | Exp     | Graphene oxide | 18 nm   |          |        | a  |    | b   |    | b  | b  | b   |
+| cite:kim-2013-selec-gas            | Exp     | Graphene oxide | 3-7 nm  |          |        | b  |    | a   |    | b  | b  | b   |
+|------------------------------------+---------+----------------+---------+----------+--------+----+----+-----+----+----+----+-----|
+| cite:zhu-2015-c-n                  | DFT     | C2N            | Mono    |          |        | a  | b  | b   | b  | b  | b  | b   |
+| cite:li-2015-effic-helium          | DFT, MD | g-C3N4         | Mono    |          |        | a  | b  | b   | b  |    | b  | b   |
+
+#+BEGIN_NOTES
+#+END_NOTES
+
+* Proposal
+1. Investigate the parameters that affect the barrier energy across different materials with different pore configurations.
+  - Kinetic diameter
+  - L-J well depth?
+  - Others?
+
+2. Develop an artificial neural network to predict barrier energy.
+  - Inputs:
+    1. Kinetic diameter or equivalent
+    2. Other physical/chemical interaction parameters?
+
+3. Use the neural network to derive selectivity and permeation data for gases.
+
+#+BEGIN_NOTES
+#+END_NOTES
+
+* Concerns
+- Unforseen physical/chemical interactions.
+  - Nobel gases
+  - Ammonia through PG
+- Kinetic diameter data hard to find is there enough to build a neural network + test?
+  - Use a different defining parameter?
+
+#+BEGIN_NOTES
+Electron beam lithography limited by precision and resolution
+#+END_NOTES
+
+* Path forward :noexport:
+- Perform DFT calculations on similar molecules with differing functional groups to determine correlation parameters.
+- Learn more about molecular dynamics packages.
+
+#+BEGIN_NOTES
+Packages mentioned: LAMMPS
+#+END_NOTES
+
+* Tasks :noexport:
+** DONE Polyphenylene (Porous graphene (PG))
+   CLOSED: [2016-03-18 Fri 12:17]
+*** PG
+# [[./img/bieri-2009-porous-graph-fig1a.png]]
+#+ATTR_HTML: :width 35% :height 35% :border 0
+[[./img/bieri-2009-porous-graph-fig1c.png]]
+
+
+*** References
+cite:bieri-2009-porous-graph
+- Bieri, M., Treier, M., Cai, J., Aït-Mansour, K., Ruffieux, P.,
+  Oliver Gr\"oning, Pierangelo Gr\"oning, Kastler, M., Rieger, R.,
+  Feng, X., Klaus M\"ullen, Fasel, R., .. (2009). Porous graphenes:
+  two-dimensional polymer synthesis with atomic precision. Chemical
+  Communications, nil(45), 6919. http://dx.doi.org/10.1039/b915190g
+
+
+*** TODO (E)-stillbine
+
+*** TODO Pore sizes
+*** TODO Stability
+**** TODO What's the max X value?
+** DONE Show correlation: Kinetic diameter vs permeance/selectivity
+   CLOSED: [2016-03-18 Fri 12:17]
+
+* References :noexport:
+bibliography:./references.bib
+
+* Options :noexport:
+#+OPTIONS: num:nil
+#+OPTIONS: reveal_center:nil
+#+OPTIONS: reveal_control:t
+#+OPTIONS: reveal_history:t
+#+OPTIONS: reveal_keyboard:t
+#+OPTIONS: reveal_progress:nil
+#+OPTIONS: reveal_overview:t
+#+OPTIONS: reveal_rolling_links:nil
+#+OPTIONS: reveal_single_file:t
+#+OPTIONS: reveal_slide_number:h.v
+#+OPTIONS: reveal_title_slide:t
+#+OPTIONS: reveal_width:1200 reveal_height:800
+#+OPTIONS: toc:0
+
+#+REVEAL_EXTRA_CSS: ./proposal.css
+#+REVEAL_HLEVEL: 1
+#+REVEAL_MARGIN: 0.2
+#+REVEAL_MAX_SCALE: 2.5
+#+REVEAL_MIN_SCALE: 0.5
+#+REVEAL_PLUGINS: (highlight notes)
+# #+REVEAL_SLIDE_HEADER: <p>MS Project Proposal</p> <hr>
+# #+REVEAL_SLIDE_FOOTER: <p>MS Project Proposal</p> <hr>
+#+REVEAL_THEME: cmu
+# #+REVEAL_TITLE_SLIDE_TEMPLATE: <h1>%t</h1><h3>{{{subtitle}}}</h3><hr><p>%a</p><p>%e</p>
+#+REVEAL_TITLE_SLIDE_TEMPLATE: <h1>%t</h1><h3>Predicting selectivity and permeance of gas transport through 2D materials using an artificial neural network.</h3><hr><p>%a</p><p>%e</p>
+#+REVEAL_TRANS: linear
+#+REVEAL_ROOT: ../reveal.js
