@@ -1,6 +1,11 @@
+* TODOs
+** TODO Relaxed graphene plane atoms transport
+Perform the same calculations as the final project but while also relaxing the atoms in the graphene plane.
 
-* Calculations
-** Week 2016-03-06: Remote copying
+* Snippets
+** 2016-03-07: Remote copying
+*Note 2016-05-18* - Copying is better done by maintaining the git repo. 
+
 To Gilgamesh:
 #+BEGIN_SRC sh
 scp ~/Google_Drive/projects/hydrogen2D/hydrogen2D.org devonw@gilgamesh.cheme.cmu.edu:projects/hydrogen2D
@@ -16,7 +21,8 @@ To update buffer
 M-x revert-buffer
 #+END_SRC
 
-** Week 2016-05-08: Tramp remote exectuion
+** 2016-05-10: Tramp remote execution
+This is a way to run code on a remote server while maintaining the code locally. It works for basic things that have text output. It doesn't work for things like ASE's view, which spawns a gui, and I haven't tried it for running vasp codes (not sure how directories would work out exactly -> may need to use absolute paths).
 
 Check tramp works
 #+begin_src sh :dir /devonw@gilgamesh.cheme.cmu.edu: :results output
@@ -66,16 +72,47 @@ from jasp import *
 a = 5
 print(a)
 #+END_SRC
+
 #+RESULTS:
 
-** Week 2016-05-15: 
+** 2016-05-: Better movies
 
-*** Graphene structure
+What is the best format for this?
+
+* DFT
+** Material
+*** Graphene monolayer
+**** Pristine
+
+#+BEGIN_SRC python :results output
+from ase import Atom, Atoms
+from ase.visualize import view
+from ase.io import write as ase_write
+import numpy as np
+
+a = 2.46 
+a1 = a * np.array([3.0**0.5/2., -1./2., 0.])
+a2 = a * np.array([3.0**0.5/2., 1./2., 0.])
+a3 = np.array([0., 0., 10.])
+
+atoms = Atoms([Atom('C', 1./2. * a3),
+                Atom('C', 1./3. * a1 + 1./3. * a2 + 1./2. * a3)],
+                cell=[a1, a2, a3])
+
+view(atoms)
+#+END_SRC
+
+#+RESULTS:
+
+**** Pore=1. One carbon defect
+
 #+BEGIN_SRC python :results output
 from ase import Atom, Atoms
 from ase.io import write as ase_write
 from ase.visualize import view
+from jasp import *
 import numpy as np
+import sys
 
 a = 2.46
 a1 = a * np.array([3.0**0.5/2., -1./2., 0.])
@@ -86,19 +123,50 @@ unitcell = Atoms([Atom('C', 1./2. * a3),
                   Atom('C', 1./3. * a1 + 1./3. * a2 + 1./2. * a3)],
                   cell=[a1, a2, a3])
 
-view(unitcell)
 i = 3
 atoms = unitcell.repeat((i,i,1))
 
-#view(atoms)
 print('Graphene unit cell with {} repeating units in both x and y:'.format(i))
 
-del atoms[9]
-view(atoms)
-print(atoms.get_distance(1,2))
+del atoms[0]
+
+name = 'material/g-mono/3x3/pore=1'
+print('')
+print('Graphene with a single carbon defect in the unit cell:'.format(i))
+file_path = './img/' + name + '.png'
+ase_write(file_path, atoms)
+print('[[' + file_path + ']]')
+
+with jasp('./dft/' + name,
+            encut=520,
+            kpts=(6,6,1),
+            xc='PBE',          # GGA functional type
+            ismear=0,          # Gaussian smearing
+            sigma=0.2,         # "Metallic" system smearing
+            isif=2,            # relax positions only
+            ibrion=2,          # conjugate gradient optimizer
+            nsw=50,            # max number of steps to relax
+            atoms=atoms) as calc:
+    try:
+        calc.calculate()
+        energy = atoms.get_potential_energy()/len(atoms)
+        print_converged(len(atoms), energy, float(get_elapsed_time(calc)))
+    except (VaspSubmitted, VaspQueued):
+        print_inprogress()
+        ready = False
+        pass
 #+END_SRC
 
 #+RESULTS:
+
+
+*** Graphene bilayer
+*** Graphene trilayer
+** Transport
+*** Graphene monolayer
+**** Single pore - linear
+***** H2
+
 
 * Meetings
 ** DONE 2016-03-08 4pm
@@ -132,7 +200,6 @@ Behler-Parrinello paper from 2007
   - is there a way to use different inputs or generalize them? (ie. an input could be the position or presence of a functional group)
 
 ** DONE 2016-05-12 11am
-
 *** Final project feedback
 [[file:~/techela/s16-06640/final-project/final-project.org::*Transport of carbon dioxide]]
 
@@ -318,7 +385,6 @@ print('[[' + file_path + ']]')
 : CO2 Distance: -3.00. In progress.
 
 *** Bilayer / Trilayer graphene
-
 **** Bilayer
 
 #+BEGIN_SRC python
@@ -328,8 +394,6 @@ from ase.visualize import view
 from jasp import *
 import numpy as np
 import sys
-
-JASPRC['queue.walltime'] = '10:00:00'
 
 def print_converged(num_atoms, energy, time):
     print("Final structure calculation: Atoms: {}. Energy/f.u. = {:0.3f}. Calculation time: {:.0f} min.".format(num_atoms, energy, time/60.))
@@ -358,35 +422,36 @@ unitcell = Atoms([Atom('C', 1./2. * a3),
 atoms = unitcell
 #atoms = unitcell.repeat((3,3,1))
 view(atoms)
+sys.exit()
 
-#defect_pos = atoms[9].position
-#del atoms[9]
+defect_pos = atoms[9].position
+del atoms[9]
 
-#ready = True
-#with jasp('graphene/G-c-final',
-#            encut=450,         # From convergence check
-#            kpts=(6,6,1),      # From convergence check
-#            xc='PBE',          # GGA functional type. Important for the defect.
-#            ismear=0,          # Gaussian smearing
-#            sigma=0.2,         # "Metallic" system smearing
-#            isif=2,            # relax positions only
-#            ibrion=2,          # conjugate gradient optimizer
-#            nsw=50,            # max number of steps to relax
-#            atoms=atoms) as calc:
-#    try:
-#        calc.calculate()
-#        energy = atoms.get_potential_energy()/len(atoms)
-#        print_converged(len(atoms), energy, float(get_elapsed_time(calc)))
-#    except (VaspSubmitted, VaspQueued):
-#        print_inprogress()
-#        ready = False
-#        pass
-#
-#if not ready:
-#    sys.exit()
-#
-#print('')
-#print('Defect position: {}'.format(defect_pos))
+ready = True
+with jasp('graphene/G-c-final',
+            encut=450,         # From convergence check
+            kpts=(6,6,1),      # From convergence check
+            xc='PBE',          # GGA functional type. Important for the defect.
+            ismear=0,          # Gaussian smearing
+            sigma=0.2,         # "Metallic" system smearing
+            isif=2,            # relax positions only
+            ibrion=2,          # conjugate gradient optimizer
+            nsw=50,            # max number of steps to relax
+            atoms=atoms) as calc:
+    try:
+        calc.calculate()
+        energy = atoms.get_potential_energy()/len(atoms)
+        print_converged(len(atoms), energy, float(get_elapsed_time(calc)))
+    except (VaspSubmitted, VaspQueued):
+        print_inprogress()
+        ready = False
+        pass
+
+if not ready:
+    sys.exit()
+
+print('')
+print('Defect position: {}'.format(defect_pos))
 
 print('')
 file_path = './img/bilayer.png'
@@ -399,7 +464,6 @@ view(atoms)
 #+END_SRC
 
 #+RESULTS:
-
 
 * Research
 ** Properties
@@ -689,6 +753,9 @@ through Single Layer Graphene. Langmuir 2012, 28, 16671−16678.
 ** Review articles
 *** cite:yoo-2013-graph-graph Graphene and graphene oxide uses as barriers
 
+** Patents
+*** TODO Aperture
+http://www.google.com/patents/US20140263035
 ** Non-pertinent
 *** TODO cite:britnell-2012-elect-tunnel hBN as a dielectric
 
