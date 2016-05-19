@@ -624,7 +624,6 @@ Selectivity results
 *** cite:wen-2015-inhib-effec Inhibition effect of non-permeating components
 *** cite:achtyl-2015-aqueous-proton Exp/DFT Defect detection. Aqueous proton transfer
 
-
 *** TODO partoens graphene structure
 ** Polyphenylene (Porous Graphene (PG))
 *** TODO cite:bieri-2009-porous-graph Synthesis of PG
