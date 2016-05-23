@@ -13,8 +13,9 @@ Competing possible research avenues:
 
 ** 2016-05-20 Fri
 - cite:drahushuk-2012-mechan-gas Mechanisms of Gas Permeation through Single Layer Graphene Membranes - Drahushuk (Strano)
+
 ** 2016-05-23 Mon
--cite:wang-2015-molec-valves Molecular valves for controlling gas phase transport made from discrete ångström-sized pores in graphene - Wang (Strano)
+- cite:wang-2015-molec-valves Molecular valves for controlling gas phase transport made from discrete ångström-sized pores in graphene - Wang, Drahushuk (Strano)
 
 * Snippets
 ** 2016-03-07: Remote copying
