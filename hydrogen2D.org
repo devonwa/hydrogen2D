@@ -13,8 +13,9 @@ Competing possible research avenues:
 
 ** 2016-05-20 Fri
 - cite:drahushuk-2012-mechan-gas Mechanisms of Gas Permeation through Single Layer Graphene Membranes - Drahushuk (Strano)
+
 ** 2016-05-23 Mon
--cite:wang-2015-molec-valves Molecular valves for controlling gas phase transport made from discrete ångström-sized pores in graphene - Wang (Strano)
+-cite:wang-2015-molec-valves Molecular valves for controlling gas phase transport made from discrete ångström-sized pores in graphene - Wang, Drahushuk (Strano)
 
 * Snippets
 ** 2016-03-07: Remote copying
@@ -118,6 +119,7 @@ view(atoms)
 
 **** Pore=1. One carbon defect
 
+***** Standard spacing
 #+BEGIN_SRC python :results output
 from ase import Atom, Atoms
 from ase.io import write as ase_write
@@ -125,6 +127,14 @@ from ase.visualize import view
 from jasp import *
 import numpy as np
 import sys
+
+
+def print_converged(num_atoms, energy, time):
+    print("Final structure calculation: Atoms: {}. Energy/f.u. = {:0.3f}. Calculation time: {:.0f} min.".format(num_atoms, energy, time/60.))
+
+def print_inprogress():
+    print("Final structure calculation: In progress.")
+
 
 a = 2.46
 a1 = a * np.array([3.0**0.5/2., -1./2., 0.])
@@ -138,13 +148,76 @@ unitcell = Atoms([Atom('C', 1./2. * a3),
 i = 3
 atoms = unitcell.repeat((i,i,1))
 
-print('Graphene unit cell with {} repeating units in both x and y:'.format(i))
+print('Graphene 3x3 pore=1:'.format(i))
 
 del atoms[0]
 
 name = 'material/g-mono/3x3/pore=1'
-print('')
-print('Graphene with a single carbon defect in the unit cell:'.format(i))
+
+with jasp('./dft/' + name,
+            encut=520,
+            kpts=(6,6,1),
+            xc='PBE',          # GGA functional type
+            ismear=0,          # Gaussian smearing
+            sigma=0.2,         # "Metallic" system smearing
+            isif=2,            # relax positions only
+            ibrion=2,          # conjugate gradient optimizer
+            nsw=100,            # max number of steps to relax
+            atoms=atoms) as calc:
+    try:
+        calc.calculate()
+        energy = atoms.get_potential_energy()/len(atoms)
+        print_converged(len(atoms), energy, float(get_elapsed_time(calc)))
+    except (VaspSubmitted, VaspQueued):
+        print_inprogress()
+        ready = False
+        pass
+
+file_path = './img/' + name + '.png'
+ase_write(file_path, atoms)
+print('[[' + file_path + ']]')
+#+END_SRC
+
+#+RESULTS:
+: Graphene 3x3 pore=1:
+: [[./img/material/g-mono/3x3/pore=1.png]]
+: Final structure calculation: In progress.
+
+***** Wide vaccuum
+
+#+BEGIN_SRC python :results output
+from ase import Atom, Atoms
+from ase.io import write as ase_write
+from ase.visualize import view
+from jasp import *
+import numpy as np
+import sys
+
+
+def print_converged(num_atoms, energy, time):
+    print("Final structure calculation: Atoms: {}. Energy/f.u. = {:0.3f}. Calculation time: {:.0f} min.".format(num_atoms, energy, time/60.))
+
+def print_inprogress():
+    print("Final structure calculation: In progress.")
+
+
+a = 2.46
+a1 = a * np.array([3.0**0.5/2., -1./2., 0.])
+a2 = a * np.array([3.0**0.5/2., 1./2., 0.])
+a3 = np.array([0., 0., 20.])
+
+unitcell = Atoms([Atom('C', 1./2. * a3),
+                  Atom('C', 1./3. * a1 + 1./3. * a2 + 1./2. * a3)],
+                  cell=[a1, a2, a3])
+
+i = 3
+atoms = unitcell.repeat((i,i,1))
+
+print('Graphene 3x3 pore=1:'.format(i))
+
+del atoms[0]
+
+name = 'material/g-mono/3x3/pore=1/vac=20'
 file_path = './img/' + name + '.png'
 ase_write(file_path, atoms)
 print('[[' + file_path + ']]')
@@ -157,7 +230,7 @@ with jasp('./dft/' + name,
             sigma=0.2,         # "Metallic" system smearing
             isif=2,            # relax positions only
             ibrion=2,          # conjugate gradient optimizer
-            nsw=50,            # max number of steps to relax
+            nsw=100,            # max number of steps to relax
             atoms=atoms) as calc:
     try:
         calc.calculate()
@@ -170,14 +243,300 @@ with jasp('./dft/' + name,
 #+END_SRC
 
 #+RESULTS:
-
+: Graphene 3x3 pore=1:
+: [[./img/material/g-mono/3x3/pore=1/vac=20.png]]
+: Final structure calculation: In progress.
 
 *** Graphene bilayer
+
 *** Graphene trilayer
+
 ** Transport
 *** Graphene monolayer
-**** Single pore - linear
+**** 3x3 pore=1 - linear
 ***** H2
+
+#+BEGIN_SRC python
+from ase import Atom, Atoms
+from ase.constraints import FixAtoms, Hookean
+from ase.visualize import view
+from jasp import *
+import numpy as np
+import matplotlib.pyplot as plt
+import sys
+
+def print_converged(i, energy, time):
+#    print(i, energy, time)
+    print("H Distance: {:5.2f}. Energy = {:8.3f}. Calculation time: {:3.0f} min.".format(i, energy, time/60.))
+
+def print_inprogress(i):
+    print("H Distance: {:5.2f}. In progress.".format(i))
+
+def print_unconverged(i):
+    print("H Distance: {:5.2f}. Did not converge.".format(i))
+
+
+# Distance of molecule's center from grahene plane
+heights = [10., 9., 8., 7., 6., 5., 4., 3., 2.5, 2., 1.5, 1., 0.5, 0.]
+
+name = 'material/g-mono/3x3/pore=1'
+file_path = './img/' + name + '.png'
+ase_write(file_path, atoms)
+print('[[' + file_path + ']]')
+
+# Build base images
+with jasp('material/g-mono/3x3/pore=1/vac=20') as calc:
+    G_defect = calc.get_atoms()
+
+HH_bond = 0.74 # H-H bond length (‎Å)
+
+atoms =  [Atoms(G_defect) for i in range(len(heights))]
+for i, h in enumerate(heights):
+    H2 = Atoms([Atom('H', (0, 0, h - HH_bond/2.)),
+                Atom('H', (0, 0, h + HH_bond/2.))])
+    atoms[i].extend(H2)
+
+# Graphene constraint
+#graphene_constraint = [FixAtoms(indices=[atom.index for atom in atoms[0] if atom.symbol=='C'])]
+
+# Hydrogen fixed position constraint
+for atom in atoms[0]:
+    if atom.symbol == 'H':
+        hydrogen_constraint = [FixAtoms(indices=[atom.index])]
+        break
+
+atoms = [Atoms(atoms[i]) for i in range(len(heights))]
+for i in range(len(heights)):
+    atoms[i].set_constraint(hydrogen_constraint)
+
+print('Unconstrained graphene, leading fixed hydrogen:')
+name = 'transport/g-mono/3x3/pore=1/linear-unconst_G'
+ready = True
+for i, h in enumerate(heights):
+    with jasp('./dft/' + name + '/d={0:0.2f}'.format(h),
+                encut=520,
+                kpts=(6,6,1),
+                xc='PBE',          # GGA functional type
+                ismear=0,          # Gaussian smearing
+                sigma=0.2,         # "Metallic" system smearing
+                isif=2,            # relax positions only
+                ibrion=2,          # conjugate gradient optimizer
+                nsw=100,            # max number of steps to relax
+                atoms=atoms) as calc:
+        try:
+            calc.calculate()
+            energy = atoms[i].get_potential_energy()
+            TE.append(energy)
+            print_converged(h, energy, float(get_elapsed_time(calc)))
+        except (VaspSubmitted, VaspQueued):
+            print_inprogress(h)
+            ready = False
+            pass
+
+if not ready:
+    import sys; sys.exit()
+
+
+import matplotlib.pyplot as plt
+
+# Consider the change in energy from lowest energy state
+TE = np.array(TE)
+TE -= min(TE)
+
+print('')
+file_path = './img/' + name + 'TE.png'
+plt.plot(heights, TE)
+plt.xlabel('Height ($\AA$)')
+plt.ylabel('Total Energy (eV)')
+plt.savefig(file_path)
+print('[[' + file_path + ']]')
+#+END_SRC
+
+***** H2 without relaxed graphene
+
+#+BEGIN_SRC python
+from ase import Atom, Atoms
+from ase.constraints import FixAtoms
+from ase.visualize import view
+from jasp import *
+import numpy as np
+import matplotlib.pyplot as plt
+import sys
+
+def print_converged(i, energy, time):
+    print("Distance: {:5.2f}. Energy = {:8.3f}. Calculation time: {:3.0f} min.".format(i, energy, time/60.))
+
+def print_inprogress(i):
+    print("Distance: {:5.2f}. In progress.".format(i))
+
+def print_unconverged(i):
+    print("Distance: {:5.2f}. Did not converge.".format(i))
+
+
+# Graphene base
+a = 2.46
+a1 = a * np.array([3.0**0.5/2., -1./2., 0.])
+a2 = a * np.array([3.0**0.5/2., 1./2., 0.])
+a3 = np.array([0., 0., 10.])
+
+graphene = Atoms([Atom('C', 1./2. * a3),
+                  Atom('C', 1./3. * a1 + 1./3. * a2 + 1./2. * a3)],
+                  cell=[a1, a2, a3])
+
+i = 3
+graphene = graphene.repeat((i,i,1))
+
+
+# Transport initial images. Distance of molecule's center from grahene plane
+heights = [10., 9., 8., 7., 6., 5., 4., 3., 2.5, 2., 1.5, 1., 0.5, 0.]
+atoms =  [Atoms(graphene) for i in range(len(heights))]
+HH_bond = 0.74 # Bond length [Ang]
+for i, h in enumerate(heights):
+    H2 = Atoms([Atom('H', (0, 0, h - HH_bond/2.)),
+                Atom('H', (0, 0, h + HH_bond/2.))])
+    atoms[i].extend(H2)
+
+
+# Hydrogen fixed position constraint
+for atom in atoms[0]:
+    if atom.symbol == 'H':
+        hydrogen_constraint = [FixAtoms(indices=[atom.index])]
+        break
+
+# Graphene constraint
+# (for comparison with final project results)
+graphene_constraint = [FixAtoms(indices=[atom.index for atom in atoms[0] if atom.symbol=='C'])]
+
+
+# Make images with constraints
+atoms_free = [Atoms(atoms[i]) for i in range(len(heights))]
+
+atoms_uncon = [Atoms(atoms[i]) for i in range(len(heights))]
+for i in range(len(heights)):
+    atoms_uncon[i].set_constraint(hydrogen_constraint)
+
+atoms_con = [Atoms(atoms[i]) for i in range(len(heights))]
+for i in range(len(heights)):
+    atoms_con[i].set_constraint(hydrogen_constraint + graphene_constraint)
+
+
+def calculate(name, atoms, TE):
+    for i, h in enumerate(heights):
+        with jasp('./dft/' + name + '/d={0:0.2f}'.format(h),
+                    encut=520,
+                    kpts=(6,6,1),
+                    xc='PBE',          # GGA functional type
+                    ismear=0,          # Gaussian smearing
+                    sigma=0.2,         # "Metallic" system smearing
+                    isif=2,            # relax positions only
+                    ibrion=2,          # conjugate gradient optimizer
+                    nsw=100,            # max number of steps to relax
+                    atoms=atoms[i]) as calc:
+            try:
+                calc.calculate()
+                energy = atoms[i].get_potential_energy()
+                TE.append(energy)
+                print_converged(h, energy, float(get_elapsed_time(calc)))
+            except (VaspSubmitted, VaspQueued):
+                print_inprogress(h)
+                ready = False
+                pass
+
+
+ready = True
+base_name = 'transport/g-mono/3x3/pore=1/molec=H2/'
+
+print('Unconstrained graphene, unconstrained hydrogen:')
+name_free = base_name + 'linear-unconst_all'
+TE_free = []
+calculate(name_free, atoms_free, TE_free)
+
+print('Unconstrained graphene, constrained leading hydrogen:')
+name_uncon = base_name + 'linear-unconst_G'
+TE_uncon = []
+calculate(name_uncon, atoms_uncon, TE_uncon)
+
+print('Constrained graphene, constrained leading hydrogen:')
+name_con = 'transport/g-mono/3x3/pore=1/molec=H2/linear-const'
+name_con = base_name + 'linear-const'
+TE_con = []
+calculate(name_con, atoms_con, TE_con)
+
+if not ready:
+    sys.exit()
+sys.exit()
+
+
+# Consider the change in energy from lowest energy state
+TE_free = np.array(TE_free)
+TE_free -= min(TE_free)
+TE_uncon = np.array(TE_uncon)
+TE_uncon -= min(TE_uncon)
+TE_con = np.array(TE_con)
+TE_con -= min(TE_con)
+
+
+# Plot a comparison of the total energies of each constraint type
+print('')
+file_path = './img/' + name + 'TE-comparison.png'
+plt.plot(heights, TE_free)
+plt.plot(heights, TE_uncon)
+plt.plot(heights, TE_con)
+plt.xlabel('Height ($\AA$)')
+plt.ylabel('Total Energy (eV)')
+plt.savefig(file_path)
+print('[[' + file_path + ']]')
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Unconstrained graphene, unconstrained hydrogen:
+Distance: 10.00. In progress.
+Distance:  9.00. In progress.
+Distance:  8.00. In progress.
+Distance:  7.00. In progress.
+Distance:  6.00. In progress.
+Distance:  5.00. In progress.
+Distance:  4.00. In progress.
+Distance:  3.00. In progress.
+Distance:  2.50. In progress.
+Distance:  2.00. In progress.
+Distance:  1.50. In progress.
+Distance:  1.00. In progress.
+Distance:  0.50. In progress.
+Distance:  0.00. In progress.
+Unconstrained graphene, constrained leading hydrogen:
+Distance: 10.00. In progress.
+Distance:  9.00. In progress.
+Distance:  8.00. In progress.
+Distance:  7.00. In progress.
+Distance:  6.00. In progress.
+Distance:  5.00. In progress.
+Distance:  4.00. In progress.
+Distance:  3.00. In progress.
+Distance:  2.50. In progress.
+Distance:  2.00. In progress.
+Distance:  1.50. In progress.
+Distance:  1.00. In progress.
+Distance:  0.50. In progress.
+Distance:  0.00. In progress.
+Constrained graphene, constrained leading hydrogen:
+Distance: 10.00. In progress.
+Distance:  9.00. In progress.
+Distance:  8.00. In progress.
+Distance:  7.00. In progress.
+Distance:  6.00. In progress.
+Distance:  5.00. In progress.
+Distance:  4.00. In progress.
+Distance:  3.00. In progress.
+Distance:  2.50. In progress.
+Distance:  2.00. In progress.
+Distance:  1.50. In progress.
+Distance:  1.00. In progress.
+Distance:  0.50. In progress.
+Distance:  0.00. In progress.
+#+end_example
+
 * Meetings
 ** DONE 2016-03-08 4pm
    CLOSED: [2016-03-09 Wed 09:26] DEADLINE: <2016-03-08 Tue 16:00>
@@ -474,6 +833,14 @@ view(atoms)
 #+END_SRC
 
 #+RESULTS:
+** 2016-05-27 3pm Group meeting presentation
+   DEADLINE: <2016-05-27 Fri 3pm>
+*** TODO Unconstrained graphene plane
+*** TODO H2 transport distance of non-interaction
+*** TODO NEB calculated transport
+*** TODO CO2 repairing energy
+*** TODO Comparison data for everything
+
 * Research
 ** Questions
 *** TODO Are the kinetic diameters used in Blankenberg correct?
@@ -491,6 +858,15 @@ Stands for Rydberg constant.
 1 eV = 7.350e-2 Ryd
 300 eV = 22.096 Ryd
 ** Properties
+*** Bond lengths
+
+| Molecule | Bond | Bond Length (Å) |
+| H2       | H-H  |            0.74 |
+| CO2      | C=O  |            1.21 |
+
+**** References
+CO2 C=O: CRC Handbook, Section 9, Characteristic Bond Lengths in Free Molecules
+H2: CRC Handbook, Section 9, Characteristic Bond Lengths in Free Molecules
 
 *** Common molecules
 Useful numbers:
@@ -545,8 +921,13 @@ Kinetic diameter
 - benz, tol, eth-benz, xylene: cite:baertsch-1996-permeat-aromat
 - cyclohexane: cite:sing-2004-use-molec
 
-
 *** 2D Materials
+
+Stability
+| Material | Stack | Production | Temperature   | Ref                       |
+|          |       |            | Stability [K] |                           |
+|----------+-------+------------+---------------+---------------------------|
+| Graphene | Mono  | CVD        | 2600          | cite:kim-2010-high-temper |
 
 | Material | Features    | Pore     |
 |          |             | Size (Å) |
@@ -687,6 +1068,8 @@ He, Ne, Ar, Kr
 |------------------------------------+----------+----------------+----+----+----+----|
 | cite:zhu-2015-c-n                  | DFT      | C2N            | a  | b  | b  |    |
 | cite:li-2015-effic-helium          | DFT, MD  | g-C3N4         | a  | b  | b  |    |
+
+* Papers
 ** Graphene
 *** cite:novoselov-2005-two-dimen
 *** cite:geim-2009-graph
@@ -748,13 +1131,6 @@ through Single Layer Graphene. Langmuir 2012, 28, 16671−16678.
 *** cite:yoo-2013-graph-graph
 ** Molybdenum disulphide (MoS2)
 *** cite:hong-2015-explor-atomic 
-** 2D material properties
-
-*** Stability
-| Material | Stack | Production | Temperature   | Ref                       |
-|          |       |            | Stability [K] |                           |
-|----------+-------+------------+---------------+---------------------------|
-| Graphene | Mono  | CVD        | 2600          | cite:kim-2010-high-temper |
 ** Quantum mechanics
 *** Lennard-Jones potential
 [[http://chemwiki.ucdavis.edu/Core/Physical_Chemistry/Physical_Properties_of_Matter/Atomic_and_Molecular_Properties/Intermolecular_Forces/Specific_Interactions/Lennard-Jones_Potential][ChemWiki - UC Davis]]
@@ -773,20 +1149,16 @@ through Single Layer Graphene. Langmuir 2012, 28, 16671−16678.
 http://www.google.com/patents/US20140263035
 ** Non-pertinent
 *** TODO cite:britnell-2012-elect-tunnel hBN as a dielectric
-** Readings
+** To Read
 *** TODO cite:elstner-1998-self-consis
-
 *** TODO cite:zhu-2006-permean-shoul
-
 *** TODO cite:zhang-2012-tunab-hydrog
 *** TODO cite:drahushuk-2012-mechan-gas
 *** TODO cite:nieszporek-2015-alkan-separ
 *** TODO cite:liu-2014-mechan-proper
 *** TODO cite:tao-2014-tunab-hydrog
 *** TODO cite:wang-2014-trans-metal
-
 *** TODO cite:bunch-2008-imper-atomic
-
 *** TODO cite:leeuwen-1994-deriv-stock Derivation of L-J lengths of liquids.
 * References
 bibliographystyle:unsrtnat
