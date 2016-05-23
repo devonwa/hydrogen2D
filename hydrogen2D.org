@@ -1,6 +1,20 @@
-* TODOs
-** TODO Relaxed graphene plane atoms transport
-Perform the same calculations as the final project but while also relaxing the atoms in the graphene plane.
+#+title: MS Research Project
+#+author: Devon Walker
+#+email: devonw@andrew.cmu.edu
+
+* Journal
+** 2016-05-19 Thu
+- cite:zan-2012-graph-reknit Graphene Reknits Its Holes - Zan (Novoselov)
+
+Competing possible research avenues:
+1. Repairing graphene
+2. Stacked-graphene aperture effect
+  2.1. Neural network?
+
+** 2016-05-20 Fri
+- cite:drahushuk-2012-mechan-gas Mechanisms of Gas Permeation through Single Layer Graphene Membranes - Drahushuk (Strano)
+** 2016-05-23 Mon
+-cite:wang-2015-molec-valves Molecular valves for controlling gas phase transport made from discrete ångström-sized pores in graphene - Wang (Strano)
 
 * Snippets
 ** 2016-03-07: Remote copying
@@ -75,10 +89,8 @@ print(a)
 
 #+RESULTS:
 
-** 2016-05-: Better movies
-
-What is the best format for this?
-
+** TODO Better movies
+- What is the best format for this?
 * DFT
 ** Material
 *** Graphene monolayer
@@ -166,8 +178,6 @@ with jasp('./dft/' + name,
 *** Graphene monolayer
 **** Single pore - linear
 ***** H2
-
-
 * Meetings
 ** DONE 2016-03-08 4pm
    CLOSED: [2016-03-09 Wed 09:26] DEADLINE: <2016-03-08 Tue 16:00>
@@ -464,8 +474,22 @@ view(atoms)
 #+END_SRC
 
 #+RESULTS:
-
 * Research
+** Questions
+*** TODO Are the kinetic diameters used in Blankenberg correct?
+cite:blankenburg-2010-porous-graph uses cite:leeuwen-1994-deriv-stock for kinetic diameter of ammonia, even though they're stated for liquids.
+cite:tsuru-2010-permeat-proper shows that certain kinetic diameter calculations may not apply to certain separations.
+*** DONE What is the unit GPU?
+    CLOSED: [2016-03-17 Thu 22:33]
+Gas permeance unit
+1 GPU = 0.33 mol/(m^2*s*Pa)
+*** What's a dispersion correction in dft?
+Dipoles occur as a molecule passes through the membrane. They need to be accounted for in the energy calculations. (need cite)
+*** DONE Ryd compared to eV?
+    CLOSED: [2016-03-17 Thu 22:36]
+Stands for Rydberg constant.
+1 eV = 7.350e-2 Ryd
+300 eV = 22.096 Ryd
 ** Properties
 
 *** Common molecules
@@ -541,7 +565,6 @@ Kinetic diameter
 Pore size
 - Graphene, Pristine: 
 - PG: cite:li-2010-two-dimen-polyp
-
 ** Separations
 
 Materials to research
@@ -664,7 +687,6 @@ He, Ne, Ar, Kr
 |------------------------------------+----------+----------------+----+----+----+----|
 | cite:zhu-2015-c-n                  | DFT      | C2N            | a  | b  | b  |    |
 | cite:li-2015-effic-helium          | DFT, MD  | g-C3N4         | a  | b  | b  |    |
-
 ** Graphene
 *** cite:novoselov-2005-two-dimen
 *** cite:geim-2009-graph
@@ -710,7 +732,6 @@ Note: Agrees with common molecules table.
 *** *cite:brockway-2013-noble-gas DFT PG-ESX study similar to Blankenberg's
 *** Notes 
 High temperatures required for permeance of H2 and He would destroy a PG monolayer. cite:huang-2014-improv-permeab
-
 ** hexagonal Boron Nitride (hBN)
 *** cite:corso-2004-boron-nitrid-nanom Boron nitride nanomesh
 Hole in mesh: size 20 Å
@@ -721,7 +742,6 @@ Hole in mesh: size 20 Å
 *** *cite:zhang-2015-hexag-boron H2/CH4 separation. Triangular pores.
 Drahushuk, L. W.; Strano, M. S. Mechanisms of Gas Permeation
 through Single Layer Graphene. Langmuir 2012, 28, 16671−16678.
-
 ** Graphene oxide
 *** *cite:kim-2013-selec-gas
 *** *cite:li-2013-ultrat-molec
@@ -735,29 +755,24 @@ through Single Layer Graphene. Langmuir 2012, 28, 16671−16678.
 |          |       |            | Stability [K] |                           |
 |----------+-------+------------+---------------+---------------------------|
 | Graphene | Mono  | CVD        | 2600          | cite:kim-2010-high-temper |
-
 ** Quantum mechanics
 *** Lennard-Jones potential
 [[http://chemwiki.ucdavis.edu/Core/Physical_Chemistry/Physical_Properties_of_Matter/Atomic_and_Molecular_Properties/Intermolecular_Forces/Specific_Interactions/Lennard-Jones_Potential][ChemWiki - UC Davis]]
 
 *** van der Waals radius
 [[http://chemwiki.ucdavis.edu/Core/Theoretical_Chemistry/Chemical_Bonding/General_Principles_of_Chemical_Bonding/Covalent_Bond_Distance%2C_Radius_and_van_der_Waals_Radius][ChemWiki - UC Davis]]
-
 ** Neural networks
 *** *cite:behler-2007-gener-neural
 *** TODO cite:behler-2008-press-induc
 *** TODO cite:behler-2011-neural-networ
 *** TODO cite:behler-2014-repres-poten
-
 ** Review articles
 *** cite:yoo-2013-graph-graph Graphene and graphene oxide uses as barriers
-
 ** Patents
 *** TODO Aperture
 http://www.google.com/patents/US20140263035
 ** Non-pertinent
 *** TODO cite:britnell-2012-elect-tunnel hBN as a dielectric
-
 ** Readings
 *** TODO cite:elstner-1998-self-consis
 
@@ -773,20 +788,17 @@ http://www.google.com/patents/US20140263035
 *** TODO cite:bunch-2008-imper-atomic
 
 *** TODO cite:leeuwen-1994-deriv-stock Derivation of L-J lengths of liquids.
-* Questions
-*** TODO Are the kinetic diameters used in Blankenberg correct?
-cite:blankenburg-2010-porous-graph uses cite:leeuwen-1994-deriv-stock for kinetic diameter of ammonia, even though they're stated for liquids.
-cite:tsuru-2010-permeat-proper shows that certain kinetic diameter calculations may not apply to certain separations.
-*** DONE What is the unit GPU?
-    CLOSED: [2016-03-17 Thu 22:33]
-Gas permeance unit
-1 GPU = 0.33 mol/(m^2*s*Pa)
-*** What's a dispersion correction in dft?
-Dipoles occur as a molecule passes through the membrane. They need to be accounted for in the energy calculations. (need cite)
-*** DONE Ryd compared to eV?
-    CLOSED: [2016-03-17 Thu 22:36]
-Stands for Rydberg constant.
-1 eV = 7.350e-2 Ryd
-300 eV = 22.096 Ryd
 * References
+bibliographystyle:unsrtnat
 bibliography:references.bib
+* Tasks :noexport:
+** Research
+*** TODO What should this project be?
+** DFT
+*** TODO Relaxed graphene plane atoms transport
+Perform the same calculations as the final project but while also relaxing the atoms in the graphene plane.
+
+*** TODO Find limit where gases appear to be in vaccuum before transport
+*** TODO Bilayer / trilayer graphene structures
+** Snippets
+*** TODO Python script for generating good movies
