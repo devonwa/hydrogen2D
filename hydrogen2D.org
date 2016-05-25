@@ -22,6 +22,11 @@ Competing possible research avenues:
 
 - cite:wang-2015-molec-valves Molecular valves for controlling gas phase transport made from discrete ångström-sized pores in graphene - Wang, Drahushuk (Strano)
 
+** 2016-05-25 Wed
+
+Simulators meeting
+- Jake presented neural network vs reaxff with Au
+
 * Snippets
 ** 2016-03-07: Remote copying
 *Note 2016-05-18* - Copying is better done by maintaining the git repo. 
