@@ -381,7 +381,7 @@ with jasp('./dft/' + name,
 #+RESULTS:
 : Graphene 3x3 pore=1:
 : [[./img/material/g-mono/3x3/pore=1/vac=20.png]]
-: Final structure calculation: In progress.
+: Final structure calculation: Atoms: 17. Energy/f.u. = -8.760. Calculation time: 589 min.
 
 *** Graphene bilayer
 
@@ -451,8 +451,6 @@ atoms_con = copy.deepcopy(atoms)
 for i in range(len(heights)):
     atoms_con[i].set_constraint(hydrogen_constraint + graphene_constraint)
 
-view(atoms_free)
-sys.exit()
 
 ready = True
 def calculate(name, atoms, TE):
@@ -500,7 +498,7 @@ calculate(name_con, atoms_con, TE_con)
 
 if not ready:
     sys.exit()
-
+sys.exit()
 
 # Consider the change in energy from lowest energy state
 TE_free = np.array(TE_free)
