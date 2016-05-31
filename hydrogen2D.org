@@ -26,6 +26,28 @@ Competing possible research avenues:
 
 Simulators meeting
 - Jake presented neural network vs reaxff with Au
+** 2016-05-26 Thu
+- 
+
+** 2016-05-31 Fri
+- 
+
+Prepared for a group meeting presentation. Ended up not having one.
+
+** 2016-05-31 Tue
+- 
+cite:partoens-2006-from-graph
+Created vaccuum distance graph to deteremine interaction distance of leading atoms in a molecule.
+
+Bilayer graphene unit cell in queue for relaxation.
+
+Need to redo some of the 'free' transport. The graphene plane simply shifted down as the molecules approached. Might help to fix carbons around the outside edge.
+
+*** TODO Check in on monolayer 5x5 and 6x6 pore=10 calculations
+*** TODO Finish pore=10 for bilayer
+
+** 2016-06-01 Wed
+- 
 
 * Snippets
 ** 2016-03-07: Remote copying
