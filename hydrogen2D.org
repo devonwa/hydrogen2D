@@ -171,7 +171,40 @@ for i, energy, force in zip(cells, energies_L, forces_L):
 
 ** TODO Better movies
 - What is the best format for this?
+** 2016-05-31: View atoms
+#+BEGIN_SRC python
+from ase import Atom, Atoms
+from ase.visualize import view
+from jasp import *
+    
+heights = [10., 9., 8., 7., 6., 5., 4., 3., 2.5, 2., 1.5, 1., 0.5, 0.]
+
+def view_atoms(name):
+    images = []
+    for i, h in enumerate(heights):
+	with jasp('./dft/' + name + '/d={0:0.2f}'.format(h)) as calc:
+	    atoms = calc.get_atoms()
+	    images.append(atoms)
+    view(images)
+
+base_name = 'transport/g-mono/3x3/pore=1/molec=CO2/'
+
+name_free = base_name + 'linear-unconst_all'
+#view_atoms(name_free)
+
+name_uncon = base_name + 'linear-unconst_G'
+#view_atoms(name_uncon)
+
+name_con = base_name + 'linear-const'
+view_atoms(name_con)
+#+END_SRC
+
+#+RESULTS:
+
 * DFT
+** Parameters
+- Vaccuum space between gas and 
+
 ** Material
 *** Graphene monolayer
 **** Pristine
@@ -180,23 +213,57 @@ for i, energy, force in zip(cells, energies_L, forces_L):
 from ase import Atom, Atoms
 from ase.visualize import view
 from ase.io import write as ase_write
-import numpy as np
+from jasp import *
+JASPRC['queue.walltime'] = '10:00:00'
 
-a = 2.46 
+
+def print_converged(num_atoms, energy, time):
+    print("Final structure calculation: Atoms: {}. Energy/f.u. = {:0.3f}. Calculation time: {:.0f} min.".format(num_atoms, energy, time/60.))
+
+def print_inprogress():
+    print("Final structure calculation: In progress.")
+
+
+a = 2.46
 a1 = a * np.array([3.0**0.5/2., -1./2., 0.])
 a2 = a * np.array([3.0**0.5/2., 1./2., 0.])
-a3 = np.array([0., 0., 10.])
+a3 = np.array([0., 0., 18.])
 
 atoms = Atoms([Atom('C', 1./2. * a3),
-                Atom('C', 1./3. * a1 + 1./3. * a2 + 1./2. * a3)],
-                cell=[a1, a2, a3])
+                  Atom('C', 1./3. * a1 + 1./3. * a2 + 1./2. * a3)],
+                  cell=[a1, a2, a3])
 
-view(atoms)
+name = 'material/g-mono'
+
+with jasp('./dft/' + name,
+            encut=520,
+            kpts=(6,6,1),
+            xc='PBE',          # GGA functional type
+            ismear=0,          # Gaussian smearing
+            sigma=0.2,         # "Metallic" system smearing
+            isif=2,            # relax positions only
+            ibrion=2,          # conjugate gradient optimizer
+            nsw=90,            # max number of steps to relax
+            atoms=atoms) as calc:
+    try:
+        calc.calculate()
+        energy = atoms.get_potential_energy()/len(atoms)
+        print_converged(len(atoms), energy, float(get_elapsed_time(calc)))
+    except (VaspSubmitted, VaspQueued):
+        print_inprogress()
+        ready = False
+        pass
+
+file_path = './img/' + name + '.png'
+ase_write(file_path, atoms)
+print('[[' + file_path + ']]')
 #+END_SRC
 
 #+RESULTS:
+: Final structure calculation: In progress.
+: [[./img/material/g-mono.png]]
 
-**** Pore=1. One carbon defect
+**** Pore=1 (One carbon defect)
 ***** Final project
 
 #+BEGIN_SRC python :results output
@@ -393,7 +460,445 @@ with jasp('./dft/' + name,
 : [[./img/material/g-mono/3x3/pore=1/vac=20.png]]
 : Final structure calculation: Atoms: 17. Energy/f.u. = -8.760. Calculation time: 589 min.
 
+**** Pore=10 (Ten carbon defect)
+***** 4x4
+#+BEGIN_SRC python :results output
+from ase import Atom, Atoms
+from ase.io import write as ase_write
+from ase.visualize import view
+from jasp import *
+import numpy as np
+import sys
+#JASPRC['queue.walltime'] = '10:00:00'
+
+
+def print_converged(num_atoms, energy, time):
+    print("Final structure calculation: Atoms: {}. Energy/f.u. = {:0.3f}. Calculation time: {:.0f} min.".format(num_atoms, energy, time/60.))
+
+def print_inprogress():
+    print("Final structure calculation: In progress.")
+
+
+a = 2.46
+a1 = a * np.array([3.0**0.5/2., -1./2., 0.])
+a2 = a * np.array([3.0**0.5/2., 1./2., 0.])
+a3 = np.array([0., 0., 20.])
+
+unitcell = Atoms([Atom('C', 1./2. * a3),
+                  Atom('C', 1./3. * a1 + 1./3. * a2 + 1./2. * a3)],
+                  cell=[a1, a2, a3])
+
+i = 4
+atoms = unitcell.repeat((i,i,1))
+
+print('Graphene 4x4 pore=10:'.format(i))
+del atoms[26]
+del atoms[17:21]
+del atoms[11:15]
+del atoms[5]
+
+name = 'material/g-mono/4x4/pore=10/vac=16'
+
+with jasp('./dft/' + name,
+            encut=520,
+            kpts=(6,6,1),
+            xc='PBE',          # GGA functional type
+            ismear=0,          # Gaussian smearing
+            sigma=0.2,         # "Metallic" system smearing
+            isif=2,            # relax positions only
+            ibrion=2,          # conjugate gradient optimizer
+            nsw=90,            # max number of steps to relax
+            atoms=atoms) as calc:
+    try:
+        calc.calculate()
+        energy = atoms.get_potential_energy()/len(atoms)
+        print_converged(len(atoms), energy, float(get_elapsed_time(calc)))
+    except (VaspSubmitted, VaspQueued):
+        print_inprogress()
+        ready = False
+        pass
+
+file_path = './img/' + name + '.png'
+ase_write(file_path, atoms.repeat((3,3,1)))
+print('[[' + file_path + ']]')
+#+END_SRC
+
+#+RESULTS:
+: Graphene 4x4 pore=10:
+: Final structure calculation: Atoms: 22. Energy/f.u. = -8.167. Calculation time: 1933 min.
+: [[./img/material/g-mono/4x4/pore=10/vac=16.png]]
+
+***** 5x5
+#+BEGIN_SRC python :results output
+from ase import Atom, Atoms
+from ase.io import write as ase_write
+from ase.visualize import view
+from jasp import *
+import numpy as np
+import sys
+#JASPRC['queue.walltime'] = '10:00:00'
+
+
+def print_converged(num_atoms, energy, time):
+    print("Final structure calculation: Atoms: {}. Energy/f.u. = {:0.3f}. Calculation time: {:.0f} min.".format(num_atoms, energy, time/60.))
+
+def print_inprogress():
+    print("Final structure calculation: In progress.")
+
+
+a = 2.46
+a1 = a * np.array([3.0**0.5/2., -1./2., 0.])
+a2 = a * np.array([3.0**0.5/2., 1./2., 0.])
+a3 = np.array([0., 0., 20.])
+
+unitcell = Atoms([Atom('C', 1./2. * a3),
+                  Atom('C', 1./3. * a1 + 1./3. * a2 + 1./2. * a3)],
+                  cell=[a1, a2, a3])
+
+i = 5
+atoms = unitcell.repeat((i,i,1))
+
+print('Graphene 5x5 pore=10:'.format(i))
+del atoms[32:35]
+del atoms[23:27]
+del atoms[15:18]
+
+name = 'material/g-mono/5x5/pore=10/vac=16'
+
+with jasp('./dft/' + name,
+            encut=520,
+            kpts=(6,6,1),
+            xc='PBE',          # GGA functional type
+            ismear=0,          # Gaussian smearing
+            sigma=0.2,         # "Metallic" system smearing
+            isif=2,            # relax positions only
+            ibrion=2,          # conjugate gradient optimizer
+            nsw=90,            # max number of steps to relax
+            atoms=atoms) as calc:
+    try:
+        calc.calculate()
+        energy = atoms.get_potential_energy()/len(atoms)
+        print_converged(len(atoms), energy, float(get_elapsed_time(calc)))
+    except (VaspSubmitted, VaspQueued):
+        print_inprogress()
+        ready = False
+        pass
+
+file_path = './img/' + name + '.png'
+ase_write(file_path, atoms.repeat((3,3,1)))
+print('[[' + file_path + ']]')
+#+END_SRC
+
+#+RESULTS:
+: Graphene 5x5 pore=10:
+: Final structure calculation: In progress.
+: [[./img/material/g-mono/5x5/pore=10/vac=16.png]]
+
+***** 6x6
+#+BEGIN_SRC python :results output
+from ase import Atom, Atoms
+from ase.io import write as ase_write
+from ase.visualize import view
+from jasp import *
+import numpy as np
+import sys
+#JASPRC['queue.walltime'] = '10:00:00'
+
+
+def print_converged(num_atoms, energy, time):
+    print("Final structure calculation: Atoms: {}. Energy/f.u. = {:0.3f}. Calculation time: {:.0f} min.".format(num_atoms, energy, time/60.))
+
+def print_inprogress():
+    print("Final structure calculation: In progress.")
+
+cell_height = 16.
+a = 2.46
+a1 = a * np.array([3.0**0.5/2., -1./2., 0.])
+a2 = a * np.array([3.0**0.5/2., 1./2., 0.])
+a3 = np.array([0., 0., cell_height])
+
+unitcell = Atoms([Atom('C', 1./2. * a3),
+                  Atom('C', 1./3. * a1 + 1./3. * a2 + 1./2. * a3)],
+                  cell=[a1, a2, a3])
+
+i = 6
+atoms = unitcell.repeat((i,i,1))
+
+print('Graphene {0:1.1f}x{0:1.1f} pore=10:'.format(i))
+del atoms[52]
+del atoms[39:43]
+del atoms[29:33]
+del atoms[19]
+
+
+name = 'material/g-mono/6x6/pore=10/vac=16'
+
+with jasp('./dft/' + name,
+            encut=520,
+            kpts=(6,6,1),
+            xc='PBE',          # GGA functional type
+            ismear=0,          # Gaussian smearing
+            sigma=0.2,         # "Metallic" system smearing
+            isif=2,            # relax positions only
+            ibrion=2,          # conjugate gradient optimizer
+            nsw=90,            # max number of steps to relax
+            atoms=atoms) as calc:
+    try:
+        calc.calculate()
+        energy = atoms.get_potential_energy()/len(atoms)
+        print_converged(len(atoms), energy, float(get_elapsed_time(calc)))
+    except (VaspSubmitted, VaspQueued):
+        print_inprogress()
+        ready = False
+        pass
+
+file_path = './img/' + name + '.png'
+ase_write(file_path, atoms.repeat((3,3,1)))
+print('[[' + file_path + ']]')
+#+END_SRC
+
+#+RESULTS:
+: Graphene 6.0x6.0 pore=10:
+: Final structure calculation: In progress.
+: [[./img/material/g-mono/6x6/pore=10/vac=16.png]]
+
 *** Graphene bilayer
+
+**** Pristine
+Structure obtained from https://www.tfkp.physik.uni-erlangen.de/download/theses/master_daniel-branski.pdf.
+
+#+BEGIN_SRC python :results drawer
+import sys
+
+from ase import Atom, Atoms
+from ase.visualize import view
+from ase.io import write as ase_write
+from jasp import *
+JASPRC['queue.walltime'] = '10:00:00'
+
+
+def print_converged(num_atoms, energy, time):
+    print("Final structure calculation: Atoms: {}. Energy/f.u. = {:0.3f}. Calculation time: {:.0f} min.".format(num_atoms, energy, time/60.))
+
+def print_inprogress():
+    print("Final structure calculation: In progress.")
+
+
+a = 2.46  # lattice constant
+b = 3.49  # interlayer distance
+gap = np.array([0., 0., b])
+vac = 20. # vaccuum on either side of graphene
+
+a1 = a * np.array([3.0**0.5/2., -1./2., 0.])
+a2 = a * np.array([3.0**0.5/2., 1./2., 0.])
+a3 = np.array([0., 0., vac])
+
+layer1_height = 1./2. * (a3 + gap)
+layer2_height = 1./2. * (a3 - gap)
+rA1 = 0. + layer1_height
+rB1 = a * np.array([1./3.**0.5, 0., 0.]) + layer1_height
+rA2 = a * np.array([1./3.**0.5, 0., 0.]) + layer2_height
+rB2 = a * np.array([2./3.**0.5, 0., 0.]) + layer2_height
+
+atoms = Atoms([Atom('C', rA1),
+               Atom('C', rB1),
+               Atom('C', rA2),
+               Atom('C', rB2)],
+               cell=[a1, a2, a3])
+
+name = 'material/g-bi'
+
+with jasp('./dft/' + name,
+            encut=520,
+            kpts=(6,6,1),
+            xc='PBE',          # GGA functional type
+            ismear=0,          # Gaussian smearing
+            sigma=0.2,         # "Metallic" system smearing
+            isif=2,            # relax positions only
+            ibrion=2,          # conjugate gradient optimizer
+            nsw=90,            # max number of steps to relax
+            atoms=atoms) as calc:
+    try:
+        calc.calculate()
+        energy = atoms.get_potential_energy()/len(atoms)
+        print_converged(len(atoms), energy, float(get_elapsed_time(calc)))
+    except (VaspSubmitted, VaspQueued):
+        print_inprogress()
+        ready = False
+        pass
+
+file_path = './img/' + name + '.png'
+ase_write(file_path, atoms)
+print('[[' + file_path + ']]')
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+Final structure calculation: In progress.
+[[./img/material/g-bi.png]]
+:END:
+
+**** Pore=1
+
+#+BEGIN_SRC python :results drawer
+import sys
+
+from ase import Atom, Atoms
+from ase.visualize import view
+from ase.io import write as ase_write
+from jasp import *
+JASPRC['queue.walltime'] = '10:00:00'
+
+
+def print_converged(num_atoms, energy, time):
+    print("Final structure calculation: Atoms: {}. Energy/f.u. = {:0.3f}. Calculation time: {:.0f} min.".format(num_atoms, energy, time/60.))
+
+def print_inprogress():
+    print("Final structure calculation: In progress.")
+
+
+a = 2.46  # lattice constant
+b = 3.49  # interlayer distance
+gap = np.array([0., 0., b])
+vac = 20. # vaccuum on either side of graphene
+
+a1 = a * np.array([3.0**0.5/2., -1./2., 0.])
+a2 = a * np.array([3.0**0.5/2., 1./2., 0.])
+a3 = np.array([0., 0., vac])
+
+layer1_height = 1./2. * (a3 + gap)
+layer2_height = 1./2. * (a3 - gap)
+rA1 = 0. + layer1_height
+rB1 = a * np.array([1./3.**0.5, 0., 0.]) + layer1_height
+rA2 = a * np.array([1./3.**0.5, 0., 0.]) + layer2_height
+rB2 = a * np.array([2./3.**0.5, 0., 0.]) + layer2_height
+
+atoms = Atoms([Atom('C', rA1),
+               Atom('C', rB1),
+               Atom('C', rA2),
+               Atom('C', rB2)],
+               cell=[a1, a2, a3])
+
+i = 3
+atoms = atoms.repeat([i,i,1])
+del atoms[17:19]
+
+name = 'material/g-bi/3x3/pore=1'
+view(atoms)
+with jasp('./dft/' + name,
+            encut=520,
+            kpts=(6,6,1),
+            xc='PBE',          # GGA functional type
+            ismear=0,          # Gaussian smearing
+            sigma=0.2,         # "Metallic" system smearing
+            isif=2,            # relax positions only
+            ibrion=2,          # conjugate gradient optimizer
+            nsw=90,            # max number of steps to relax
+            atoms=atoms) as calc:
+    try:
+        calc.calculate()
+        energy = atoms.get_potential_energy()/len(atoms)
+        print_converged(len(atoms), energy, float(get_elapsed_time(calc)))
+    except (VaspSubmitted, VaspQueued):
+        print_inprogress()
+        ready = False
+        pass
+
+file_path = './img/' + name + '.png'
+ase_write(file_path, atoms)
+print('[[' + file_path + ']]')
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+:END:
+
+**** Pore=10
+
+#+BEGIN_SRC python :results drawer
+import sys
+
+from ase import Atom, Atoms
+from ase.visualize import view
+from ase.io import write as ase_write
+from jasp import *
+JASPRC['queue.walltime'] = '10:00:00'
+
+
+def print_converged(num_atoms, energy, time):
+    print("Final structure calculation: Atoms: {}. Energy/f.u. = {:0.3f}. Calculation time: {:.0f} min.".format(num_atoms, energy, time/60.))
+
+def print_inprogress():
+    print("Final structure calculation: In progress.")
+
+
+a = 2.46  # lattice constant
+b = 3.49  # interlayer distance
+gap = np.array([0., 0., b])
+vac = 20. # vaccuum on either side of graphene
+
+a1 = a * np.array([3.0**0.5/2., -1./2., 0.])
+a2 = a * np.array([3.0**0.5/2., 1./2., 0.])
+a3 = np.array([0., 0., vac])
+
+layer1_height = 1./2. * (a3 + gap)
+layer2_height = 1./2. * (a3 - gap)
+rA1 = 0. + layer1_height
+rB1 = a * np.array([1./3.**0.5, 0., 0.]) + layer1_height
+rA2 = a * np.array([1./3.**0.5, 0., 0.]) + layer2_height
+rB2 = a * np.array([2./3.**0.5, 0., 0.]) + layer2_height
+
+atoms = Atoms([Atom('C', rA1),
+               Atom('C', rB1),
+               Atom('C', rA2),
+               Atom('C', rB2)],
+               cell=[a1, a2, a3])
+
+i = 6
+atoms = atoms.repeat([i,i,1])
+# layer 1 pore
+del atoms[108]
+del atoms[104]
+del atoms[84:86]
+del atoms[80:82]
+del atoms[60:62]
+del atoms[56:58]
+
+# layer 2 pore
+del atoms[75:79]
+del atoms[55:60]
+del atoms[35]
+name = 'material/g-bi/6x6/pore=10'
+view(atoms)
+sys.exit()
+with jasp('./dft/' + name,
+            encut=520,
+            kpts=(6,6,1),
+            xc='PBE',          # GGA functional type
+            ismear=0,          # Gaussian smearing
+            sigma=0.2,         # "Metallic" system smearing
+            isif=2,            # relax positions only
+            ibrion=2,          # conjugate gradient optimizer
+            nsw=90,            # max number of steps to relax
+            atoms=atoms) as calc:
+    try:
+        calc.calculate()
+        energy = atoms.get_potential_energy()/len(atoms)
+        print_converged(len(atoms), energy, float(get_elapsed_time(calc)))
+    except (VaspSubmitted, VaspQueued):
+        print_inprogress()
+        ready = False
+        pass
+
+file_path = './img/' + name + '.png'
+ase_write(file_path, atoms)
+print('[[' + file_path + ']]')
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+:END:
+
 
 *** Graphene trilayer
 
@@ -406,6 +911,7 @@ with jasp('./dft/' + name,
 import copy
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.interpolate import interp1d
 import sys
 
 from ase import Atom, Atoms
@@ -461,11 +967,10 @@ atoms_con = copy.deepcopy(atoms)
 for i in range(len(heights)):
     atoms_con[i].set_constraint(hydrogen_constraint + graphene_constraint)
 
-
 ready = True
 def calculate(name, atoms, TE):
     for i, h in enumerate(heights):
-        with jasp(name + '/d={0:0.2f}'.format(h),
+        with jasp('./dft/' + name + '/d={0:0.2f}'.format(h),
                     encut=520,
                     kpts=(6,6,1),
                     xc='PBE',          # GGA functional type
@@ -486,7 +991,7 @@ def calculate(name, atoms, TE):
                 pass
 
 
-base_name = 'dft/transport/g-mono/3x3/pore=1/molec=H2/'
+base_name = 'transport/g-mono/3x3/pore=1/molec=H2/'
 
 print('Unconstrained graphene, unconstrained hydrogen:')
 name_free = base_name + 'linear-unconst_all'
@@ -501,7 +1006,380 @@ calculate(name_uncon, atoms_uncon, TE_uncon)
 
 print('')
 print('Constrained graphene, constrained leading hydrogen:')
-name_con = 'transport/g-mono/3x3/pore=1/molec=H2/linear-const'
+name_con = base_name + 'linear-const'
+TE_con = []
+calculate(name_con, atoms_con, TE_con)
+
+if not ready:
+    sys.exit()
+
+# Consider the change in energy from lowest energy state
+TE_free = np.array(TE_free)
+TE_free -= min(TE_free)
+TE_uncon = np.array(TE_uncon)
+TE_uncon -= min(TE_uncon)
+TE_con = np.array(TE_con)
+TE_con -= min(TE_con)
+
+
+def plot_spline(x, y, plt, style):
+    spline = interp1d(x, y, kind='cubic')
+    x_lin = np.linspace(0,10,1000)
+    plt.plot(x_lin, spline(x_lin), style)
+
+
+# Plot a comparison of the total energies of each constraint type
+print('')
+file_path = './img/' + base_name + 'TE-comparison.png'
+h_lin = np.linspace(0,10,1000)
+spline_free = interp1d(heights, TE_free, kind='cubic')
+plt.plot(heights, TE_free, 'ro', label='No constraints')
+plt.plot(heights, TE_uncon, 'go', label='Leading H atom constrained')
+plt.plot(heights, TE_con, 'bo', label='Leading H + graphene constrained')
+plot_spline(heights, TE_free, plt, 'r-')
+plot_spline(heights, TE_uncon, plt, 'g-')
+plot_spline(heights, TE_con, plt, 'b-')
+plt.xlabel('Height ($\AA$)')
+plt.ylabel('Total Energy (eV)')
+plt.xlim([0,10])
+#plt.ylim([0,0.1])
+plt.legend()
+plt.savefig(file_path)
+print('[[' + file_path + ']]')
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Unconstrained graphene, unconstrained hydrogen:
+Distance: 10.00. Energy = -155.683. Calculation time: 199 min.
+Distance:  9.00. Energy = -155.683. Calculation time: 628 min.
+Distance:  8.00. Energy = -155.683. Calculation time: 105 min.
+Distance:  7.00. Energy = -155.684. Calculation time: 103 min.
+Distance:  6.00. Energy = -155.684. Calculation time: 105 min.
+Distance:  5.00. Energy = -155.687. Calculation time: 106 min.
+Distance:  4.00. Energy = -155.695. Calculation time: 350 min.
+Distance:  3.00. Energy = -155.690. Calculation time: 356 min.
+Distance:  2.50. Energy = -155.637. Calculation time: 798 min.
+Distance:  2.00. Energy = -155.677. Calculation time: 1715 min.
+Distance:  1.50. Energy = -155.677. Calculation time: 2157 min.
+Distance:  1.00. Energy = -155.238. Calculation time: 2113 min.
+Distance:  0.50. Energy = -155.239. Calculation time: 1454 min.
+Distance:  0.00. Energy = -155.239. Calculation time: 888 min.
+
+Unconstrained graphene, constrained leading hydrogen:
+Distance: 10.00. Energy = -155.683. Calculation time: 355 min.
+Distance:  9.00. Energy = -155.683. Calculation time: 374 min.
+Distance:  8.00. Energy = -155.683. Calculation time: 169 min.
+Distance:  7.00. Energy = -155.683. Calculation time: 168 min.
+Distance:  6.00. Energy = -155.684. Calculation time: 169 min.
+Distance:  5.00. Energy = -155.686. Calculation time: 170 min.
+Distance:  4.00. Energy = -155.694. Calculation time: 169 min.
+Distance:  3.00. Energy = -155.690. Calculation time: 169 min.
+Distance:  2.50. Energy = -155.613. Calculation time: 210 min.
+Distance:  2.00. Energy = -155.674. Calculation time: 1248 min.
+Distance:  1.50. Energy = -155.605. Calculation time: 2107 min.
+Distance:  1.00. Energy = -153.879. Calculation time: 411 min.
+Distance:  0.50. Energy = -155.118. Calculation time:  82 min.
+Distance:  0.00. Energy = -155.238. Calculation time: 1181 min.
+
+Constrained graphene, constrained leading hydrogen:
+Distance: 10.00. Energy = -155.683. Calculation time: 157 min.
+Distance:  9.00. Energy = -155.683. Calculation time: 157 min.
+Distance:  8.00. Energy = -155.683. Calculation time: 165 min.
+Distance:  7.00. Energy = -155.684. Calculation time: 156 min.
+Distance:  6.00. Energy = -155.684. Calculation time: 361 min.
+Distance:  5.00. Energy = -155.687. Calculation time: 352 min.
+Distance:  4.00. Energy = -155.695. Calculation time: 362 min.
+Distance:  3.00. Energy = -155.690. Calculation time: 363 min.
+Distance:  2.50. Energy = -155.611. Calculation time: 370 min.
+Distance:  2.00. Energy = -155.283. Calculation time: 349 min.
+Distance:  1.50. Energy = -154.461. Calculation time: 377 min.
+Distance:  1.00. Energy = -153.815. Calculation time: 298 min.
+Distance:  0.50. Energy = -154.247. Calculation time: 316 min.
+Distance:  0.00. Energy = -154.990. Calculation time: 232 min.
+
+[[./img/transport/g-mono/3x3/pore=1/molec=H2/TE-comparison.png]]
+#+end_example
+
+***** H2 (NEB)
+
+#+BEGIN_SRC python
+import copy
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.interpolate import interp1d
+import sys
+
+from ase import Atom, Atoms
+from ase.constraints import FixAtoms
+from ase.neb import NEB
+from ase.visualize import view
+from jasp import *
+
+def print_converged(i, energy, time):
+    print("Distance: {:5.2f}. Energy = {:8.3f}. Calculation time: {:3.0f} min.".format(i, energy, time/60.))
+
+def print_inprogress(i):
+    print("Distance: {:5.2f}. In progress.".format(i))
+
+def print_unconverged(i):
+    print("Distance: {:5.2f}. Did not converge.".format(i))
+
+
+# Graphene base
+with jasp('dft/material/g-mono/3x3/pore=1/vac=20') as calc:
+    graphene = calc.get_atoms()
+plane_height = 10.
+defect_pos = np.array([0, 0., plane_height]) # defect position
+
+
+# Transport initial images. Distance of molecule's center from grahene plane
+heights = [10., 9., 8., 7., 6., 5., 4., 3., 2.5, 2., 1.5, 1., 0.5, 0.]
+atoms =  [Atoms(graphene) for i in range(len(heights))]
+HH_bond = 0.74 # Bond length [Ang]
+for i, h in enumerate(heights):
+    H2 = Atoms([Atom('H', defect_pos + (0, 0, h - HH_bond/2.)),
+                Atom('H', defect_pos + (0, 0, h + HH_bond/2.))])
+    atoms[i].extend(H2)
+
+
+# Hydrogen fixed position constraint
+for atom in atoms[0]:
+    if atom.symbol == 'H':
+        hydrogen_constraint = [FixAtoms(indices=[atom.index])]
+        break
+
+# Graphene constraint
+# (for comparison with final project results)
+graphene_constraint = [FixAtoms(indices=[atom.index for atom in atoms[0] if atom.symbol=='C'])]
+
+# Make images with constraints
+atoms_free = copy.deepcopy(atoms)
+
+
+ready = True
+def calculate(name, atoms, TE):
+    for i, h in enumerate(heights):
+        with jasp('./dft/' + name + '/d={0:0.2f}'.format(h),
+                    encut=520,
+                    kpts=(6,6,1),
+                    xc='PBE',          # GGA functional type
+                    ismear=0,          # Gaussian smearing
+                    sigma=0.2,         # "Metallic" system smearing
+                    isif=2,            # relax positions only
+                    ibrion=2,          # conjugate gradient optimizer
+                    nsw=100,            # max number of steps to relax
+                    atoms=atoms[i]) as calc:
+            try:
+                calc.calculate()
+                energy = atoms[i].get_potential_energy()
+                TE.append(energy)
+                print_converged(h, energy, float(get_elapsed_time(calc)))
+            except (VaspSubmitted, VaspQueued):
+                print_inprogress(h)
+                ready = False
+                pass
+
+
+base_name = 'transport/g-mono/3x3/pore=1/molec=H2/'
+
+
+name_free = base_name + 'linear-unconst_all'
+TE_free = []
+calculate(name_free, atoms_free, TE_free)
+
+
+if not ready:
+    sys.exit()
+
+# Consider the change in energy from lowest energy state
+TE_free = np.array(TE_free)
+TE_free -= min(TE_free)
+TE_uncon = np.array(TE_uncon)
+TE_uncon -= min(TE_uncon)
+TE_con = np.array(TE_con)
+TE_con -= min(TE_con)
+
+
+def plot_spline(x, y, plt, style):
+    spline = interp1d(x, y, kind='cubic')
+    x_lin = np.linspace(0,10,1000)
+    plt.plot(x_lin, spline(x_lin), style)
+
+
+# Plot a comparison of the total energies of each constraint type
+print('')
+file_path = './img/' + base_name + 'TE-comparison.png'
+h_lin = np.linspace(0,10,1000)
+spline_free = interp1d(heights, TE_free, kind='cubic')
+plt.plot(heights, TE_free, 'ro', label='No constraints')
+plt.plot(heights, TE_uncon, 'go', label='Leading H atom constrained')
+plt.plot(heights, TE_con, 'bo', label='Leading H + graphene constrained')
+plot_spline(heights, TE_free, plt, 'r-')
+plot_spline(heights, TE_uncon, plt, 'g-')
+plot_spline(heights, TE_con, plt, 'b-')
+plt.xlabel('Height ($\AA$)')
+plt.ylabel('Total Energy (eV)')
+plt.xlim([0,10])
+#plt.ylim([0,0.1])
+plt.legend()
+plt.savefig(file_path)
+print('[[' + file_path + ']]')
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Unconstrained graphene, unconstrained hydrogen:
+Distance: 10.00. Energy = -155.683. Calculation time: 199 min.
+Distance:  9.00. Energy = -155.683. Calculation time: 628 min.
+Distance:  8.00. Energy = -155.683. Calculation time: 105 min.
+Distance:  7.00. Energy = -155.684. Calculation time: 103 min.
+Distance:  6.00. Energy = -155.684. Calculation time: 105 min.
+Distance:  5.00. Energy = -155.687. Calculation time: 106 min.
+Distance:  4.00. Energy = -155.695. Calculation time: 350 min.
+Distance:  3.00. Energy = -155.690. Calculation time: 356 min.
+Distance:  2.50. Energy = -155.637. Calculation time: 798 min.
+Distance:  2.00. Energy = -155.677. Calculation time: 1715 min.
+Distance:  1.50. Energy = -155.677. Calculation time: 2157 min.
+Distance:  1.00. Energy = -155.238. Calculation time: 2113 min.
+Distance:  0.50. Energy = -155.239. Calculation time: 1454 min.
+Distance:  0.00. Energy = -155.239. Calculation time: 888 min.
+
+Unconstrained graphene, constrained leading hydrogen:
+Distance: 10.00. Energy = -155.683. Calculation time: 355 min.
+Distance:  9.00. Energy = -155.683. Calculation time: 374 min.
+Distance:  8.00. Energy = -155.683. Calculation time: 169 min.
+Distance:  7.00. Energy = -155.683. Calculation time: 168 min.
+Distance:  6.00. Energy = -155.684. Calculation time: 169 min.
+Distance:  5.00. Energy = -155.686. Calculation time: 170 min.
+Distance:  4.00. Energy = -155.694. Calculation time: 169 min.
+Distance:  3.00. Energy = -155.690. Calculation time: 169 min.
+Distance:  2.50. Energy = -155.613. Calculation time: 210 min.
+Distance:  2.00. Energy = -155.674. Calculation time: 1248 min.
+Distance:  1.50. Energy = -155.605. Calculation time: 2107 min.
+Distance:  1.00. Energy = -153.879. Calculation time: 411 min.
+Distance:  0.50. Energy = -155.118. Calculation time:  82 min.
+Distance:  0.00. Energy = -155.238. Calculation time: 1181 min.
+
+Constrained graphene, constrained leading hydrogen:
+Distance: 10.00. Energy = -155.683. Calculation time: 157 min.
+Distance:  9.00. Energy = -155.683. Calculation time: 157 min.
+Distance:  8.00. Energy = -155.683. Calculation time: 165 min.
+Distance:  7.00. Energy = -155.684. Calculation time: 156 min.
+Distance:  6.00. Energy = -155.684. Calculation time: 361 min.
+Distance:  5.00. Energy = -155.687. Calculation time: 352 min.
+Distance:  4.00. Energy = -155.695. Calculation time: 362 min.
+Distance:  3.00. Energy = -155.690. Calculation time: 363 min.
+Distance:  2.50. Energy = -155.611. Calculation time: 370 min.
+Distance:  2.00. Energy = -155.283. Calculation time: 349 min.
+Distance:  1.50. Energy = -154.461. Calculation time: 377 min.
+Distance:  1.00. Energy = -153.815. Calculation time: 298 min.
+Distance:  0.50. Energy = -154.247. Calculation time: 316 min.
+Distance:  0.00. Energy = -154.990. Calculation time: 232 min.
+
+[[./img/transport/g-mono/3x3/pore=1/molec=H2/TE-comparison.png]]
+#+end_example
+      
+***** N2
+
+#+BEGIN_SRC python
+import copy
+import numpy as np
+import matplotlib.pyplot as plt
+import sys
+
+from ase import Atom, Atoms
+from ase.constraints import FixAtoms
+from ase.visualize import view
+from jasp import *
+
+def print_converged(i, energy, time):
+    print("Distance: {:5.2f}. Energy = {:8.3f}. Calculation time: {:3.0f} min.".format(i, energy, time/60.))
+
+def print_inprogress(i):
+    print("Distance: {:5.2f}. In progress.".format(i))
+
+def print_unconverged(i):
+    print("Distance: {:5.2f}. Did not converge.".format(i))
+
+
+# Graphene base
+with jasp('dft/material/g-mono/3x3/pore=1/vac=20') as calc:
+    graphene = calc.get_atoms()
+plane_height = 10.
+defect_pos = np.array([0, 0., plane_height]) # defect position
+
+
+# Transport initial images. Distance of molecule's center from grahene plane
+heights = [10., 9., 8., 7., 6., 5., 4., 3., 2.5, 2., 1.5, 1., 0.5, 0.]
+atoms =  [Atoms(graphene) for i in range(len(heights))]
+bond1 = 1.13 # Bond length [Ang]
+for i, h in enumerate(heights):
+    N2 = Atoms([Atom('N', defect_pos + (0, 0, h - bond1/2.)),
+                Atom('N', defect_pos + (0, 0, h + bond1/2.))])
+    atoms[i].extend(N2)
+
+
+# Fixed position constraint
+for atom in atoms[0]:
+    if atom.symbol == 'N':
+        molecule_constraint = [FixAtoms(indices=[atom.index])]
+        break
+
+# Graphene constraint
+# (for comparison with final project results)
+graphene_constraint = [FixAtoms(indices=[atom.index for atom in atoms[0] if atom.symbol=='C'])]
+
+# Make images with constraints
+atoms_free = copy.deepcopy(atoms)
+
+atoms_uncon = copy.deepcopy(atoms)
+for i in range(len(heights)):
+    atoms_uncon[i].set_constraint(molecule_constraint)
+
+atoms_con = copy.deepcopy(atoms)
+for i in range(len(heights)):
+    atoms_con[i].set_constraint(molecule_constraint + graphene_constraint)
+
+ready = True
+def calculate(name, atoms, TE):
+    for i, h in enumerate(heights):
+        with jasp('./dft/' + name + '/d={0:0.2f}'.format(h),
+                    encut=520,
+                    kpts=(6,6,1),
+                    xc='PBE',          # GGA functional type
+                    ismear=0,          # Gaussian smearing
+                    sigma=0.2,         # "Metallic" system smearing
+                    isif=2,            # relax positions only
+                    ibrion=2,          # conjugate gradient optimizer
+                    nsw=100,            # max number of steps to relax
+                    atoms=atoms[i]) as calc:
+            try:
+                calc.calculate()
+                energy = atoms[i].get_potential_energy()
+                TE.append(energy)
+                print_converged(h, energy, float(get_elapsed_time(calc)))
+            except (VaspSubmitted, VaspQueued):
+                print_inprogress(h)
+                ready = False
+                pass
+
+
+base_name = 'transport/g-mono/3x3/pore=1/molec=N2/'
+
+#print('Unconstrained graphene, unconstrained hydrogen:')
+#name_free = base_name + 'linear-unconst_all'
+#TE_free = []
+#calculate(name_free, atoms_free, TE_free)
+#
+#print('')
+#print('Unconstrained graphene, constrained leading hydrogen:')
+#name_uncon = base_name + 'linear-unconst_G'
+#TE_uncon = []
+#calculate(name_uncon, atoms_uncon, TE_uncon)
+
+print('')
+print('Constrained graphene, constrained leading atom:')
 name_con = base_name + 'linear-const'
 TE_con = []
 calculate(name_con, atoms_con, TE_con)
@@ -521,66 +1399,534 @@ TE_con -= min(TE_con)
 
 # Plot a comparison of the total energies of each constraint type
 print('')
-file_path = './img/' + name + 'TE-comparison.png'
-plt.plot(heights, TE_free)
-plt.plot(heights, TE_uncon)
-plt.plot(heights, TE_con)
+file_path = './img/' + base_name + 'TE-comparison.png'
+plt.plot(heights, TE_free, label='No constraints')
+plt.plot(heights, TE_uncon, label='Leading H atom constrained')
+plt.plot(heights, TE_con, label='All constrained')
 plt.xlabel('Height ($\AA$)')
 plt.ylabel('Total Energy (eV)')
+plt.ylim([0,0.1])
+plt.legend()
 plt.savefig(file_path)
 print('[[' + file_path + ']]')
 #+END_SRC
 
 #+RESULTS:
 #+begin_example
-Unconstrained graphene, unconstrained hydrogen:
-Distance: 10.00. In progress.
-Distance:  9.00. In progress.
-Distance:  8.00. In progress.
-Distance:  7.00. In progress.
-Distance:  6.00. In progress.
-Distance:  5.00. In progress.
-Distance:  4.00. In progress.
-Distance:  3.00. In progress.
-Distance:  2.50. In progress.
-Distance:  2.00. In progress.
-Distance:  1.50. In progress.
-Distance:  1.00. In progress.
-Distance:  0.50. In progress.
-Distance:  0.00. In progress.
-
-Unconstrained graphene, constrained leading hydrogen:
-Distance: 10.00. In progress.
-Distance:  9.00. In progress.
-Distance:  8.00. In progress.
-Distance:  7.00. In progress.
-Distance:  6.00. In progress.
-Distance:  5.00. In progress.
-Distance:  4.00. In progress.
-Distance:  3.00. In progress.
-Distance:  2.50. In progress.
-Distance:  2.00. In progress.
-Distance:  1.50. In progress.
-Distance:  1.00. In progress.
-Distance:  0.50. In progress.
-Distance:  0.00. In progress.
 
 Constrained graphene, constrained leading hydrogen:
-Distance: 10.00. In progress.
-Distance:  9.00. In progress.
-Distance:  8.00. In progress.
-Distance:  7.00. In progress.
-Distance:  6.00. In progress.
-Distance:  5.00. In progress.
-Distance:  4.00. In progress.
-Distance:  3.00. In progress.
-Distance:  2.50. In progress.
-Distance:  2.00. In progress.
-Distance:  1.50. In progress.
-Distance:  1.00. In progress.
-Distance:  0.50. In progress.
-Distance:  0.00. In progress.
+Distance: 10.00. Energy = -165.547. Calculation time: 202 min.
+Distance:  9.00. Energy = -165.547. Calculation time: 194 min.
+Distance:  8.00. Energy = -165.547. Calculation time: 203 min.
+Distance:  7.00. Energy = -165.546. Calculation time: 201 min.
+Distance:  6.00. Energy = -165.547. Calculation time: 202 min.
+Distance:  5.00. Energy = -165.549. Calculation time: 202 min.
+Distance:  4.00. Energy = -165.540. Calculation time: 199 min.
+Distance:  3.00. Energy = -165.243. Calculation time: 174 min.
+Distance:  2.50. Energy = -164.484. Calculation time: 154 min.
+Distance:  2.00. Energy = -163.579. Calculation time: 175 min.
+Distance:  1.50. Energy = -164.350. Calculation time: 303 min.
+Distance:  1.00. Energy = -165.976. Calculation time: 415 min.
+Distance:  0.50. Energy = -165.759. Calculation time: 313 min.
+Distance:  0.00. Energy = -165.145. Calculation time: 262 min.
 #+end_example
+
+***** CO2
+
+#+BEGIN_SRC python
+import copy
+import numpy as np
+import matplotlib.pyplot as plt
+import sys
+
+from ase import Atom, Atoms
+from ase.constraints import FixAtoms
+from ase.visualize import view
+from jasp import *
+
+def print_converged(i, energy, time):
+    print("Distance: {:5.2f}. Energy = {:8.3f}. Calculation time: {:3.0f} min.".format(i, energy, time/60.))
+
+def print_inprogress(i):
+    print("Distance: {:5.2f}. In progress.".format(i))
+
+def print_unconverged(i):
+    print("Distance: {:5.2f}. Did not converge.".format(i))
+
+
+# Graphene base
+with jasp('dft/material/g-mono/3x3/pore=1/vac=20') as calc:
+    graphene = calc.get_atoms()
+plane_height = 10.
+defect_pos = np.array([0, 0., plane_height]) # defect position
+
+
+# Transport initial images. Distance of molecule's center from grahene plane
+heights = [10., 9., 8., 7., 6., 5., 4., 3., 2.5, 2., 1.5, 1., 0.5, 0.]
+CO_bond = 1.21 # Bond length [Ang]
+atoms =  [Atoms(graphene) for i in range(len(heights))]
+for i, h in enumerate(heights):
+    CO2 = Atoms([Atom('O', defect_pos + (0., 0., h - CO_bond)),
+                 Atom('C', defect_pos + (0., 0., h)),
+                 Atom('O', defect_pos + (0., 0., h + CO_bond))])
+    atoms[i].extend(CO2)
+
+# Fixed position constraint
+for i, atom in enumerate(atoms[0]):
+    if atom.symbol == 'O':
+        molecule_constraint = [FixAtoms(indices=[atom.index+1])]
+        break
+
+# Graphene constraint
+# (for comparison with final project results)
+graphene_constraint = [FixAtoms(indices=[atom.index for atom in atoms[0] if atom.symbol=='C'])]
+
+# Make images with constraints
+atoms_free = copy.deepcopy(atoms)
+
+atoms_uncon = copy.deepcopy(atoms)
+for i in range(len(heights)):
+    atoms_uncon[i].set_constraint(molecule_constraint)
+
+atoms_con = copy.deepcopy(atoms)
+for i in range(len(heights)):
+    atoms_con[i].set_constraint(molecule_constraint + graphene_constraint)
+
+
+ready = True
+def calculate(name, atoms, TE):
+    for i, h in enumerate(heights):
+        with jasp('./dft/' + name + '/d={0:0.2f}'.format(h),
+                    encut=520,
+                    kpts=(6,6,1),
+                    xc='PBE',          # GGA functional type
+                    ismear=0,          # Gaussian smearing
+                    sigma=0.2,         # "Metallic" system smearing
+                    isif=2,            # relax positions only
+                    ibrion=2,          # conjugate gradient optimizer
+                    nsw=100,            # max number of steps to relax
+                    atoms=atoms[i]) as calc:
+            try:
+                calc.calculate()
+                energy = atoms[i].get_potential_energy()
+                TE.append(energy)
+                print_converged(h, energy, float(get_elapsed_time(calc)))
+            except (VaspSubmitted, VaspQueued):
+                print_inprogress(h)
+                ready = False
+                pass
+
+
+base_name = 'transport/g-mono/3x3/pore=1/molec=CO2/'
+
+print('Unconstrained graphene, unconstrained molecule:')
+name_free = base_name + 'linear-unconst_all'
+TE_free = []
+calculate(name_free, atoms_free, TE_free)
+
+print('')
+print('Unconstrained graphene, constrained CO2 carbon:')
+name_uncon = base_name + 'linear-unconst_G'
+TE_uncon = []
+calculate(name_uncon, atoms_uncon, TE_uncon)
+
+print('')
+print('Constrained graphene, constrained CO2 carbon:')
+name_con = base_name + 'linear-const'
+TE_con = []
+calculate(name_con, atoms_con, TE_con)
+
+if not ready:
+    sys.exit()
+sys.exit()
+
+# Consider the change in energy from lowest energy state
+TE_free = np.array(TE_free)
+TE_free -= min(TE_free)
+TE_uncon = np.array(TE_uncon)
+TE_uncon -= min(TE_uncon)
+TE_con = np.array(TE_con)
+TE_con -= min(TE_con)
+
+
+# Plot a comparison of the total energies of each constraint type
+print('')
+file_path = './img/' + base_name + 'TE-comparison.png'
+plt.plot(heights, TE_free, label='No constraints')
+plt.plot(heights, TE_uncon, label='Leading H atom constrained')
+plt.plot(heights, TE_con, label='All constrained')
+plt.xlabel('Height ($\AA$)')
+plt.ylabel('Total Energy (eV)')
+plt.ylim([0,0.1])
+plt.legend()
+plt.savefig(file_path)
+print('[[' + file_path + ']]')
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Unconstrained graphene, unconstrained molecule:
+Distance: 10.00. Energy = -171.861. Calculation time: 387 min.
+Distance:  9.00. Energy = -171.861. Calculation time: 604 min.
+Distance:  8.00. Energy = -171.861. Calculation time: 556 min.
+Distance:  7.00. Energy = -171.861. Calculation time: 339 min.
+Distance:  6.00. Energy = -171.861. Calculation time: 347 min.
+Distance:  5.00. Energy = -171.863. Calculation time: 381 min.
+Distance:  4.00. Energy = -171.803. Calculation time: 355 min.
+Distance:  3.00. Energy = -171.800. Calculation time: 2632 min.
+Distance:  2.50. Energy = -171.741. Calculation time: 4954 min.
+Distance:  2.00. Energy = -171.777. Calculation time: 4830 min.
+Distance:  1.50. Energy = -173.486. Calculation time: 2459 min.
+Distance:  1.00. Energy = -172.259. Calculation time: 1947 min.
+Distance:  0.50. Energy = -172.258. Calculation time: 2127 min.
+Distance:  0.00. Energy = -170.043. Calculation time: 1282 min.
+
+Unconstrained graphene, constrained CO2 carbon:
+Distance: 10.00. Energy = -171.861. Calculation time: 265 min.
+Distance:  9.00. Energy = -171.861. Calculation time: 277 min.
+Distance:  8.00. Energy = -171.861. Calculation time: 291 min.
+Distance:  7.00. Energy = -171.861. Calculation time: 275 min.
+Distance:  6.00. Energy = -171.861. Calculation time: 267 min.
+Distance:  5.00. Energy = -171.863. Calculation time: 284 min.
+Distance:  4.00. Energy = -171.803. Calculation time: 273 min.
+Distance:  3.00. Energy = -171.757. Calculation time: 2732 min.
+Distance:  2.50. Energy = -171.796. Calculation time: 4690 min.
+Distance:  2.00. Energy = -171.787. Calculation time: 4402 min.
+Distance:  1.50. In progress.
+Distance:  1.00. Energy = -172.244. Calculation time: 814 min.
+Distance:  0.50. Energy = -172.256. Calculation time: 2039 min.
+Distance:  0.00. Energy = -170.043. Calculation time: 786 min.
+
+Constrained graphene, constrained CO2 carbon:
+Distance: 10.00. Energy = -171.861. Calculation time: 300 min.
+Distance:  9.00. Energy = -171.861. Calculation time: 303 min.
+Distance:  8.00. Energy = -171.861. Calculation time: 325 min.
+Distance:  7.00. Energy = -171.861. Calculation time: 323 min.
+Distance:  6.00. Energy = -171.861. Calculation time: 313 min.
+Distance:  5.00. Energy = -171.863. Calculation time: 318 min.
+Distance:  4.00. Energy = -171.803. Calculation time: 215 min.
+Distance:  3.00. Energy = -170.736. Calculation time: 249 min.
+Distance:  2.50. Energy = -168.686. Calculation time: 247 min.
+Distance:  2.00. Energy = -166.160. Calculation time: 122 min.
+Distance:  1.50. Energy = -171.428. Calculation time: 432 min.
+Distance:  1.00. Energy = -171.304. Calculation time: 306 min.
+Distance:  0.50. Energy = -170.840. Calculation time: 504 min.
+Distance:  0.00. Energy = -169.706. Calculation time: 424 min.
+#+end_example
+
+* Results
+** Final project
+*** Bond length
+
+#+BEGIN_SRC python
+from ase import Atom, Atoms
+from ase.visualize import view
+from jasp import *
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.interpolate import interp1d
+import sys
+
+fp_dir = '~/techela/s16-06640/final-project/' # Directory of final project.
+
+# Distance of the molecule normal to the graphene plane
+heights = [3., 2.5, 2., 1.5, 1., 0.5, 0., -0.5, -1., -1.5, -2, -2.5, -3]
+
+# Calculated distance after relaxation
+h_rel = []
+
+BL_h = []
+BL_co2 = [[], []]
+for i, h in enumerate(heights):
+
+    with jasp(fp_dir + 'transport/G-c-HHc-constraints-yes-hook-d={0:0.2f}'.format(h)) as calc:
+        atoms = calc.get_atoms()
+        calc.calculate()
+        bond_dist = atoms.get_distance(17,18)
+        BL_h.append(bond_dist)
+        h_fixed = atoms[17].position[2]
+        h_graphene = atoms[0].position[2]
+        h_rel_i = h_fixed + (bond_dist / 2.) - h_graphene
+        h_rel.append(h_rel_i)
+
+    with jasp(fp_dir + 'transport/G-c-CO2-transport-yes-hook-d={0:0.2f}'.format(h)) as calc:
+        atoms = calc.get_atoms()
+        calc.calculate()
+        BL_co2[0].append(atoms.get_distance(17,18))
+        BL_co2[1].append(atoms.get_distance(18,19))
+
+
+def plot_spline(x, y, plt, style):
+    spline = interp1d(x, y, kind='cubic')
+    x_lin = np.linspace(x[0],x[-1],200)
+    plt.plot(x_lin, spline(x_lin), style)
+
+file_path = './img/final-project/G-bond-length.png'
+plt.plot(h_rel, BL_h, 'ro', label='H2')
+plt.plot(heights, BL_co2[0], 'go', label='CO2 #1')
+plt.plot(heights, BL_co2[1], 'bo', label='CO2 #2')
+plot_spline(h_rel, BL_h, plt, 'r-')
+plot_spline(heights, BL_co2[0], plt, 'g-')
+plot_spline(heights, BL_co2[1], plt, 'b-')
+plt.xlabel('Molecule distance from graphene plane ($\AA$)')
+plt.ylabel('Bond length ($\AA$)')
+plt.ylim([0.5,3])
+plt.xlim([-3,3])
+plt.legend()
+plt.savefig(file_path)
+print('[[' + file_path + ']]')
+#+END_SRC
+
+#+RESULTS:
+: [[./img/final-project/G-bond-length.png]]
+
+*** Barrier energy
+
+#+BEGIN_SRC python
+from ase import Atom, Atoms
+from ase.visualize import view
+from jasp import *
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.interpolate import interp1d
+import sys
+
+fp_dir = '~/techela/s16-06640/final-project/' # Directory of final project.
+
+# Distance of the molecule normal to the graphene plane
+heights = [3., 2.5, 2., 1.5, 1., 0.5, 0., -0.5, -1., -1.5, -2, -2.5, -3]
+
+# Calculated distance after relaxation
+h_rel = []
+
+TE_h = []
+TE_co2 = []
+for i, h in enumerate(heights):
+
+    with jasp(fp_dir + 'transport/G-c-HHc-constraints-yes-hook-d={0:0.2f}'.format(h)) as calc:
+        atoms = calc.get_atoms()
+        calc.calculate()
+        energy = atoms.get_potential_energy()
+        TE_h.append(energy)
+        bond_dist = atoms.get_distance(17,18)
+        h_fixed = atoms[17].position[2]
+        h_graphene = atoms[0].position[2]
+        h_rel_i = h_fixed + (bond_dist / 2.) - h_graphene
+        h_rel.append(h_rel_i)
+
+    with jasp(fp_dir + 'transport/G-c-CO2-transport-yes-hook-d={0:0.2f}'.format(h)) as calc:
+        atoms = calc.get_atoms()
+        calc.calculate()
+        energy = atoms.get_potential_energy()
+        TE_co2.append(energy)
+
+TE_h = np.array(TE_h)
+TE_h -= min(TE_h)
+TE_co2 = np.array(TE_co2)
+TE_co2 -= min(TE_co2)
+
+
+def plot_spline(x, y, plt, style):
+    spline = interp1d(x, y, kind='cubic')
+    x_lin = np.linspace(x[0],x[-1],200)
+    print('Max energy: {:0.3f} eV'.format(max(spline(x_lin)))) 
+    plt.plot(x_lin, spline(x_lin), style)
+
+print('')
+print('Energy barriers:')
+file_path = './img/final-project/total_energy-comparison.png'
+plt.plot(h_rel, TE_h, 'ro', label='H2')
+plt.plot(heights, TE_co2, 'go', label='CO2')
+plot_spline(h_rel, TE_h, plt, 'r-')
+plot_spline(heights, TE_co2, plt, 'g-')
+plt.xlabel('Molecule distance from graphene plane ($\AA$)')
+plt.ylabel('$\Delta$ Energy (eV)')
+plt.xlim([-3.,3.])
+plt.ylim([0,5.5])
+plt.legend(loc='upper center')
+plt.savefig(file_path)
+print('[[' + file_path + ']]')
+#+END_SRC
+
+#+RESULTS:
+: 
+: Energy barriers:
+: Max energy: 1.879 eV
+: Max energy: 4.643 eV
+: [[./img/final-project/total_energy-comparison.png]]
+
+** Transport. Pore=1
+
+#+BEGIN_SRC python
+import copy
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.interpolate import interp1d
+import sys
+
+from ase import Atom, Atoms
+from ase.constraints import FixAtoms
+from ase.visualize import view
+from jasp import *
+
+def print_converged(i, energy, time):
+    print("Distance: {:5.2f}. Energy = {:8.3f}. Calculation time: {:3.0f} min.".format(i, energy, time/60.))
+
+def print_inprogress(i):
+    print("Distance: {:5.2f}. In progress.".format(i))
+
+def print_unconverged(i):
+    print("Distance: {:5.2f}. Did not converge.".format(i))
+
+
+# Transport initial images. Distance of molecule's center from grahene plane
+heights = [10., 9., 8., 7., 6., 5., 4., 3., 2.5, 2., 1.5, 1., 0.5, 0.]
+
+def calculate(name, TE):
+    for i, h in enumerate(heights):
+        with jasp('./dft/' + name + '/d={0:0.2f}'.format(h)) as calc:
+            calc.calculate()
+            atoms = calc.get_atoms()
+            energy = atoms.get_potential_energy()
+            TE.append(energy)
+
+
+base_name = 'transport/g-mono/3x3/pore=1/molec=H2/'
+
+name_free = base_name + 'linear-unconst_all'
+TE_free = []
+calculate(name_free, TE_free)
+
+name_uncon = base_name + 'linear-unconst_G'
+TE_uncon = []
+calculate(name_uncon, TE_uncon)
+
+name_con = base_name + 'linear-const'
+TE_con = []
+calculate(name_con, TE_con)
+
+# Consider the change in energy from lowest energy state
+TE_free = np.array(TE_free)
+TE_free -= min(TE_free)
+TE_uncon = np.array(TE_uncon)
+TE_uncon -= min(TE_uncon)
+TE_con = np.array(TE_con)
+TE_con -= min(TE_con)
+
+
+def plot_spline(x, y, plt, style):
+    spline = interp1d(x, y, kind='cubic')
+    x_lin = np.linspace(0,10,1000)
+    plt.plot(x_lin, spline(x_lin), style)
+
+
+print('')
+print('Normal view')
+file_path = './img/' + base_name + 'TE-comparison.png'
+plt.figure(1)
+plt.plot(heights, TE_free, 'ro', label='No constraints')
+plt.plot(heights, TE_uncon, 'go', label='Leading H atom constrained')
+plt.plot(heights, TE_con, 'bo', label='Leading H + graphene constrained')
+plot_spline(heights, TE_free, plt, 'r-')
+plot_spline(heights, TE_uncon, plt, 'g-')
+plot_spline(heights, TE_con, plt, 'b-')
+plt.xlabel('Height ($\AA$)')
+plt.ylabel('Total Energy (eV)')
+plt.xlim([0,10])
+#plt.ylim([0,0.1])
+plt.legend()
+plt.savefig(file_path)
+print('[[' + file_path + ']]')
+
+print('')
+print('Lennard-Jones potential well and convergence view')
+file_path = './img/' + base_name + 'TE-comparison-LJ_zoom.png'
+plt.figure(2)
+plt.plot(heights, TE_free, 'ro', label='No constraints')
+plt.plot(heights, TE_uncon, 'go', label='Leading H atom constrained')
+plt.plot(heights, TE_con, 'bo', label='Leading H + graphene constrained')
+plot_spline(heights, TE_free, plt, 'r-')
+plot_spline(heights, TE_uncon, plt, 'g-')
+plot_spline(heights, TE_con, plt, 'b-')
+plt.xlabel('Height ($\AA$)')
+plt.ylabel('Total Energy (eV)')
+plt.xlim([0,8])
+plt.ylim([-0.15,0.2])
+plt.legend()
+plt.savefig(file_path)
+print('[[' + file_path + ']]')
+#+END_SRC
+
+#+RESULTS:
+: 
+: Normal view
+: [[./img/transport/g-mono/3x3/pore=1/molec=H2/TE-comparison.png]]
+: 
+: Lennard-Jones potential well and convergence view
+: [[./img/transport/g-mono/3x3/pore=1/molec=H2/TE-comparison-LJ_zoom.png]]
+
+** Vaccuum distance convergence
+Look at the distance the molecule away from the graphene plane is to know when it appears to be a free molecule in space and does not exhibit changes in energy due to interaction.
+
+#+BEGIN_SRC python :results drawer
+import numpy as np
+import matplotlib.pyplot as plt
+
+from ase import Atom, Atoms
+from ase.visualize import view
+from jasp import *
+
+
+def closest_atom_distance(atoms):
+    pos = atoms.get_positions()
+    dist = (pos[17] - pos[0])[2] # leading atom was always #17 in these calculations
+    return dist
+
+
+def calculate(molec, dist, TE, heights):
+    for h in heights:
+        with jasp('./dft/transport/g-mono/3x3/pore=1/molec=' + molec + '/linear-const/d={0:0.2f}'.format(h)) as calc:
+	    calc.calculate()
+	    atoms = calc.get_atoms()
+	    dist.append(closest_atom_distance(atoms))
+	    energy = atoms.get_potential_energy()
+	    TE.append(energy)
+
+
+dists = [[] for i in range(3)]
+TEs = [[] for i in range(3)]
+molecs = ['H2', 'N2', 'CO2']
+heights = [10., 9., 8., 7., 6., 5., 4., 3., 2.5, 2., 1.5, 1., 0.5, 0.]
+for i, (molec, dist, TE) in enumerate(zip(molecs, dists, TEs)):
+    calculate(molec, dist, TE, heights)
+    TE = np.array(TE)
+    TE -= min(TE)
+    TEs[i] = TE
+
+
+file_path = './img/results/convergence-vaccuum-pore=1.png'
+print('#+CAPTION: Vaccuum distance convergence. Height represents distance between closest atom and the graphene plane.')
+print('#+NAME: fig:vaccuum-distance')
+for dist, TE in zip(dists, TEs):
+#    plt.plot(heights, TE)
+    plt.plot(dist, TE)
+plt.xlabel('Height ($\AA$)')
+plt.ylabel('Total Energy (eV)')
+plt.xlim([0,8])
+plt.ylim([-0.5,2])
+plt.legend(molecs)
+plt.savefig(file_path)
+print('[[' + file_path + ']]')
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+#+CAPTION: Vaccuum distance convergence. Height represents distance between closest atom and the graphene plane.
+#+NAME: fig:vaccuum-distance
+[[./img/results/convergence-vaccuum-pore=1.png]]
+:END:
+
+It appears that when the leading atom is 4 Å away from the graphene plane, there is no interaction. Since most molecules that we'll be testing are about 2-4 Å in length, it seems reasonable to make the z-direction vaccuum space of the calculations to be 9 Å on either side of the graphene plane. 
 
 * Meetings
 ** DONE 2016-03-08 4pm
@@ -878,40 +2224,103 @@ view(atoms)
 #+END_SRC
 
 #+RESULTS:
-** 2016-05-27 3pm Group meeting presentation
-   DEADLINE: <2016-05-27 Fri 3pm>
-*** TODO Unconstrained graphene plane
-*** TODO H2 transport distance of non-interaction
-*** TODO NEB calculated transport
-*** TODO CO2 repairing energy
-*** TODO Comparison data for everything
+** DONE 2016-05-27 3pm Group meeting presentation
+   CLOSED: [2016-05-31 Tue 15:07] DEADLINE: <2016-05-27 Fri 3pm>
+
+(Meeting cancelled)
+
+*** Concept of gas phase transport
+
+#+BEGIN_SRC python
+from ase import Atom, Atoms
+from ase.visualize import view
+from jasp import *
+import numpy as np
+import matplotlib.pyplot as plt
+import sys
+
+heights = [10., 9., 8., 7., 6., 5., 4., 3., 2.5, 2., 1.5, 1., 0.5, 0.]
+
+def movie(constraint):
+    images = []
+    for i, h in enumerate(heights):
+        with jasp('./dft/transport/g-mono/3x3/pore=1/molec=CO2/' + constraint + '/d={0:0.2f}'.format(h)) as calc:
+            atoms = calc.get_atoms()
+            images.append(atoms)
+    view(images)
+
+free = 'linear-unconst_all'
+unconst_G = 'linear-unconst_G'
+const_all = 'linear-const'
+
+#movie(free)
+#movie(unconst_G)
+movie(const_all)
+#+END_SRC
+
+#+RESULTS:
+
+*** Bond length of molecules change as they transport
+
+[[./img/final-project/G-bond-length.png]]
+
+*** Total energy difference between H2 and CO2
+
+[[./img/final-project/total_energy-comparison.png]]
+
+*** How constraints effect total energy
+
+Hydrogen transport through monolayer graphene. Pore=1
+[[./img/transport/g-mono/3x3/pore=1/molec=H2/TE-comparison.png]]
+
+*** Non-interaction distance convergence
+[[./img/transport/g-mono/3x3/pore=1/molec=H2/TE-comparison-LJ_zoom.png]]
+
+How does this well distance change with other molecules?
+- Running comparisons with CO2 and N2.
+
+*** Pore distance convergence
+What pore interaction distance is acceptable?
+
+[[./img/material/g-mono/4x4/pore=10/vac=16.png]]
+
+[[./img/material/g-mono/5x5/pore=10/vac=16.png]]
+
+[[./img/material/g-mono/6x6/pore=10/vac=16.png]]
+
+*** Questions
+- How well is DFT handling multiple species?
+- - Smearing: sigma is not dependent on per molecule basis
+
+- Pressure can change diffusion pathways (gas phase vs adsorption)
+- - cite:du-2011-separ-hydrog
+- - cite:drahushuk-2012-mechan-gas
 
 * Research
 ** Questions
-*** TODO Are the kinetic diameters used in Blankenberg correct?
+*** Are the kinetic diameters used in Blankenberg correct?
 cite:blankenburg-2010-porous-graph uses cite:leeuwen-1994-deriv-stock for kinetic diameter of ammonia, even though they're stated for liquids.
 cite:tsuru-2010-permeat-proper shows that certain kinetic diameter calculations may not apply to certain separations.
-*** DONE What is the unit GPU?
-    CLOSED: [2016-03-17 Thu 22:33]
+*** What is the unit GPU?
 Gas permeance unit
 1 GPU = 0.33 mol/(m^2*s*Pa)
 *** What's a dispersion correction in dft?
-Dipoles occur as a molecule passes through the membrane. They need to be accounted for in the energy calculations. (need cite)
-*** DONE Ryd compared to eV?
-    CLOSED: [2016-03-17 Thu 22:36]
+Dipoles occur as a molecule passes through the membrane. They need to be accounted for in the energy calculations.
+*** Ryd compared to eV?
 Stands for Rydberg constant.
 1 eV = 7.350e-2 Ryd
 300 eV = 22.096 Ryd
+*** TODO Best way to calculate a pore's diameter?
 ** Properties
 *** Bond lengths
 
 | Molecule | Bond | Bond Length (Å) |
 | H2       | H-H  |            0.74 |
 | CO2      | C=O  |            1.21 |
+| N2       | N=-N |            1.13 |
 
 **** References
-CO2 C=O: CRC Handbook, Section 9, Characteristic Bond Lengths in Free Molecules
-H2: CRC Handbook, Section 9, Characteristic Bond Lengths in Free Molecules
+CO2 C=O, H2, N2: CRC Handbook, Section 9, Characteristic Bond Lengths in Free Molecules
 
 *** Common molecules
 Useful numbers:
@@ -966,7 +2375,15 @@ Kinetic diameter
 - benz, tol, eth-benz, xylene: cite:baertsch-1996-permeat-aromat
 - cyclohexane: cite:sing-2004-use-molec
 
-*** 2D Materials
+*** 2D materials
+
+Structure
+| Material | Stack | Lattice      |
+|          |       | Constant [Å] |
+|----------+-------+--------------|
+| Graphene | Mono  | 2.460        |
+|          |       |              |
+
 
 Stability
 | Material | Stack | Production | Temperature   | Ref                       |
@@ -974,12 +2391,12 @@ Stability
 |----------+-------+------------+---------------+---------------------------|
 | Graphene | Mono  | CVD        | 2600          | cite:kim-2010-high-temper |
 
+
+
 | Material | Features    | Pore     |
 |          |             | Size (Å) |
 |----------+-------------+----------|
 | Graphene | Pristine    |          |
-| Graphene | -1 carbons  |          |
-| Graphene | -2 benzenes |          |
 | PG       |             | 2.48     |
 | PG-ES1   |             |          |
 | PG-ES2   |             |          |
@@ -987,6 +2404,10 @@ Stability
 | hBN      |             |          |
 
 **** References
+
+Structure
+- Lattice constant
+  - Graphene mono: cite:partoens-2006-from-graph
 
 Pore size
 - Graphene, Pristine: 
