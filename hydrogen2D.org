@@ -922,6 +922,14 @@ view_atoms(name_con)
 
 #+RESULTS:
 
+** 2016-06-02: Improve energy curve resolution at curves
+Suggest more points to improve the resolution of a total energy curve for a transporting molecule through a 2D material plane.
+
+#+BEGIN_SRC python
+
+
+#+END_SRC
+
 * DFT
 ** Parameters
 - Vaccuum space between gas and 
