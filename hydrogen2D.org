@@ -780,6 +780,58 @@ http://www.google.com/patents/US20140263035
 *** TODO cite:leeuwen-1994-deriv-stock Derivation of L-J lengths of liquids.
 *** TODO cite:hauser-2012-methan-selec Methane transfer through graphene, DFT
 * Snippets
+** Toolbox
+#+BEGIN_SRC python :tangle devon_toolbox.py
+import os
+import sys
+import numpy as np
+
+from ase import Atom, Atoms
+from ase.io import write as ase_write
+
+
+def status_converged(energy, time):
+    print("Final structure calculation: Energy/f.u. = {:0.3f}. Calculation time: {:.0f} min.".format(energy, time/60.))
+
+
+def status_inprogress():
+    print("Final structure calculation: In progress.")
+
+
+def status_unconverged(i):
+    print("Distance: {:5.2f}. Did not converge.".format(i))
+
+
+def set_vacuum(atoms, vacuum):
+    """Center atoms in the z-direction in a cell of size vacuum.
+
+    Centers a 2D material in a unitcell with space above and below of 1/2 * vacuum. Assumes the current unitcell is centered and changes only occur in the z-direction.
+    """
+    cell = atoms.get_cell()
+    center_old = cell[2][2] / 2.
+    center_new = vacuum / 2.
+    cell[2][2] = vacuum
+    atoms.set_cell(cell)
+
+    for atom in atoms:
+        atom.position[2] = center_new - (center_old - atom.position[2])
+
+
+def print_image(name, atoms):
+    print(write_image(name, atoms))
+
+
+def write_image(name, atoms):
+    file_path = './img/' + name + '.png'
+    directory = file_path[:file_path.rfind('/')]
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    ase_write(file_path, atoms)
+    return '[[' + file_path + ']]'
+#+END_SRC
+
+#+RESULTS:
+
 ** 2016-03-07: Remote copying
 *Note 2016-05-18* - Copying is better done by maintaining the git repo. 
 
@@ -898,7 +950,7 @@ for i, energy, force in zip(ENCUTS, energies_en, forces_en):
 : Still processing: ~/tmp/vasp_test/molecules/c2h6-en-300
 
 ** TODO Better movies
-- What is the best format for this?
+
 ** 2016-05-31: View atoms
 #+BEGIN_SRC python
 from ase import Atom, Atoms
@@ -929,7 +981,7 @@ view_atoms(name_con)
 
 #+RESULTS:
 
-** 2016-06-02: Improve energy curve resolution at curves
+** TODO 2016-06-02: Improve energy curve resolution at curves
 Suggest more points to improve the resolution of a total energy curve for a transporting molecule through a 2D material plane.
 
 #+BEGIN_SRC python
@@ -945,7 +997,7 @@ Suggest more points to improve the resolution of a total energy curve for a tran
 *** Graphene monolayer
 **** Pristine
 
-#+BEGIN_SRC python :results output
+#+BEGIN_SRC python :results drawer
 from ase import Atom, Atoms
 from ase.visualize import view
 from ase.io import write as ase_write
@@ -969,7 +1021,7 @@ atoms = Atoms([Atom('C', 1./2. * a3),
                   Atom('C', 1./3. * a1 + 1./3. * a2 + 1./2. * a3)],
                   cell=[a1, a2, a3])
 
-name = 'material/g-mono'
+name = 'material/g-mono/final'
 
 with jasp('./dft/' + name,
             encut=520,
@@ -996,79 +1048,17 @@ print('[[' + file_path + ']]')
 #+END_SRC
 
 #+RESULTS:
-: Final structure calculation: In progress.
-: [[./img/material/g-mono.png]]
+:RESULTS:
+Final structure calculation: Atoms: 2. Energy/f.u. = -9.228. Calculation time: 6 min.
+[[./img/material/g-mono/final.png]]
+:END:
 
 **** Pore=1 (One carbon defect)
-***** Final project
+***** DONE Non-centered, standard spacing
+      CLOSED: [2016-06-02 Thu 14:44]
+Looking back, the non-centered versions of these calculations are not as intuitive to watch in a movie format. Also, the desired ease of having the symmetry point being at the gamma point does not carry to pore sizes greater than 1.
 
-#+BEGIN_SRC python :results output
-from ase import Atom, Atoms
-from ase.io import write as ase_write
-from ase.visualize import view
-from jasp import *
-import numpy as np
-import sys
-JASPRC['queue.walltime'] = '10:00:00'
-
-
-def print_converged(num_atoms, energy, time):
-    print("Final structure calculation: Atoms: {}. Energy/f.u. = {:0.3f}. Calculation time: {:.0f} min.".format(num_atoms, energy, time/60.))
-
-def print_inprogress():
-    print("Final structure calculation: In progress.")
-
-
-a = 2.46
-a1 = a * np.array([3.0**0.5/2., -1./2., 0.])
-a2 = a * np.array([3.0**0.5/2., 1./2., 0.])
-a3 = np.array([0., 0., 10.])
-
-unitcell = Atoms([Atom('C', 1./2. * a3),
-                  Atom('C', 1./3. * a1 + 1./3. * a2 + 1./2. * a3)],
-                  cell=[a1, a2, a3])
-
-i = 3
-atoms = unitcell.repeat((i,i,1))
-
-print('Graphene 3x3 pore=1:'.format(i))
-
-del atoms[0]
-
-name = 'material/g-mono/3x3/pore=1/vac=10-nsw=50'
-
-with jasp('./dft/' + name,
-            encut=450,
-            kpts=(6,6,1),
-            xc='PBE',          # GGA functional type
-            ismear=0,          # Gaussian smearing
-            sigma=0.2,         # "Metallic" system smearing
-            isif=2,            # relax positions only
-            ibrion=2,          # conjugate gradient optimizer
-            nsw=50,            # max number of steps to relax
-            atoms=atoms) as calc:
-    try:
-        calc.calculate()
-        energy = atoms.get_potential_energy()/len(atoms)
-        print_converged(len(atoms), energy, float(get_elapsed_time(calc)))
-    except (VaspSubmitted, VaspQueued):
-        print_inprogress()
-        ready = False
-        pass
-
-file_path = './img/' + name + '.png'
-ase_write(file_path, atoms)
-print('[[' + file_path + ']]')
-#+END_SRC
-
-#+RESULTS:
-: Graphene 3x3 pore=1:
-: Final structure calculation: Atoms: 17. Energy/f.u. = -8.762. Calculation time: 192 min.
-: [[./img/material/g-mono/3x3/pore=1/vac=10-nsw=50.png]]
-
-***** Standard spacing
-
-#+BEGIN_SRC python :results output
+#+BEGIN_SRC python :results drawer
 from ase import Atom, Atoms
 from ase.io import write as ase_write
 from ase.visualize import view
@@ -1101,7 +1091,7 @@ print('Graphene 3x3 pore=1:'.format(i))
 
 del atoms[0]
 
-name = 'material/g-mono/3x3/pore=1/vac=10'
+name = 'material/g-mono/3x3/pore=1/non-centered/vac=10'
 
 with jasp('./dft/' + name,
             encut=520,
@@ -1128,26 +1118,26 @@ print('[[' + file_path + ']]')
 #+END_SRC
 
 #+RESULTS:
-: Graphene 3x3 pore=1:
-: Final structure calculation: Atoms: 17. Energy/f.u. = -8.759. Calculation time: 188 min.
-: [[./img/material/g-mono/3x3/pore=1/vac=10.png]]
+:RESULTS:
+Graphene 3x3 pore=1:
+Final structure calculation: Atoms: 17. Energy/f.u. = -8.759. Calculation time: 188 min.
+[[./img/material/g-mono/3x3/pore=1/non-centered/vac=10.png]]
+:END:
 
-***** Wide vaccuum
+***** DONE Non-centered, wide vaccuum
+      CLOSED: [2016-06-02 Thu 14:43]
+Looking back, it doesn't really make sense to run these calculations with a vacuum any wider than the distance where planes of the superstructure do not interact.
 
-#+BEGIN_SRC python :results output
+#+BEGIN_SRC python :results drawer
+import numpy as np
+import sys
+
 from ase import Atom, Atoms
 from ase.io import write as ase_write
 from ase.visualize import view
 from jasp import *
-import numpy as np
-import sys
 
-
-def print_converged(num_atoms, energy, time):
-    print("Final structure calculation: Atoms: {}. Energy/f.u. = {:0.3f}. Calculation time: {:.0f} min.".format(num_atoms, energy, time/60.))
-
-def print_inprogress():
-    print("Final structure calculation: In progress.")
+import devon_toolbox as dtb
 
 
 a = 2.46
@@ -1166,10 +1156,8 @@ print('Graphene 3x3 pore=1:'.format(i))
 
 del atoms[0]
 
-name = 'material/g-mono/3x3/pore=1/vac=20'
-file_path = './img/' + name + '.png'
-ase_write(file_path, atoms)
-print('[[' + file_path + ']]')
+name = 'material/g-mono/3x3/pore=1/non-centered/vac=20'
+print(dtb.write_image(name, atoms))
 
 with jasp('./dft/' + name,
             encut=520,
@@ -1184,20 +1172,87 @@ with jasp('./dft/' + name,
     try:
         calc.calculate()
         energy = atoms.get_potential_energy()/len(atoms)
-        print_converged(len(atoms), energy, float(get_elapsed_time(calc)))
+        dtb.status_converged(energy, float(get_elapsed_time(calc)))
     except (VaspSubmitted, VaspQueued):
-        print_inprogress()
+        dtb.status_inprogress()
         ready = False
         pass
 #+END_SRC
 
 #+RESULTS:
-: Graphene 3x3 pore=1:
-: [[./img/material/g-mono/3x3/pore=1/vac=20.png]]
-: Final structure calculation: Atoms: 17. Energy/f.u. = -8.760. Calculation time: 589 min.
+:RESULTS:
+Graphene 3x3 pore=1:
+[[./img/material/g-mono/3x3/pore=1/non-centered/vac=20.png]]
+Final structure calculation: Energy/f.u. = -8.760. Calculation time: 589 min.
+:END:
+
+***** DONE Centered
+      CLOSED: [2016-06-02 Thu 14:44]
+Based on the gas transport graph, a distance of 8 Angstrom between graphene planes should be more than sufficient to say the planes are not interacting. 
+
+#+BEGIN_SRC python :results drawer
+import numpy as np
+import sys
+
+from ase import Atom, Atoms
+from ase.io import write as ase_write
+from ase.visualize import view
+from jasp import *
+JASPRC['queue.walltime'] = '10:00:00'
+
+import devon_toolbox as dtb
+
+
+a = 2.46
+a1 = a * np.array([3.0**0.5/2., -1./2., 0.])
+a2 = a * np.array([3.0**0.5/2., 1./2., 0.])
+a3 = np.array([0., 0., 8.])
+
+atoms = Atoms([Atom('C', 1./2. * a3),
+                  Atom('C', 1./3. * a1 + 1./3. * a2 + 1./2. * a3)],
+                  cell=[a1, a2, a3])
+
+i = 3
+atoms = atoms.repeat((i,i,1))
+
+print("Position of defect: {}".format(atoms[9].position))
+del atoms[9]
+
+name = 'material/g-mono/3x3/pore=1/final'
+dtb.print_image(name, atoms)
+
+with jasp('./dft/' + name,
+            encut=520,
+            kpts=(6,6,1),
+            xc='PBE',          # GGA functional type
+            ismear=0,          # Gaussian smearing
+            sigma=0.2,         # "Metallic" system smearing
+            isif=2,            # relax positions only
+            ibrion=2,          # conjugate gradient optimizer
+            nsw=100,            # max number of steps to relax
+            atoms=atoms) as calc:
+    try:
+        calc.calculate()
+        energy = atoms.get_potential_energy()/len(atoms)
+        dtb.status_converged(energy, float(get_elapsed_time(calc)))
+    except (VaspSubmitted, VaspQueued):
+        dtb.status_inprogress()
+        ready = False
+        pass
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+Position of defect: [ 5.681  0.     4.   ]
+[[./img/material/g-mono/3x3/pore=1/final.png]]
+Final structure calculation: Energy/f.u. = -8.759. Calculation time: 207 min.
+:END:
+
+As expected, the energy is the same as the energies of the non-centered calculations.
 
 **** Pore=10 (Ten carbon defect)
-***** 4x4
+***** DONE 4x4
+      CLOSED: [2016-06-02 Thu 14:47]
 #+BEGIN_SRC python :results drawer
 from ase import Atom, Atoms
 from ase.io import write as ase_write
@@ -1266,28 +1321,25 @@ Final structure calculation: Atoms: 22. Energy/f.u. = -8.167. Calculation time: 
 [[./img/material/g-mono/4x4/pore=10/vac=16.png]]
 :END:
 
-***** 5x5
+***** TODO 5x5
+
 #+BEGIN_SRC python :results drawer
+import numpy as np
+import sys
+
 from ase import Atom, Atoms
 from ase.io import write as ase_write
 from ase.visualize import view
 from jasp import *
-import numpy as np
-import sys
 #JASPRC['queue.walltime'] = '10:00:00'
 
-
-def print_converged(num_atoms, energy, time):
-    print("Final structure calculation: Atoms: {}. Energy/f.u. = {:0.3f}. Calculation time: {:.0f} min.".format(num_atoms, energy, time/60.))
-
-def print_inprogress():
-    print("Final structure calculation: In progress.")
+import devon_toolbox as dtb
 
 
 a = 2.46
 a1 = a * np.array([3.0**0.5/2., -1./2., 0.])
 a2 = a * np.array([3.0**0.5/2., 1./2., 0.])
-a3 = np.array([0., 0., 20.])
+a3 = np.array([0., 0., 10.])
 
 unitcell = Atoms([Atom('C', 1./2. * a3),
                   Atom('C', 1./3. * a1 + 1./3. * a2 + 1./2. * a3)],
@@ -1301,22 +1353,9 @@ del atoms[32:35]
 del atoms[23:27]
 del atoms[15:18]
 
-name = 'material/g-mono/5x5/pore=10/vac=16'
+name = 'material/g-mono/5x5/pore=10/final'
 
 with jasp('./dft/' + name,
-            encut=520,
-            xc='PBE',          # GGA functional type
-            atoms=atoms) as calc:
-    try:
-        calc.calculate()
-        energy = atoms.get_potential_energy()/len(atoms)
-        print_converged(len(atoms), energy, float(get_elapsed_time(calc)))
-    except (VaspSubmitted, VaspQueued):
-        print_inprogress()
-        ready = False
-        pass
-
-with jasp('./dft/' + name + '/relax',
             encut=520,
             kpts=(6,6,1),
             xc='PBE',          # GGA functional type
@@ -1324,32 +1363,29 @@ with jasp('./dft/' + name + '/relax',
             sigma=0.2,         # "Metallic" system smearing
             isif=2,            # relax positions only
             ibrion=2,          # conjugate gradient optimizer
-            nsw=200,            # max number of steps to relax
+            nsw=0,             # max number of steps to relax
             atoms=atoms) as calc:
     try:
         calc.calculate()
         energy = atoms.get_potential_energy()/len(atoms)
-        print_converged(len(atoms), energy, float(get_elapsed_time(calc)))
+        dtb.status_converged(energy, float(get_elapsed_time(calc)))
     except (VaspSubmitted, VaspQueued):
-        print_inprogress()
+        dtb.status_inprogress()
         ready = False
         pass
 
-file_path = './img/' + name + '.png'
-ase_write(file_path, atoms.repeat((3,3,1)))
-print('[[' + file_path + ']]')
+dtb.print_image(name, atoms)
 #+END_SRC
 
 #+RESULTS:
 :RESULTS:
 Graphene 5x5 pore=10:
-Final structure calculation: Atoms: 40. Energy/f.u. = -8.579. Calculation time: 153 min.
 Final structure calculation: In progress.
-[[./img/material/g-mono/5x5/pore=10/vac=16.png]]
+[[./img/material/g-mono/5x5/pore=10/final.png]]
 :END:
 
-***** 6x6
-#+BEGIN_SRC python :results output
+***** TODO 6x6
+#+BEGIN_SRC python :results drawer
 from ase import Atom, Atoms
 from ase.io import write as ase_write
 from ase.visualize import view
@@ -1416,7 +1452,8 @@ print('[[' + file_path + ']]')
 : [[./img/material/g-mono/6x6/pore=10/vac=16.png]]
 
 *** Graphene bilayer
-**** Pristine
+**** DONE Pristine
+     CLOSED: [2016-06-02 Thu 14:42]
 Structure obtained from https://www.tfkp.physik.uni-erlangen.de/download/theses/master_daniel-branski.pdf.
 
 #+BEGIN_SRC python :results drawer
@@ -1458,7 +1495,7 @@ atoms = Atoms([Atom('C', rA1),
                Atom('C', rB2)],
                cell=[a1, a2, a3])
 
-name = 'material/g-bi'
+name = 'material/g-bi/final'
 
 with jasp('./dft/' + name,
             encut=520,
@@ -1487,10 +1524,10 @@ print('[[' + file_path + ']]')
 #+RESULTS:
 :RESULTS:
 Final structure calculation: Atoms: 4. Energy/f.u. = -9.225. Calculation time: 14 min.
-[[./img/material/g-bi.png]]
+[[./img/material/g-bi/final.png]]
 :END:
 
-**** Pore=1
+**** TODO Pore=1
 
 #+BEGIN_SRC python :results drawer
 import sys
@@ -1563,10 +1600,11 @@ print('[[' + file_path + ']]')
 #+RESULTS:
 :RESULTS:
 Final structure calculation: In progress.
+34
 [[./img/material/g-bi/3x3/pore=1.png]]
 :END:
 
-**** Pore=10
+**** TODO Pore=1 nsw test
 
 #+BEGIN_SRC python :results drawer
 import sys
@@ -1575,14 +1613,8 @@ from ase import Atom, Atoms
 from ase.visualize import view
 from ase.io import write as ase_write
 from jasp import *
-#JASPRC['queue.walltime'] = '10:00:00'
 
-
-def print_converged(num_atoms, energy, time):
-    print("Final structure calculation: Atoms: {}. Energy/f.u. = {:0.3f}. Calculation time: {:.0f} min.".format(num_atoms, energy, time/60.))
-
-def print_inprogress():
-    print("Final structure calculation: In progress.")
+import devon_toolbox as dtb
 
 
 a = 2.46  # lattice constant
@@ -1607,16 +1639,98 @@ atoms = Atoms([Atom('C', rA1),
                Atom('C', rB2)],
                cell=[a1, a2, a3])
 
+i = 3
+atoms = atoms.repeat([i,i,1])
+del atoms[17:19]
+
+nsw = [0, 10]
+
+def calculate(nsw):
+    name = 'material/g-bi/3x3/pore=1/test/nsw={:0.0f}'.format(nsw)
+    dtb.print_image(name, atoms)
+
+    with jasp('./dft/' + name,
+                encut=520,
+                kpts=(6,6,1),
+                xc='PBE',          # GGA functional type
+                ismear=0,          # Gaussian smearing
+                sigma=0.2,         # "Metallic" system smearing
+                isif=2,            # relax positions only
+                ibrion=2,          # conjugate gradient optimizer
+                nsw=nsw,             # max number of steps to relax
+                atoms=atoms) as calc:
+        try:
+            calc.calculate()
+            energy = atoms.get_potential_energy()/len(atoms)
+            dtb.status_converged(len(atoms), energy, float(get_elapsed_time(calc)))
+        except (VaspSubmitted, VaspQueued):
+            dtb.status_inprogress()
+            ready = False
+            pass
+
+
+for n in nsw:
+    calculate(n)
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+[[./img/material/g-bi/3x3/pore=1/test/nsw=0.png]]
+Final structure calculation: In progress.
+[[./img/material/g-bi/3x3/pore=1/test/nsw=10.png]]
+Final structure calculation: In progress.
+:END:
+
+**** TODO Pore=10
+
+#+BEGIN_SRC python :results drawer
+import sys
+
+from ase import Atom, Atoms
+from ase.visualize import view
+from ase.io import write as ase_write
+from jasp import *
+#JASPRC['queue.walltime'] = '10:00:00'
+
+import devon_toolbox as dtb
+
+
+a = 2.46  # lattice constant
+b = 3.49  # interlayer distance
+gap = np.array([0., 0., b])
+vac = 16. # vaccuum on either side of graphene
+
+a1 = a * np.array([3.0**0.5/2., -1./2., 0.])
+a2 = a * np.array([3.0**0.5/2., 1./2., 0.])
+a3 = np.array([0., 0., vac])
+
+layer1_height = 1./2. * (a3 + gap)
+layer2_height = 1./2. * (a3 - gap)
+rA1 = 0. + layer1_height
+rB1 = a * np.array([1./3.**0.5, 0., 0.]) + layer1_height
+rA2 = a * np.array([1./3.**0.5, 0., 0.]) + layer2_height
+rB2 = a * np.array([2./3.**0.5, 0., 0.]) + layer2_height
+
+atoms = Atoms([Atom('C', rA1),
+               Atom('C', rB1),
+               Atom('C', rA2),
+               Atom('C', rB2)],
+               cell=[a1, a2, a3])
+
 i = 6
 atoms = atoms.repeat([i,i,1])
 
-pore = [37, 39, 63, 83, 104, 79, 77, 55, 56, 35, 60, 57, 80, 81, 84, 61, 59, 82, 58, 62]
+pore_l1 = [57, 60, 61, 80, 81, 84, 85, 104, 105, 108]
+pore_l2 = [35, 38, 39, 58, 59, 62, 63, 82, 83, 86]
+pore = pore_l1 + pore_l2
 pore.sort()
 for p in reversed(pore):
-    #atoms[p].symbol = "N"
+#    atoms[p].symbol = "N"
     del atoms[p]
 
+
 name = 'material/g-bi/6x6/pore=10'
+dtb.print_image(name, atoms)
 
 with jasp('./dft/' + name,
             encut=520,
@@ -1626,30 +1740,28 @@ with jasp('./dft/' + name,
             sigma=0.2,         # "Metallic" system smearing
             isif=2,            # relax positions only
             ibrion=2,          # conjugate gradient optimizer
-            nsw=150,            # max number of steps to relax
+            nsw=100,           # max number of steps to relax
             atoms=atoms) as calc:
     try:
         calc.calculate()
         energy = atoms.get_potential_energy()/len(atoms)
-        print_converged(len(atoms), energy, float(get_elapsed_time(calc)))
+        dtb.status_converged(energy, float(get_elapsed_time(calc)))
     except (VaspSubmitted, VaspQueued):
-        print_inprogress()
+        dtb.status_inprogress()
         ready = False
         pass
-
-file_path = './img/' + name + '.png'
-ase_write(file_path, atoms)
-print('[[' + file_path + ']]')
 #+END_SRC
 
 #+RESULTS:
 :RESULTS:
+[[./img/material/g-bi/6x6/pore=10.png]]
+Final structure calculation: In progress.
 :END:
 
 ** Transport
 *** Graphene monolayer
 **** 3x3 pore=1 - linear
-***** H2
+***** TODO H2
 
 #+BEGIN_SRC python
 import copy
@@ -1663,6 +1775,9 @@ from ase.constraints import FixAtoms
 from ase.visualize import view
 from jasp import *
 
+import devon_toolbox as dtb
+
+
 def print_converged(i, energy, time):
     print("Distance: {:5.2f}. Energy = {:8.3f}. Calculation time: {:3.0f} min.".format(i, energy, time/60.))
 
@@ -1674,14 +1789,15 @@ def print_unconverged(i):
 
 
 # Graphene base
-with jasp('dft/material/g-mono/3x3/pore=1/vac=20') as calc:
+with jasp('dft/material/g-mono/3x3/pore=1/final') as calc:
     graphene = calc.get_atoms()
-plane_height = 10.
-defect_pos = np.array([0, 0., plane_height]) # defect position
+
+dtb.set_vacuum(graphene, 20)
+defect_pos = np.array([5.681, 0., 10.]) # defect position
 
 
 # Transport initial images. Distance of molecule's center from grahene plane
-heights = [10., 9., 8., 7., 6., 5., 4., 3., 2.5, 2., 1.5, 1., 0.5, 0.]
+heights = [10., 9., 8., 7., 6., 5., 4., 3., 2.5, 2., 1.5, 1., 0.5, 0., -0.5, -1., -1.5, -2.]
 atoms =  [Atoms(graphene) for i in range(len(heights))]
 HH_bond = 0.74 # Bond length [Ang]
 for i, h in enumerate(heights):
@@ -1696,17 +1812,23 @@ for atom in atoms[0]:
         hydrogen_constraint = [FixAtoms(indices=[atom.index])]
         break
 
-# Graphene constraint
+
+# Graphene total constraint
 # (for comparison with final project results)
 graphene_constraint = [FixAtoms(indices=[atom.index for atom in atoms[0] if atom.symbol=='C'])]
 
-# Make images with constraints
+# Unconstrained graphene, unconstrained molecule
+# Constraint one carbon so the entire plane doesn't shift as the molecule approaches
 atoms_free = copy.deepcopy(atoms)
+for i in range(len(heights)):
+    atoms_free[i].set_constraint([FixAtoms(indices=[0])])
 
+# Unconstrained graphene, constrained molecule
 atoms_uncon = copy.deepcopy(atoms)
 for i in range(len(heights)):
     atoms_uncon[i].set_constraint(hydrogen_constraint)
 
+# Constrained graphene, constrained molecule
 atoms_con = copy.deepcopy(atoms)
 for i in range(len(heights)):
     atoms_con[i].set_constraint(hydrogen_constraint + graphene_constraint)
@@ -1738,25 +1860,25 @@ def calculate(name, atoms, TE):
 base_name = 'transport/g-mono/3x3/pore=1/molec=H2/'
 
 print('Unconstrained graphene, unconstrained hydrogen:')
-name_free = base_name + 'linear-unconst_all'
+name_free = base_name + 'linear-free-free'
 TE_free = []
 calculate(name_free, atoms_free, TE_free)
 
 print('')
 print('Unconstrained graphene, constrained leading hydrogen:')
-name_uncon = base_name + 'linear-unconst_G'
+name_uncon = base_name + 'linear-const-free'
 TE_uncon = []
 calculate(name_uncon, atoms_uncon, TE_uncon)
 
 print('')
 print('Constrained graphene, constrained leading hydrogen:')
-name_con = base_name + 'linear-const'
+name_con = base_name + 'linear-const-const'
 TE_con = []
 calculate(name_con, atoms_con, TE_con)
 
 if not ready:
     sys.exit()
-
+sys.exit()
 # Consider the change in energy from lowest energy state
 TE_free = np.array(TE_free)
 TE_free -= min(TE_free)
@@ -1795,57 +1917,67 @@ print('[[' + file_path + ']]')
 #+RESULTS:
 #+begin_example
 Unconstrained graphene, unconstrained hydrogen:
-Distance: 10.00. Energy = -155.683. Calculation time: 199 min.
-Distance:  9.00. Energy = -155.683. Calculation time: 628 min.
-Distance:  8.00. Energy = -155.683. Calculation time: 105 min.
-Distance:  7.00. Energy = -155.684. Calculation time: 103 min.
-Distance:  6.00. Energy = -155.684. Calculation time: 105 min.
-Distance:  5.00. Energy = -155.687. Calculation time: 106 min.
-Distance:  4.00. Energy = -155.695. Calculation time: 350 min.
-Distance:  3.00. Energy = -155.690. Calculation time: 356 min.
-Distance:  2.50. Energy = -155.637. Calculation time: 798 min.
-Distance:  2.00. Energy = -155.677. Calculation time: 1715 min.
-Distance:  1.50. Energy = -155.677. Calculation time: 2157 min.
-Distance:  1.00. Energy = -155.238. Calculation time: 2113 min.
-Distance:  0.50. Energy = -155.239. Calculation time: 1454 min.
-Distance:  0.00. Energy = -155.239. Calculation time: 888 min.
+Distance: 10.00. In progress.
+Distance:  9.00. In progress.
+Distance:  8.00. In progress.
+Distance:  7.00. In progress.
+Distance:  6.00. In progress.
+Distance:  5.00. In progress.
+Distance:  4.00. In progress.
+Distance:  3.00. In progress.
+Distance:  2.50. In progress.
+Distance:  2.00. In progress.
+Distance:  1.50. In progress.
+Distance:  1.00. In progress.
+Distance:  0.50. In progress.
+Distance:  0.00. In progress.
+Distance: -0.50. In progress.
+Distance: -1.00. In progress.
+Distance: -1.50. In progress.
+Distance: -2.00. In progress.
 
 Unconstrained graphene, constrained leading hydrogen:
-Distance: 10.00. Energy = -155.683. Calculation time: 355 min.
-Distance:  9.00. Energy = -155.683. Calculation time: 374 min.
-Distance:  8.00. Energy = -155.683. Calculation time: 169 min.
-Distance:  7.00. Energy = -155.683. Calculation time: 168 min.
-Distance:  6.00. Energy = -155.684. Calculation time: 169 min.
-Distance:  5.00. Energy = -155.686. Calculation time: 170 min.
-Distance:  4.00. Energy = -155.694. Calculation time: 169 min.
-Distance:  3.00. Energy = -155.690. Calculation time: 169 min.
-Distance:  2.50. Energy = -155.613. Calculation time: 210 min.
-Distance:  2.00. Energy = -155.674. Calculation time: 1248 min.
-Distance:  1.50. Energy = -155.605. Calculation time: 2107 min.
-Distance:  1.00. Energy = -153.879. Calculation time: 411 min.
-Distance:  0.50. Energy = -155.118. Calculation time:  82 min.
-Distance:  0.00. Energy = -155.238. Calculation time: 1181 min.
+Distance: 10.00. In progress.
+Distance:  9.00. In progress.
+Distance:  8.00. In progress.
+Distance:  7.00. In progress.
+Distance:  6.00. In progress.
+Distance:  5.00. In progress.
+Distance:  4.00. In progress.
+Distance:  3.00. In progress.
+Distance:  2.50. In progress.
+Distance:  2.00. In progress.
+Distance:  1.50. In progress.
+Distance:  1.00. In progress.
+Distance:  0.50. In progress.
+Distance:  0.00. In progress.
+Distance: -0.50. In progress.
+Distance: -1.00. In progress.
+Distance: -1.50. In progress.
+Distance: -2.00. In progress.
 
 Constrained graphene, constrained leading hydrogen:
-Distance: 10.00. Energy = -155.683. Calculation time: 157 min.
-Distance:  9.00. Energy = -155.683. Calculation time: 157 min.
-Distance:  8.00. Energy = -155.683. Calculation time: 165 min.
-Distance:  7.00. Energy = -155.684. Calculation time: 156 min.
-Distance:  6.00. Energy = -155.684. Calculation time: 361 min.
-Distance:  5.00. Energy = -155.687. Calculation time: 352 min.
-Distance:  4.00. Energy = -155.695. Calculation time: 362 min.
-Distance:  3.00. Energy = -155.690. Calculation time: 363 min.
-Distance:  2.50. Energy = -155.611. Calculation time: 370 min.
-Distance:  2.00. Energy = -155.283. Calculation time: 349 min.
-Distance:  1.50. Energy = -154.461. Calculation time: 377 min.
-Distance:  1.00. Energy = -153.815. Calculation time: 298 min.
-Distance:  0.50. Energy = -154.247. Calculation time: 316 min.
-Distance:  0.00. Energy = -154.990. Calculation time: 232 min.
-
-[[./img/transport/g-mono/3x3/pore=1/molec=H2/TE-comparison.png]]
+Distance: 10.00. In progress.
+Distance:  9.00. In progress.
+Distance:  8.00. In progress.
+Distance:  7.00. In progress.
+Distance:  6.00. In progress.
+Distance:  5.00. In progress.
+Distance:  4.00. In progress.
+Distance:  3.00. In progress.
+Distance:  2.50. In progress.
+Distance:  2.00. In progress.
+Distance:  1.50. In progress.
+Distance:  1.00. In progress.
+Distance:  0.50. In progress.
+Distance:  0.00. In progress.
+Distance: -0.50. In progress.
+Distance: -1.00. In progress.
+Distance: -1.50. In progress.
+Distance: -2.00. In progress.
 #+end_example
 
-***** H2 (NEB)
+***** TODO H2 (NEB)
 
 #+BEGIN_SRC python
 import copy
@@ -2024,7 +2156,7 @@ Distance:  0.00. Energy = -154.990. Calculation time: 232 min.
 [[./img/transport/g-mono/3x3/pore=1/molec=H2/TE-comparison.png]]
 #+end_example
       
-***** N2
+***** TODO N2
 
 #+BEGIN_SRC python
 import copy
@@ -2048,7 +2180,7 @@ def print_unconverged(i):
 
 
 # Graphene base
-with jasp('dft/material/g-mono/3x3/pore=1/vac=20') as calc:
+with jasp('dft/material/g-mono/3x3/pore=1/non-centered/vac=20') as calc:
     graphene = calc.get_atoms()
 plane_height = 10.
 defect_pos = np.array([0, 0., plane_height]) # defect position
@@ -2156,26 +2288,8 @@ print('[[' + file_path + ']]')
 #+END_SRC
 
 #+RESULTS:
-#+begin_example
 
-Constrained graphene, constrained leading hydrogen:
-Distance: 10.00. Energy = -165.547. Calculation time: 202 min.
-Distance:  9.00. Energy = -165.547. Calculation time: 194 min.
-Distance:  8.00. Energy = -165.547. Calculation time: 203 min.
-Distance:  7.00. Energy = -165.546. Calculation time: 201 min.
-Distance:  6.00. Energy = -165.547. Calculation time: 202 min.
-Distance:  5.00. Energy = -165.549. Calculation time: 202 min.
-Distance:  4.00. Energy = -165.540. Calculation time: 199 min.
-Distance:  3.00. Energy = -165.243. Calculation time: 174 min.
-Distance:  2.50. Energy = -164.484. Calculation time: 154 min.
-Distance:  2.00. Energy = -163.579. Calculation time: 175 min.
-Distance:  1.50. Energy = -164.350. Calculation time: 303 min.
-Distance:  1.00. Energy = -165.976. Calculation time: 415 min.
-Distance:  0.50. Energy = -165.759. Calculation time: 313 min.
-Distance:  0.00. Energy = -165.145. Calculation time: 262 min.
-#+end_example
-
-***** CO2
+***** TODO CO2
 
 #+BEGIN_SRC python
 import copy
