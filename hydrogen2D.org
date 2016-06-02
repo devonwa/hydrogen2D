@@ -27,6 +27,7 @@ Competing possible research avenues:
 - cite:drahushuk-2016-analy-time Analysis of Time-Varying, Stochastic Gas Transport Through Graphene Membranes - Drahushuk, Keonig, Bunch*, Strano*
 
 
+<<<<<<< HEAD
 - cite:wang-2015-molec-valves Molecular valves for controlling gas phase transport made from discrete ångström-sized pores in graphene - Wang, Drahushuk (Strano)
 
 
@@ -41,20 +42,736 @@ Simulators meeting
 Prepared for a group meeting presentation. Ended up not having one.
 
 ** 2016-05-31 Tue
-- 
-cite:partoens-2006-from-graph
+- cite:partoens-2007-from-graph
 Created vaccuum distance graph to deteremine interaction distance of leading atoms in a molecule.
 
 Bilayer graphene unit cell in queue for relaxation.
 
 Need to redo some of the 'free' transport. The graphene plane simply shifted down as the molecules approached. Might help to fix carbons around the outside edge.
 
-*** TODO Check in on monolayer 5x5 and 6x6 pore=10 calculations
-*** TODO Finish pore=10 for bilayer
-
+*** DONE Check in on monolayer 5x5 and 6x6 pore=10 calculations
+    CLOSED: [2016-06-01 Wed 12:26]
 ** 2016-06-01 Wed
 - 
 
+Possible research idea: Look into pore stability of different passivating molecules, including what it takes to remove a passivated species (ie. if N is a more stable passivating species than H, what is the energy barrier for replacing H with N?).
+
+*** DONE Finish pore=10 for bilayer
+    CLOSED: [2016-06-01 Wed 12:26]
+
+* Meetings
+** DONE 2016-03-08 4pm
+   CLOSED: [2016-03-09 Wed 09:26] DEADLINE: <2016-03-08 Tue 16:00>
+*** Questions
+quantum mechanics:
+- can we adsorb molecules to the surface which impart favorable changes to the electron density around diffusion sites?
+
+neural network:
+- can we use a neural network to address properties that dft doesn't model well, such as charging the material with a potential?
+
+org-ref:
+- can you later attach a pdf?
+- duplicate current bibliography into default bibliography?
+- do you highlight pdfs or just type into the notes file?
+
+*** Actions
+1. Table outlining separation data
+
+** DONE 2016-04-15 11am
+   CLOSED: [2016-05-11 Wed 16:02] DEADLINE: <2016-04-15 Fri 11:00>
+*** Final project suggestion
+- develop a suggestion related to research
+- look into what jasp is lacking
+
+*** Neural networks
+Behler-Parrinello paper from 2007
+- inputs are atom positions
+- questions
+  - how is it not overfit with an 8200 optimizing set and 800 test set?
+  - is there a way to use different inputs or generalize them? (ie. an input could be the position or presence of a functional group)
+
+** DONE 2016-05-12 11am
+*** Final project feedback
+[[file:~/techela/s16-06640/final-project/final-project.org::*Transport of carbon dioxide]]
+
+*** Correct constraints for a molecule
+
+#+BEGIN_SRC python
+from ase import Atom, Atoms
+from ase.constraints import FixAtoms, Hookean
+from ase.visualize import view
+from jasp import *
+import numpy as np
+import matplotlib.pyplot as plt
+import sys
+
+JASPRC['queue.walltime'] = '10:00:00'
+
+def print_converged(i, energy, time):
+#    print(i, energy, time)
+    print("CO2 Distance: {:5.2f}. Energy = {:8.3f}. Calculation time: {:3.0f} min.".format(i, energy, time/60.))
+
+def print_inprogress(i):
+    print("CO2 Distance: {:5.2f}. In progress.".format(i))
+
+def print_unconverged(i):
+    print("CO2 Distance: {:5.2f}. Did not converge.".format(i))
+
+
+# Height of the fixed atom
+heights = [3., 2.5, 2., 1.5, 1., 0.5, 0., -0.5, -1., -1.5, -2, -2.5, -3]
+
+
+# Build base images
+with jasp('graphene/G-c-final') as calc:
+    G_defect = calc.get_atoms()
+def_pos = np.array([5.681, 0., 5.]) # defect position
+
+# http://en.wikipedia.org/wiki/Carbon_dioxide_(data_page)
+CO_bond = 1.16 # Ang. C=O bond length in CO2
+
+atoms =  [Atoms(G_defect) for i in range(len(heights))]
+for i, h in enumerate(heights):
+    CO2 = Atoms([Atom('O', def_pos + (0., 0., h - CO_bond)),
+                 Atom('C', def_pos + (0., 0., h)),
+                 Atom('O', def_pos + (0., 0., h + CO_bond))])
+
+    atoms[i].extend(CO2)
+
+# Constraint - fix all carbons (including the CO2 carbon)
+carbon_constraint = [FixAtoms(indices=[atom.index for atom in atoms[0] if atom.symbol=='C'])]
+
+# Hookean constraint
+# Values for constants rt [Ang] and k [eV/Ang^-2] are from https://wiki.fysik.dtu.dk/ase/ase/constraints.html for a C=O bond
+for atom in atoms[0]:
+    if atom.symbol == 'O':
+        hook_constraint = [Hookean(a1=atom.index, a2=atom.index+1, rt=1.58, k=10.),
+                           Hookean(a1=atom.index+1, a2=atom.index+2, rt=1.58, k=10.)]
+        break
+
+ready = True
+
+# Constrained graphene, constrained carbon in CO2
+print('Unconstrained graphene, constrained carbon in CO2:')
+
+atoms_yy = [Atoms(atoms[i]) for i in range(len(heights))]
+#for i in range(len(heights)):
+#    atoms_yy[i].set_constraint(carbon_constraint)
+
+
+
+
+
+with jasp('transport/G-c-CO2-transport-no-yes-d=1.00a'.format(h),
+                encut=450,         # From convergence check
+                kpts=(6,6,1),      # From convergence check
+                xc='PBE',          # GGA functional type. Important for the defect.
+                ismear=0,          # Gaussian smearing
+                sigma=0.2,         # "Metallic" system smearing
+                isif=2,            # relax positions only
+                ibrion=2,          # conjugate gradient optimizer
+                nsw=50,            # max number of steps to relax
+                atoms=atoms_yy[i]) as calc:
+        try:
+            calc.calculate()
+            energy = atoms_yy[i].get_potential_energy()
+            print_converged(h, energy, float(get_elapsed_time(calc)))
+        except (VaspSubmitted, VaspQueued):
+            print_inprogress(h)
+            ready = False
+            pass
+sys.exit()
+
+
+
+
+
+TE_yy = []
+BO_yy = [[], []]
+for i, h in enumerate(heights):
+    with jasp('transport/G-c-CO2-transport-no-yes-d={0:0.2f}'.format(h),
+                encut=450,         # From convergence check
+                kpts=(6,6,1),      # From convergence check
+                xc='PBE',          # GGA functional type. Important for the defect.
+                ismear=0,          # Gaussian smearing
+                sigma=0.2,         # "Metallic" system smearing
+                isif=2,            # relax positions only
+                ibrion=2,          # conjugate gradient optimizer
+                nsw=50,            # max number of steps to relax
+                atoms=atoms_yy[i]) as calc:
+        try:
+            calc.calculate()
+            energy = atoms_yy[i].get_potential_energy()
+            TE_yy.append(energy)
+            BO_yy[0].append(atoms_yy[i].get_distance(17,18))
+            BO_yy[1].append(atoms_yy[i].get_distance(18,19))
+            print_converged(h, energy, float(get_elapsed_time(calc)))
+        except (VaspSubmitted, VaspQueued):
+            print_inprogress(h)
+            ready = False
+            pass
+
+
+# Constrained graphene, constrained carbon in CO2 + Hookean oxygen
+print('')
+print('Unconstrained graphene, constrained carbon + Hookean oxygen:')
+
+atoms_yh = [Atoms(atoms[i]) for i in range(len(heights))]
+#for i in range(len(heights)):
+#    atoms_yh[i].set_constraint(carbon_constraint + hook_constraint)
+
+TE_yh = []
+BO_yh = [[], []]
+for i, h in enumerate(heights):
+    with jasp('transport/G-c-CO2-transport-no-hook-d={0:0.2f}'.format(h),
+                encut=450,         # From convergence check
+                kpts=(6,6,1),      # From convergence check
+                xc='PBE',          # GGA functional type. Important for the defect.
+                ismear=0,          # Gaussian smearing
+                sigma=0.2,         # "Metallic" system smearing
+                isif=2,            # relax positions only
+                ibrion=2,          # conjugate gradient optimizer
+                nsw=50,            # max number of steps to relax
+                atoms=atoms_yh[i]) as calc:
+        try:
+            calc.calculate()
+            energy = atoms_yh[i].get_potential_energy()
+            TE_yh.append(energy)
+            BO_yh[0].append(atoms_yh[i].get_distance(17,18))
+            BO_yh[1].append(atoms_yh[i].get_distance(18,19))
+            print_converged(h, energy, float(get_elapsed_time(calc)))
+        except (VaspSubmitted, VaspQueued):
+            print_inprogress(h)
+            ready = False
+            pass
+
+if not ready:
+    import sys; sys.exit()
+
+import matplotlib.pyplot as plt
+
+# Consider the change in energy from lowest energy state
+TE_yy = np.array(TE_yy)
+TE_yh = np.array(TE_yh)
+TE_yy -= min(TE_yy)
+TE_yh -= min(TE_yh)
+
+print('')
+print('Comparison of constraint techniques:')
+file_path = './img/G-c-C-linear.png'
+plt.figure(0)
+plt.plot(heights, TE_yy, label='O uconstrained')
+plt.plot(heights, TE_yh, label='Hookean constraint')
+plt.xlabel('Height (Ang)')
+plt.ylabel('$\Delta$ Energy (eV)')
+plt.legend()
+plt.savefig(file_path)
+print('[[' + file_path + ']]')
+#view(atoms_yy)
+#view(atoms_yh)
+#+END_SRC
+
+#+RESULTS:
+: Unconstrained graphene, constrained carbon in CO2:
+: CO2 Distance: -3.00. In progress.
+
+*** Bilayer / Trilayer graphene
+**** Bilayer
+
+#+BEGIN_SRC python
+from ase import Atom, Atoms
+from ase.io import write as ase_write
+from ase.visualize import view
+from jasp import *
+import numpy as np
+import sys
+
+def print_converged(num_atoms, energy, time):
+    print("Final structure calculation: Atoms: {}. Energy/f.u. = {:0.3f}. Calculation time: {:.0f} min.".format(num_atoms, energy, time/60.))
+
+def print_inprogress():
+    print("Final structure calculation: In progress.")
+
+
+a = 2.46
+a1 = a * np.array([3.0**0.5/2., -1./2., 0.])
+a2 = a * np.array([3.0**0.5/2., 1./2., 0.])
+a3 = np.array([0., 0., 10.])
+
+layer_dist = 3.32
+b1 = a1
+b2 = a * np.array([1./2., 3.0**0.5/2., 0.])
+b3 = a3 - 2 * np.array([0., 0., layer_dist])
+
+unitcell = Atoms([Atom('C', 1./2. * a3),
+                  Atom('C', 1./3. * a1 + 1./3. * a2 + 1./2. * a3),
+                  Atom('C', 1./2. * b3),
+                  Atom('C', 1./3. * b1 + 1./3. * b2 + 1./2. * b3)],
+                  cell=[a1, a2, a3])
+
+
+atoms = unitcell
+#atoms = unitcell.repeat((3,3,1))
+view(atoms)
+sys.exit()
+
+defect_pos = atoms[9].position
+del atoms[9]
+
+ready = True
+with jasp('graphene/G-c-final',
+            encut=450,         # From convergence check
+            kpts=(6,6,1),      # From convergence check
+            xc='PBE',          # GGA functional type. Important for the defect.
+            ismear=0,          # Gaussian smearing
+            sigma=0.2,         # "Metallic" system smearing
+            isif=2,            # relax positions only
+            ibrion=2,          # conjugate gradient optimizer
+            nsw=50,            # max number of steps to relax
+            atoms=atoms) as calc:
+    try:
+        calc.calculate()
+        energy = atoms.get_potential_energy()/len(atoms)
+        print_converged(len(atoms), energy, float(get_elapsed_time(calc)))
+    except (VaspSubmitted, VaspQueued):
+        print_inprogress()
+        ready = False
+        pass
+
+if not ready:
+    sys.exit()
+
+print('')
+print('Defect position: {}'.format(defect_pos))
+
+print('')
+file_path = './img/bilayer.png'
+#file_path = './img/G-c-final-repeat-present.png'
+#atoms = atoms.repeat((3,3,1))
+#atoms.rotate('x', -np.pi/4)
+ase_write(file_path, atoms)
+print('[[' + file_path + ']]')
+view(atoms)
+#+END_SRC
+
+#+RESULTS:
+** DONE 2016-05-27 3pm Group meeting presentation
+   CLOSED: [2016-05-31 Tue 15:07] DEADLINE: <2016-05-27 Fri 3pm>
+
+(Meeting cancelled)
+
+*** Concept of gas phase transport
+
+#+BEGIN_SRC python
+from ase import Atom, Atoms
+from ase.visualize import view
+from jasp import *
+import numpy as np
+import matplotlib.pyplot as plt
+import sys
+
+heights = [10., 9., 8., 7., 6., 5., 4., 3., 2.5, 2., 1.5, 1., 0.5, 0.]
+
+def movie(constraint):
+    images = []
+    for i, h in enumerate(heights):
+        with jasp('./dft/transport/g-mono/3x3/pore=1/molec=CO2/' + constraint + '/d={0:0.2f}'.format(h)) as calc:
+            atoms = calc.get_atoms()
+            images.append(atoms)
+    view(images)
+
+free = 'linear-unconst_all'
+unconst_G = 'linear-unconst_G'
+const_all = 'linear-const'
+
+#movie(free)
+#movie(unconst_G)
+movie(const_all)
+#+END_SRC
+
+#+RESULTS:
+
+*** Bond length of molecules change as they transport
+
+[[./img/final-project/G-bond-length.png]]
+
+*** Total energy difference between H2 and CO2
+
+[[./img/final-project/total_energy-comparison.png]]
+
+*** How constraints effect total energy
+
+Hydrogen transport through monolayer graphene. Pore=1
+[[./img/transport/g-mono/3x3/pore=1/molec=H2/TE-comparison.png]]
+
+*** Non-interaction distance convergence
+[[./img/transport/g-mono/3x3/pore=1/molec=H2/TE-comparison-LJ_zoom.png]]
+
+How does this well distance change with other molecules?
+- Running comparisons with CO2 and N2.
+
+*** Pore distance convergence
+What pore interaction distance is acceptable?
+
+[[./img/material/g-mono/4x4/pore=10/vac=16.png]]
+
+[[./img/material/g-mono/5x5/pore=10/vac=16.png]]
+
+[[./img/material/g-mono/6x6/pore=10/vac=16.png]]
+
+*** Questions
+- How well is DFT handling multiple species?
+- - Smearing: sigma is not dependent on per molecule basis
+
+- Pressure can change diffusion pathways (gas phase vs adsorption)
+- - cite:du-2011-separ-hydrog
+- - cite:drahushuk-2012-mechan-gas
+
+* Research
+** Questions
+*** Are the kinetic diameters used in Blankenberg correct?
+cite:blankenburg-2010-porous-graph uses cite:leeuwen-1994-deriv-stock for kinetic diameter of ammonia, even though they're stated for liquids.
+cite:tsuru-2010-permeat-proper shows that certain kinetic diameter calculations may not apply to certain separations.
+*** What is the unit GPU?
+Gas permeance unit
+1 GPU = 0.33 mol/(m^2*s*Pa)
+*** What's a dispersion correction in dft?
+Dipoles occur as a molecule passes through the membrane. They need to be accounted for in the energy calculations.
+*** Ryd compared to eV?
+Stands for Rydberg constant.
+1 eV = 7.350e-2 Ryd
+300 eV = 22.096 Ryd
+*** TODO Best way to calculate a pore's diameter?
+*** What should I compare H2 transport with?
+- cite:koenig-2012-selec-molec 
+- cite:jiang-2009-porous-graph 
+- cite:blankenburg-2010-porous-graph
+
+** Properties
+*** Bond lengths
+
+| Molecule | Bond | Bond Length (Å) |
+| H2       | H-H  |            0.74 |
+| CO2      | C=O  |            1.21 |
+| N2       | N=-N |            1.13 |
+
+**** References
+CO2 C=O, H2, N2: CRC Handbook, Section 9, Characteristic Bond Lengths in Free Molecules
+
+*** Common molecules
+Useful numbers:
+- Average energy of a gas particle at room temperature: ~0.037 eV (need cite)
+  - calculated as $E=(3/2)kT$, where $k$ is the Boltzmann constant
+
+#+caption: Properties of common industrial gases.
+#+name: tab:properties-common_gases
+| Molecule      |  Kinetic |
+|               | diameter |
+|               |      (Å) |
+|---------------+----------|
+| He            |     2.60 |
+| H2O           |     2.65 |
+| Ne            |     2.79 |
+| H2            |     2.89 |
+| NH3           |     3.26 |
+| CO2           |     3.30 |
+| Ar            |     3.42 |
+| O2            |     3.46 |
+| Kr            |     3.60 |
+| H2S           |     3.60 |
+| N2            |     3.64 |
+| CO            |     3.76 |
+| CH4           |     3.80 |
+|---------------+----------|
+| CH4           |      3.8 |
+| C2H6          |      --- |
+| C2H4          |      3.9 |
+| C3H8          |      4.3 |
+| n-C4H10       |      4.3 |
+| C3H6          |      4.5 |
+| i-C4H10       |        6 |
+|---------------+----------|
+| Benzene       |     5.85 |
+| Toluene       |     5.85 |
+| p-xylene      |     5.85 |
+| Ethyl-benzene |     6.00 |
+| Cyclohexane   |      6.0 |
+| o-xylene      |     6.80 |
+| m-xylene      |     6.80 |
+
+**** References
+Kinetic diameter
+- He, H2S, CO: [[https://en.wikipedia.org/wiki/Kinetic_diameter][Wiki]]
+- CO2, O2, N2, H2O, CH4, H2: cite:ismail-2015-fundam-gas p14
+- CO2, CO, CH4: cite:li-2010-two-dimen-polyp
+- NH3: cite:blankenburg-2010-porous-graph 
+- Ne, Ar: [[http://www.kayelaby.npl.co.uk/general_physics/2_2/2_2_4.html][NPL]]
+- Kr: [[https://smartech.gatech.edu/handle/1853/50383][Crawford-2013]]
+- He, H2, O2, N2, CO, CO2, CH4, C2H6, C2H4, C3H8, C3H6, n-C4H10, i-C4H10: cite:matteucci-2006-trans-gases Has L-J parameters in same table
+- benz, tol, eth-benz, xylene: cite:baertsch-1996-permeat-aromat
+- cyclohexane: cite:sing-2004-use-molec
+
+*** 2D materials
+
+Structure
+| Material | Stack | Lattice      |
+|          |       | Constant [Å] |
+|----------+-------+--------------|
+| Graphene | Mono  | 2.460        |
+|          |       |              |
+
+
+Stability
+| Material | Stack | Production | Temperature   | Ref                       |
+|          |       |            | Stability [K] |                           |
+|----------+-------+------------+---------------+---------------------------|
+| Graphene | Mono  | CVD        | 2600          | cite:kim-2010-high-temper |
+
+
+
+| Material | Features    | Pore     |
+|          |             | Size (Å) |
+|----------+-------------+----------|
+| Graphene | Pristine    |          |
+| PG       |             | 2.48     |
+| PG-ES1   |             |          |
+| PG-ES2   |             |          |
+| PG-ES3   |             |          |
+| hBN      |             |          |
+
+**** References
+
+Structure
+- Lattice constant
+  - Graphene mono: cite:partoens-2006-from-graph
+
+Pore size
+- Graphene, Pristine: 
+- PG: cite:li-2010-two-dimen-polyp
+** Separations
+
+Materials to research
+- Graphene Monolayer
+- Graphene Bilayer
+- Graphene oxide
+- Boron nitride monolayer
+- Boron nitride bilayer
+
+*** Master Table
+
+Table legend:
+- 2D Material:
+  - hBN: hexagonal boron nitride
+  - PG: Polyphenylene (porous graphene)
+  - PG-ES1: Porous Graphene-E-Stilbene-1
+- Features: Distinctive variations of the material.
+  - Porous: Intentially engineered pores
+  - Defects: Naturally occuring defects from the production process.
+- Func. Groups: Functional groups attached around a pore.
+  - CNT: Carbon nanotubes
+- Methods:
+  - DFT: Density functional theory
+  - Exp: Experimental
+  - MD: Molecular dynamics simulation
+  - TST: Transition state theory
+- Molecules: Numbers denote separation groups. Members of "a" can be separated from "b" and both can be separated from "c". Additionally, "a" transfers across the barrier before "b".
+
+#+caption: Table of separation selectivity groupings found in literature with molecule columns ordered by kinetic diameter.
+#+name: tab:separations-common_gases
+| Reference                          | Methods  | 2D             | Stack   | Features | Func.  | He | H2O | Ne | H2 | NH3 | CO2 | Ar | O2 | N2 | Kr | H2S | CO | CH4 | Note |
+|                                    |          | Material       |         |          | Groups |    |     |    |    |     |     |    |    |    |    |     |    |     |      |
+|------------------------------------+----------+----------------+---------+----------+--------+----+-----+----+----+-----+-----+----+----+----+----+-----+----+-----+------|
+| cite:jiang-2009-porous-graph       | DFT, MD  | Graphene       | Mono    | Porous   | N/H, H |    |     |    | a  |     |     |    |    |    |    |     |    | b   |      |
+| cite:wesołowski-2011-pillar-graph  | MD       | Graphene       | Multi   | Porous   | CNT    | c  |     |    |    |     |     | b  |    |    | a  |     |    |     |      |
+| cite:du-2011-separ-hydrog          | MD       | Graphene       | Mono    | Porous   |        |    |     |    | a  |     |     |    |    | b  |    |     |    |     |      |
+| cite:koenig-2012-selec-molec       | Exp      | Graphene       | Bilayer | Porous   |        |    |     |    | a  |     | a   | b  |    | b  |    |     |    | b   |      |
+| cite:kim-2013-selec-gas            | Exp      | Graphene       | Multi   | Defects  |        |    |     |    |    |     |     |    | a  | b  |    |     |    |     |      |
+| cite:celebi-2014-ultim-permeat     | Exp      | Graphene       | Bilayer | Porous   |        |    |     |    | a  |     | b   |    |    |    |    |     |    |     |      |
+| cite:lei-2014-separ-hydrog         | DFT      | Graphene       | Mono    | Porous   |        |    |     |    |    |     |     |    |    |    |    | a   |    | b   |    3 |
+| cite:liu-2015-selec-trend          | MD       | Graphene       | Mono    | Porous   | N/H    |    |     |    | a  |     | a   | b  |    | b  |    |     |    | b   |      |
+| cite:sun-2015-applic-nanop         | MD       | Graphene       | Mono    | Porous   | N/H    |    |     |    |    |     | a   |    |    | a  |    | a   |    | b   |      |
+|------------------------------------+----------+----------------+---------+----------+--------+----+-----+----+----+-----+-----+----+----+----+----+-----+----+-----+------|
+| cite:blankenburg-2010-porous-graph | DFT, MD  | PG             | Mono    |          |        | a  |     | a  | a  | c   | b   | d  | b  | c  |    |     | c  |     |      |
+| cite:li-2010-two-dimen-polyp       | DFT      | PG             | Mono    |          |        |    |     |    | a  |     | b   |    |    |    |    |     | b  | b   |      |
+| cite:huang-2014-improv-permeab     | DFT, MD  | PG             | Bilayer |          |        |    |     |    | a  |     |     |    |    |    |    |     |    | b   |      |
+| cite:schrier-2012-carbon-dioxid    | MD       | PG-ES1         | Mono    |          |        |    |     |    |    |     | a   |    | b  | b  |    |     |    |     |      |
+| cite:brockway-2013-noble-gas       | DFT, MD  | PG-ES1         | Mono    |          |        | a  |     | a  |    |     | b   | b  | b  | b  |    |     |    | c   |      |
+| cite:tao-2014-tunab-hydrog         | DFT, MD  | PG-ES1         | Mono    |          |        |    |     |    | a  |     | b   |    |    | b  |    |     |    | b   |      |
+|------------------------------------+----------+----------------+---------+----------+--------+----+-----+----+----+-----+-----+----+----+----+----+-----+----+-----+------|
+| cite:nair-2012-unimp-permeat       | Exp, MD  | Graphene oxide | 1 µm    |          |        | b  | a   |    | b  |     |     | b  |    | b  |    |     |    |     |      |
+| cite:li-2013-ultrat-molec          | Exp      | Graphene oxide | 2-18 nm |          |        |    |     |    | a  |     | b   |    |    |    |    |     |    |     |      |
+| cite:li-2013-ultrat-molec          | Exp      | Graphene oxide | 2-18 nm |          |        |    |     |    | a  |     |     |    |    | b  |    |     |    |     |      |
+| cite:li-2013-ultrat-molec          | Exp      | Graphene oxide | 18 nm   |          |        | a  |     |    | a  |     | b   |    | b  | b  |    |     | b  | b   |    1 |
+| cite:kim-2013-selec-gas            | Exp      | Graphene oxide | 3-7 nm  |          |        |    |     |    | a  |     | b   |    |    |    |    |     |    |     |    2 |
+| cite:kim-2013-selec-gas            | Exp      | Graphene oxide | 3-7 nm  |          |        | b  |     |    | b  |     | a   |    | b  | b  |    |     |    | b   |      |
+|------------------------------------+----------+----------------+---------+----------+--------+----+-----+----+----+-----+-----+----+----+----+----+-----+----+-----+------|
+| cite:zhang-2015-hexag-boron        | DFT, MD  | hBN            | Mono    | Porous   | N/H    |    |     |    | a  |     |     |    |    |    |    |     |    | b   |      |
+|------------------------------------+----------+----------------+---------+----------+--------+----+-----+----+----+-----+-----+----+----+----+----+-----+----+-----+------|
+| cite:jiao-2011-graph               | DFT, TST | Graphdiyne     | Mono    |          |        |    |     |    | a  |     | b   |    |    |    |    |     |    | b   |      |
+| cite:zhu-2015-c-n                  | DFT      | C2N            | Mono    |          |        | a  | b   | b  |    |     | b   | b  | b  | b  |    | b   |    | b   |      |
+| cite:li-2015-effic-helium          | DFT, MD  | g-C3N4         | Mono    |          |        | a  |     | b  | b  |     | b   | b  |    | b  |    |     | b  | b   |      |
+
+Notes:
+1. Extrapolated from single-gas permeation results.
+2. Long time scale ~1 hr. At short time scales <0.1 hr, the permeance rate is reversed.
+3. Pore carbons had negative charge (-0.241 e).
+
+*** Atmospheric separations
+N2, O2, Ar, CO2, Ne, He, CH4 
+
+| Reference                          | Methods  | 2D             | Stack   | Features | Func.  | N2 | O2 | Ar | CO2 | Ne | He | CH4 |
+|                                    |          | Material       |         |          | Groups |    |    |    |     |    |    |     |
+|------------------------------------+----------+----------------+---------+----------+--------+----+----+----+-----+----+----+-----|
+| cite:koenig-2012-selec-molec       | Exp      | Graphene       | Bilayer | Porous   |        | b  |    | b  | a   |    |    | b   |
+| cite:kim-2013-selec-gas            | Exp      | Graphene       | Multi   | Defects  |        | b  | a  |    |     |    |    |     |
+| cite:liu-2015-selec-trend          | MD       | Graphene       | Mono    | Porous   | N/H    | b  |    | b  | a   |    |    | b   |
+| cite:sun-2015-applic-nanop         | MD       | Graphene       | Mono    | Porous   | N/H    | a  |    |    | a   |    |    | b   |
+|------------------------------------+----------+----------------+---------+----------+--------+----+----+----+-----+----+----+-----|
+| cite:blankenburg-2010-porous-graph | DFT, MD  | PG             | Mono    |          |        | c  | b  | d  | b   | a  | a  |     |
+| cite:schrier-2012-carbon-dioxid    | MD       | PG-ES1         | Mono    |          |        | b  | b  |    | a   |    |    |     |
+| cite:brockway-2013-noble-gas       | DFT, MD  | PG-ES1         | Mono    |          |        | b  | b  | b  | b   | a  | a  | c   |
+|------------------------------------+----------+----------------+---------+----------+--------+----+----+----+-----+----+----+-----|
+| cite:li-2013-ultrat-molec          | Exp      | Graphene oxide | 18 nm   |          |        | b  | b  |    | b   |    | a  | b   |
+| cite:kim-2013-selec-gas            | Exp      | Graphene oxide | 3-7 nm  |          |        | b  | b  |    | a   |    | b  | b   |
+|------------------------------------+----------+----------------+---------+----------+--------+----+----+----+-----+----+----+-----|
+| cite:zhu-2015-c-n                  | DFT      | C2N            | Mono    |          |        | b  | b  | b  | b   | b  | a  | b   |
+| cite:li-2015-effic-helium          | DFT, MD  | g-C3N4         | Mono    |          |        | b  |    | b  | b   | b  | a  | b   |
+
+*** Water-gas shift
+CO + H2O -> CO2 + H2
+
+| Reference                          | Methods  | 2D             | CO | H2O | CO2 | H2 |
+|                                    |          | Material       |    |     |     |    |
+|------------------------------------+----------+----------------+----+-----+-----+----|
+| cite:celebi-2014-ultim-permeat     | Exp      | Graphene       |    |     | b   | a  |
+|------------------------------------+----------+----------------+----+-----+-----+----|
+| cite:blankenburg-2010-porous-graph | DFT      | PG             | c  |     | b   | a  |
+| cite:li-2010-two-dimen-polyp       | DFT      | PG             | b  |     | b   | a  |
+|------------------------------------+----------+----------------+----+-----+-----+----|
+| cite:tao-2014-tunab-hydrog         | DFT, MD  | PG-ES1         |    |     | b   | a  |
+|------------------------------------+----------+----------------+----+-----+-----+----|
+| cite:nair-2012-unimp-permeat       | Exp, MD  | Graphene oxide |    | a   |     | b  |
+| cite:li-2013-ultrat-molec          | Exp      | Graphene oxide |    |     | b   | a  |
+| cite:li-2013-ultrat-molec          | Exp      | Graphene oxide | b  |     | b   | a  |
+| cite:kim-2013-selec-gas            | Exp      | Graphene oxide |    |     | b   | a  |
+| cite:kim-2013-selec-gas            | Exp      | Graphene oxide |    |     | a   | b  |
+|------------------------------------+----------+----------------+----+-----+-----+----|
+| cite:jiao-2011-graph               | DFT, TST | Graphdiyne     |    |     | b   | a  |
+
+*** Nobel gas separation
+He, Ne, Ar, Kr
+
+| Reference                          | Methods  | 2D             | He | Ne | Ar | Kr |
+|                                    |          | Material       |    |    |    |    |
+|------------------------------------+----------+----------------+----+----+----+----|
+| cite:wesołowski-2011-pillar-graph  | MD       | Graphene       | c  |    | b  | a  |
+|------------------------------------+----------+----------------+----+----+----+----|
+| cite:blankenburg-2010-porous-graph | DFT      | PG             | a  | a  | d  |    |
+|------------------------------------+----------+----------------+----+----+----+----|
+| cite:zhu-2015-c-n                  | DFT      | C2N            | a  | b  | b  |    |
+| cite:li-2015-effic-helium          | DFT, MD  | g-C3N4         | a  | b  | b  |    |
+
+** TODO H2 transport comparison
+Use the following works to generate a table with comparisons of H2 transport
+- cite:koenig-2012-selec-molec 
+- cite:jiang-2009-porous-graph 
+- cite:blankenburg-2010-porous-graph
+
+* Papers
+** Graphene
+*** cite:novoselov-2005-two-dimen
+*** cite:partoens-2006-from-graph graphene structure unitcell
+*** cite:geim-2009-graph
+*** *cite:jiang-2009-porous-graph DFT porous graphene separation of H2/CH4
+Selectivity results
+| Graphene monolayer porous N/H functionalized |  10^8 |
+| Graphene monolayer porous H functionalized   | 10^23 |
+| Traditional polymer / silica membranes       |  10^8 |
+*** cite:pontes-2009-barrier-free DFT HCN production with substitutional doping using boron
+*** DONE cite:du-2011-separ-hydrog DFT H2/N2 separation
+    CLOSED: [2016-06-01 Wed 14:59]
+*** DONE *cite:koenig-2012-selec-molec Experimental separation of common gases
+    CLOSED: [2016-06-01 Wed 14:59]
+*** cite:shan-2012-influen-chemic CO2/N2 separation using cite:jiang-2009-porous-graph funcitonalized groups
+*** DONE cite:drahushuk-2012-mechan-gas MD H2/N2 separation. Explains mechanisms for gases crossing the membrane
+    CLOSED: [2016-06-01 Wed 14:59]
+*** cite:kim-2013-selec-gas  Exp O2/N2. Most work done on GO.
+*** cite:miao-2013-first-princ DFT proton/H separation
+*** cite:qin-2013-graph-with H2&He separation from air. Octogon pore + secondary small pore.
+*** cite:ambrosetti-2014-gas-separ Water filtration through porous graphene. No permeation/selectivity data.
+*** cite:celebi-2014-ultim-permeat Exp separation of H2/CO2 with bilayer G. Also a water permeance comparison to Goretex.
+*** cite:tsetseris-2014-graph DFT Boron can pass through pristine graphene under moderate annealing conditions
+*** cite:sun-2015-applic-nanop DFT separation for gases in natural gas processing
+*** cite:wen-2015-inhib-effec Inhibition effect of non-permeating components
+*** cite:achtyl-2015-aqueous-proton Exp/DFT Defect detection. Aqueous proton transfer
+
+** Polyphenylene (Porous Graphene (PG))
+*** cite:bieri-2009-porous-graph Synthesis of PG
+*** *cite:blankenburg-2010-porous-graph Selectivity study of common gases with DFT
+[[./img/blankenburg-2010-porous-graph-3.png]]
+*** cite:schrier-2010-helium-separ Helium isotope separation
+*** cite:li-2010-two-dimen-polyp H2 separation from CO2, CO, CH4
+*** cite:lu-2014-promis-monol DFT O2 separation from harmful gases
+*** cite:huang-2014-improv-permeab Bilayer porous graphene. H2/CH4 separation. High permeance and selectivity
+*** cite:tao-2014-tunab-hydrog DFT PG-ESX study on hydrogen purification
+| Molecule |     Kinetic |
+|          | Diam. (Ang) |
+|----------+-------------|
+| H2       |         2.9 |
+| N2       |        3.64 |
+| CO       |        3.76 |
+| CH4      |         3.8 |
+Note: Agrees with common molecules table.
+
+*** *cite:brockway-2013-noble-gas DFT PG-ESX study similar to Blankenberg's
+*** Notes 
+High temperatures required for permeance of H2 and He would destroy a PG monolayer. cite:huang-2014-improv-permeab
+** hexagonal Boron Nitride (hBN)
+*** cite:corso-2004-boron-nitrid-nanom Boron nitride nanomesh
+Hole in mesh: size 20 Å
+- 'likely driven by the lattice mismatch of the film and the rhodium substrate'
+*** cite:jin-2009-fabric-frees monolayer fabrication with electron irradiation
+*** cite:nag-2010-graph-analog-bn properties of hBN compared to graphene
+*** cite:hu-2014-proton-trans proton transport of graphene, hBN, MoS2
+*** *cite:zhang-2015-hexag-boron H2/CH4 separation. Triangular pores.
+Drahushuk, L. W.; Strano, M. S. Mechanisms of Gas Permeation
+through Single Layer Graphene. Langmuir 2012, 28, 16671−16678.
+** Graphene oxide
+*** *cite:kim-2013-selec-gas
+*** *cite:li-2013-ultrat-molec
+*** cite:yoo-2013-graph-graph
+** Molybdenum disulphide (MoS2)
+*** cite:hong-2015-explor-atomic 
+** Quantum mechanics
+*** Lennard-Jones potential
+[[http://chemwiki.ucdavis.edu/Core/Physical_Chemistry/Physical_Properties_of_Matter/Atomic_and_Molecular_Properties/Intermolecular_Forces/Specific_Interactions/Lennard-Jones_Potential][ChemWiki - UC Davis]]
+
+*** van der Waals radius
+[[http://chemwiki.ucdavis.edu/Core/Theoretical_Chemistry/Chemical_Bonding/General_Principles_of_Chemical_Bonding/Covalent_Bond_Distance%2C_Radius_and_van_der_Waals_Radius][ChemWiki - UC Davis]]
+** Neural networks
+*** *cite:behler-2007-gener-neural
+*** TODO cite:behler-2008-press-induc
+*** TODO cite:behler-2011-neural-networ
+*** TODO cite:behler-2014-repres-poten
+** Review articles
+*** cite:yoo-2013-graph-graph Graphene and graphene oxide uses as barriers
+** Patents
+*** TODO Aperture
+http://www.google.com/patents/US20140263035
+** Non-pertinent
+*** TODO cite:britnell-2012-elect-tunnel hBN as a dielectric
+** To Read
+*** TODO cite:elstner-1998-self-consis
+*** TODO cite:zhu-2006-permean-shoul
+*** TODO cite:zhang-2012-tunab-hydrog
+*** TODO cite:drahushuk-2012-mechan-gas
+*** TODO cite:nieszporek-2015-alkan-separ
+*** TODO cite:liu-2014-mechan-proper
+*** TODO cite:tao-2014-tunab-hydrog
+*** TODO cite:wang-2014-trans-metal
+*** TODO cite:bunch-2008-imper-atomic
+*** TODO cite:leeuwen-1994-deriv-stock Derivation of L-J lengths of liquids.
+*** TODO cite:hauser-2012-methan-selec Methane transfer through graphene, DFT
 * Snippets
 ** 2016-03-07: Remote copying
 *Note 2016-05-18* - Copying is better done by maintaining the git repo. 
@@ -131,18 +848,19 @@ print(a)
 ** 2016-05-23: Test vasp is working on the server
 
 #+BEGIN_SRC python
-import numpy as np
-np.set_printoptions(precision=3, suppress=True)
+import sys
 
 from ase import Atoms, Atom
 from ase.structure import molecule
 from ase.io import write as ase_write
+from ase.visualize import view
 from jasp import *
-JASPRC['queue.walltime'] = '10:00:00'
+JASPRC['queue.walltime'] = '00:30:00'
 
 atoms = molecule('C2H6')
+atoms.center(vacuum=4)
 
-ENCUTS = [300, 350, 400]
+ENCUTS = [300]
 energies_en = []
 forces_en = []
 ready = True
@@ -159,43 +877,18 @@ for en in ENCUTS:
             ready = False
             print("Still processing: {}".format(job_name))
 
-
-cells = [0.5, 3, 6]
-energies_L = []
-forces_L = []
-for c in cells:
-    atoms.center(vacuum=c)
-    job_name = '~/tmp/vasp_test/molecules/c2h6-L-{0}'.format(c)
-    with jasp(job_name,
-              encut=400,
-              xc='PBE',
-              atoms=atoms) as calc:
-        try:
-            energies_L.append(atoms.get_potential_energy())
-            forces_L.append(atoms.get_forces())
-        except (VaspSubmitted, VaspQueued):
-            ready = False
-            print("Still processing: {}".format(job_name))
-
 if not ready:
     import sys; sys.exit()
 
-print("1.")
 print("{0:5s}    {1:7s}    {2:9s}".format("ENCUT", "Energy", "Max force"))
 print("{0:5s}    {1:7s}    {2:9s}".format("", "[eV]", "[eV/Ang]"))
 print("-----------------------------")
 for i, energy, force in zip(ENCUTS, energies_en, forces_en):
     print("{0:5d}    {1:7.3f}    {2:9.3f}".format(i, energy, force.max()))
-
-print("\n2.")
-print("{0:11s}    {1:7s}    {2:9s}".format("Cell vacuum", "Energy", "Max force"))
-print("{0:11s}    {1:7s}    {2:9s}".format("", "[eV]", "[eV/Ang]"))
-print("-----------------------------------")
-for i, energy, force in zip(cells, energies_L, forces_L):
-    print("{0:11.1f}    {1:7.3f}    {2:9.3f}".format(i, energy, force.max()))
 #+END_SRC
 
 #+RESULTS:
+: Still processing: ~/tmp/vasp_test/molecules/c2h6-en-300
 
 ** TODO Better movies
 - What is the best format for this?
@@ -490,7 +1183,7 @@ with jasp('./dft/' + name,
 
 **** Pore=10 (Ten carbon defect)
 ***** 4x4
-#+BEGIN_SRC python :results output
+#+BEGIN_SRC python :results drawer
 from ase import Atom, Atoms
 from ase.io import write as ase_write
 from ase.visualize import view
@@ -552,12 +1245,14 @@ print('[[' + file_path + ']]')
 #+END_SRC
 
 #+RESULTS:
-: Graphene 4x4 pore=10:
-: Final structure calculation: Atoms: 22. Energy/f.u. = -8.167. Calculation time: 1933 min.
-: [[./img/material/g-mono/4x4/pore=10/vac=16.png]]
+:RESULTS:
+Graphene 4x4 pore=10:
+Final structure calculation: Atoms: 22. Energy/f.u. = -8.167. Calculation time: 1933 min.
+[[./img/material/g-mono/4x4/pore=10/vac=16.png]]
+:END:
 
 ***** 5x5
-#+BEGIN_SRC python :results output
+#+BEGIN_SRC python :results drawer
 from ase import Atom, Atoms
 from ase.io import write as ase_write
 from ase.visualize import view
@@ -595,13 +1290,26 @@ name = 'material/g-mono/5x5/pore=10/vac=16'
 
 with jasp('./dft/' + name,
             encut=520,
+            xc='PBE',          # GGA functional type
+            atoms=atoms) as calc:
+    try:
+        calc.calculate()
+        energy = atoms.get_potential_energy()/len(atoms)
+        print_converged(len(atoms), energy, float(get_elapsed_time(calc)))
+    except (VaspSubmitted, VaspQueued):
+        print_inprogress()
+        ready = False
+        pass
+
+with jasp('./dft/' + name + '/relax',
+            encut=520,
             kpts=(6,6,1),
             xc='PBE',          # GGA functional type
             ismear=0,          # Gaussian smearing
             sigma=0.2,         # "Metallic" system smearing
             isif=2,            # relax positions only
             ibrion=2,          # conjugate gradient optimizer
-            nsw=90,            # max number of steps to relax
+            nsw=200,            # max number of steps to relax
             atoms=atoms) as calc:
     try:
         calc.calculate()
@@ -618,9 +1326,12 @@ print('[[' + file_path + ']]')
 #+END_SRC
 
 #+RESULTS:
-: Graphene 5x5 pore=10:
-: Final structure calculation: In progress.
-: [[./img/material/g-mono/5x5/pore=10/vac=16.png]]
+:RESULTS:
+Graphene 5x5 pore=10:
+Final structure calculation: Atoms: 40. Energy/f.u. = -8.579. Calculation time: 153 min.
+Final structure calculation: In progress.
+[[./img/material/g-mono/5x5/pore=10/vac=16.png]]
+:END:
 
 ***** 6x6
 #+BEGIN_SRC python :results output
@@ -658,7 +1369,6 @@ del atoms[39:43]
 del atoms[29:33]
 del atoms[19]
 
-
 name = 'material/g-mono/6x6/pore=10/vac=16'
 
 with jasp('./dft/' + name,
@@ -669,7 +1379,7 @@ with jasp('./dft/' + name,
             sigma=0.2,         # "Metallic" system smearing
             isif=2,            # relax positions only
             ibrion=2,          # conjugate gradient optimizer
-            nsw=90,            # max number of steps to relax
+            nsw=400,            # max number of steps to relax
             atoms=atoms) as calc:
     try:
         calc.calculate()
@@ -691,7 +1401,6 @@ print('[[' + file_path + ']]')
 : [[./img/material/g-mono/6x6/pore=10/vac=16.png]]
 
 *** Graphene bilayer
-
 **** Pristine
 Structure obtained from https://www.tfkp.physik.uni-erlangen.de/download/theses/master_daniel-branski.pdf.
 
@@ -762,7 +1471,7 @@ print('[[' + file_path + ']]')
 
 #+RESULTS:
 :RESULTS:
-Final structure calculation: In progress.
+Final structure calculation: Atoms: 4. Energy/f.u. = -9.225. Calculation time: 14 min.
 [[./img/material/g-bi.png]]
 :END:
 
@@ -775,7 +1484,6 @@ from ase import Atom, Atoms
 from ase.visualize import view
 from ase.io import write as ase_write
 from jasp import *
-JASPRC['queue.walltime'] = '10:00:00'
 
 
 def print_converged(num_atoms, energy, time):
@@ -812,7 +1520,7 @@ atoms = atoms.repeat([i,i,1])
 del atoms[17:19]
 
 name = 'material/g-bi/3x3/pore=1'
-view(atoms)
+
 with jasp('./dft/' + name,
             encut=520,
             kpts=(6,6,1),
@@ -821,7 +1529,7 @@ with jasp('./dft/' + name,
             sigma=0.2,         # "Metallic" system smearing
             isif=2,            # relax positions only
             ibrion=2,          # conjugate gradient optimizer
-            nsw=90,            # max number of steps to relax
+            nsw=150,            # max number of steps to relax
             atoms=atoms) as calc:
     try:
         calc.calculate()
@@ -839,6 +1547,8 @@ print('[[' + file_path + ']]')
 
 #+RESULTS:
 :RESULTS:
+Final structure calculation: In progress.
+[[./img/material/g-bi/3x3/pore=1.png]]
 :END:
 
 **** Pore=10
@@ -850,7 +1560,7 @@ from ase import Atom, Atoms
 from ase.visualize import view
 from ase.io import write as ase_write
 from jasp import *
-JASPRC['queue.walltime'] = '10:00:00'
+#JASPRC['queue.walltime'] = '10:00:00'
 
 
 def print_converged(num_atoms, energy, time):
@@ -884,21 +1594,15 @@ atoms = Atoms([Atom('C', rA1),
 
 i = 6
 atoms = atoms.repeat([i,i,1])
-# layer 1 pore
-del atoms[108]
-del atoms[104]
-del atoms[84:86]
-del atoms[80:82]
-del atoms[60:62]
-del atoms[56:58]
 
-# layer 2 pore
-del atoms[75:79]
-del atoms[55:60]
-del atoms[35]
+pore = [37, 39, 63, 83, 104, 79, 77, 55, 56, 35, 60, 57, 80, 81, 84, 61, 59, 82, 58, 62]
+pore.sort()
+for p in reversed(pore):
+    #atoms[p].symbol = "N"
+    del atoms[p]
+
 name = 'material/g-bi/6x6/pore=10'
-view(atoms)
-sys.exit()
+
 with jasp('./dft/' + name,
             encut=520,
             kpts=(6,6,1),
@@ -907,7 +1611,7 @@ with jasp('./dft/' + name,
             sigma=0.2,         # "Metallic" system smearing
             isif=2,            # relax positions only
             ibrion=2,          # conjugate gradient optimizer
-            nsw=90,            # max number of steps to relax
+            nsw=150,            # max number of steps to relax
             atoms=atoms) as calc:
     try:
         calc.calculate()
@@ -926,9 +1630,6 @@ print('[[' + file_path + ']]')
 #+RESULTS:
 :RESULTS:
 :END:
-
-
-*** Graphene trilayer
 
 ** Transport
 *** Graphene monolayer
@@ -1956,705 +2657,6 @@ print('[[' + file_path + ']]')
 
 It appears that when the leading atom is 4 Å away from the graphene plane, there is no interaction. Since most molecules that we'll be testing are about 2-4 Å in length, it seems reasonable to make the z-direction vaccuum space of the calculations to be 9 Å on either side of the graphene plane. 
 
-* Meetings
-** DONE 2016-03-08 4pm
-   CLOSED: [2016-03-09 Wed 09:26] DEADLINE: <2016-03-08 Tue 16:00>
-*** Questions
-quantum mechanics:
-- can we adsorb molecules to the surface which impart favorable changes to the electron density around diffusion sites?
-
-neural network:
-- can we use a neural network to address properties that dft doesn't model well, such as charging the material with a potential?
-
-org-ref:
-- can you later attach a pdf?
-- duplicate current bibliography into default bibliography?
-- do you highlight pdfs or just type into the notes file?
-
-*** Actions
-1. Table outlining separation data
-
-** DONE 2016-04-15 11am
-   CLOSED: [2016-05-11 Wed 16:02] DEADLINE: <2016-04-15 Fri 11:00>
-*** Final project suggestion
-- develop a suggestion related to research
-- look into what jasp is lacking
-
-*** Neural networks
-Behler-Parrinello paper from 2007
-- inputs are atom positions
-- questions
-  - how is it not overfit with an 8200 optimizing set and 800 test set?
-  - is there a way to use different inputs or generalize them? (ie. an input could be the position or presence of a functional group)
-
-** DONE 2016-05-12 11am
-*** Final project feedback
-[[file:~/techela/s16-06640/final-project/final-project.org::*Transport of carbon dioxide]]
-
-*** Correct constraints for a molecule
-
-#+BEGIN_SRC python
-from ase import Atom, Atoms
-from ase.constraints import FixAtoms, Hookean
-from ase.visualize import view
-from jasp import *
-import numpy as np
-import matplotlib.pyplot as plt
-import sys
-
-JASPRC['queue.walltime'] = '10:00:00'
-
-def print_converged(i, energy, time):
-#    print(i, energy, time)
-    print("CO2 Distance: {:5.2f}. Energy = {:8.3f}. Calculation time: {:3.0f} min.".format(i, energy, time/60.))
-
-def print_inprogress(i):
-    print("CO2 Distance: {:5.2f}. In progress.".format(i))
-
-def print_unconverged(i):
-    print("CO2 Distance: {:5.2f}. Did not converge.".format(i))
-
-
-# Height of the fixed atom
-heights = [3., 2.5, 2., 1.5, 1., 0.5, 0., -0.5, -1., -1.5, -2, -2.5, -3]
-
-
-# Build base images
-with jasp('graphene/G-c-final') as calc:
-    G_defect = calc.get_atoms()
-def_pos = np.array([5.681, 0., 5.]) # defect position
-
-# http://en.wikipedia.org/wiki/Carbon_dioxide_(data_page)
-CO_bond = 1.16 # Ang. C=O bond length in CO2
-
-atoms =  [Atoms(G_defect) for i in range(len(heights))]
-for i, h in enumerate(heights):
-    CO2 = Atoms([Atom('O', def_pos + (0., 0., h - CO_bond)),
-                 Atom('C', def_pos + (0., 0., h)),
-                 Atom('O', def_pos + (0., 0., h + CO_bond))])
-
-    atoms[i].extend(CO2)
-
-# Constraint - fix all carbons (including the CO2 carbon)
-carbon_constraint = [FixAtoms(indices=[atom.index for atom in atoms[0] if atom.symbol=='C'])]
-
-# Hookean constraint
-# Values for constants rt [Ang] and k [eV/Ang^-2] are from https://wiki.fysik.dtu.dk/ase/ase/constraints.html for a C=O bond
-for atom in atoms[0]:
-    if atom.symbol == 'O':
-        hook_constraint = [Hookean(a1=atom.index, a2=atom.index+1, rt=1.58, k=10.),
-                           Hookean(a1=atom.index+1, a2=atom.index+2, rt=1.58, k=10.)]
-        break
-
-ready = True
-
-# Constrained graphene, constrained carbon in CO2
-print('Unconstrained graphene, constrained carbon in CO2:')
-
-atoms_yy = [Atoms(atoms[i]) for i in range(len(heights))]
-#for i in range(len(heights)):
-#    atoms_yy[i].set_constraint(carbon_constraint)
-
-
-
-
-
-with jasp('transport/G-c-CO2-transport-no-yes-d=1.00a'.format(h),
-                encut=450,         # From convergence check
-                kpts=(6,6,1),      # From convergence check
-                xc='PBE',          # GGA functional type. Important for the defect.
-                ismear=0,          # Gaussian smearing
-                sigma=0.2,         # "Metallic" system smearing
-                isif=2,            # relax positions only
-                ibrion=2,          # conjugate gradient optimizer
-                nsw=50,            # max number of steps to relax
-                atoms=atoms_yy[i]) as calc:
-        try:
-            calc.calculate()
-            energy = atoms_yy[i].get_potential_energy()
-            print_converged(h, energy, float(get_elapsed_time(calc)))
-        except (VaspSubmitted, VaspQueued):
-            print_inprogress(h)
-            ready = False
-            pass
-sys.exit()
-
-
-
-
-
-TE_yy = []
-BO_yy = [[], []]
-for i, h in enumerate(heights):
-    with jasp('transport/G-c-CO2-transport-no-yes-d={0:0.2f}'.format(h),
-                encut=450,         # From convergence check
-                kpts=(6,6,1),      # From convergence check
-                xc='PBE',          # GGA functional type. Important for the defect.
-                ismear=0,          # Gaussian smearing
-                sigma=0.2,         # "Metallic" system smearing
-                isif=2,            # relax positions only
-                ibrion=2,          # conjugate gradient optimizer
-                nsw=50,            # max number of steps to relax
-                atoms=atoms_yy[i]) as calc:
-        try:
-            calc.calculate()
-            energy = atoms_yy[i].get_potential_energy()
-            TE_yy.append(energy)
-            BO_yy[0].append(atoms_yy[i].get_distance(17,18))
-            BO_yy[1].append(atoms_yy[i].get_distance(18,19))
-            print_converged(h, energy, float(get_elapsed_time(calc)))
-        except (VaspSubmitted, VaspQueued):
-            print_inprogress(h)
-            ready = False
-            pass
-
-
-# Constrained graphene, constrained carbon in CO2 + Hookean oxygen
-print('')
-print('Unconstrained graphene, constrained carbon + Hookean oxygen:')
-
-atoms_yh = [Atoms(atoms[i]) for i in range(len(heights))]
-#for i in range(len(heights)):
-#    atoms_yh[i].set_constraint(carbon_constraint + hook_constraint)
-
-TE_yh = []
-BO_yh = [[], []]
-for i, h in enumerate(heights):
-    with jasp('transport/G-c-CO2-transport-no-hook-d={0:0.2f}'.format(h),
-                encut=450,         # From convergence check
-                kpts=(6,6,1),      # From convergence check
-                xc='PBE',          # GGA functional type. Important for the defect.
-                ismear=0,          # Gaussian smearing
-                sigma=0.2,         # "Metallic" system smearing
-                isif=2,            # relax positions only
-                ibrion=2,          # conjugate gradient optimizer
-                nsw=50,            # max number of steps to relax
-                atoms=atoms_yh[i]) as calc:
-        try:
-            calc.calculate()
-            energy = atoms_yh[i].get_potential_energy()
-            TE_yh.append(energy)
-            BO_yh[0].append(atoms_yh[i].get_distance(17,18))
-            BO_yh[1].append(atoms_yh[i].get_distance(18,19))
-            print_converged(h, energy, float(get_elapsed_time(calc)))
-        except (VaspSubmitted, VaspQueued):
-            print_inprogress(h)
-            ready = False
-            pass
-
-if not ready:
-    import sys; sys.exit()
-
-import matplotlib.pyplot as plt
-
-# Consider the change in energy from lowest energy state
-TE_yy = np.array(TE_yy)
-TE_yh = np.array(TE_yh)
-TE_yy -= min(TE_yy)
-TE_yh -= min(TE_yh)
-
-print('')
-print('Comparison of constraint techniques:')
-file_path = './img/G-c-C-linear.png'
-plt.figure(0)
-plt.plot(heights, TE_yy, label='O uconstrained')
-plt.plot(heights, TE_yh, label='Hookean constraint')
-plt.xlabel('Height (Ang)')
-plt.ylabel('$\Delta$ Energy (eV)')
-plt.legend()
-plt.savefig(file_path)
-print('[[' + file_path + ']]')
-#view(atoms_yy)
-#view(atoms_yh)
-#+END_SRC
-
-#+RESULTS:
-: Unconstrained graphene, constrained carbon in CO2:
-: CO2 Distance: -3.00. In progress.
-
-*** Bilayer / Trilayer graphene
-**** Bilayer
-
-#+BEGIN_SRC python
-from ase import Atom, Atoms
-from ase.io import write as ase_write
-from ase.visualize import view
-from jasp import *
-import numpy as np
-import sys
-
-def print_converged(num_atoms, energy, time):
-    print("Final structure calculation: Atoms: {}. Energy/f.u. = {:0.3f}. Calculation time: {:.0f} min.".format(num_atoms, energy, time/60.))
-
-def print_inprogress():
-    print("Final structure calculation: In progress.")
-
-
-a = 2.46
-a1 = a * np.array([3.0**0.5/2., -1./2., 0.])
-a2 = a * np.array([3.0**0.5/2., 1./2., 0.])
-a3 = np.array([0., 0., 10.])
-
-layer_dist = 3.32
-b1 = a1
-b2 = a * np.array([1./2., 3.0**0.5/2., 0.])
-b3 = a3 - 2 * np.array([0., 0., layer_dist])
-
-unitcell = Atoms([Atom('C', 1./2. * a3),
-                  Atom('C', 1./3. * a1 + 1./3. * a2 + 1./2. * a3),
-                  Atom('C', 1./2. * b3),
-                  Atom('C', 1./3. * b1 + 1./3. * b2 + 1./2. * b3)],
-                  cell=[a1, a2, a3])
-
-
-atoms = unitcell
-#atoms = unitcell.repeat((3,3,1))
-view(atoms)
-sys.exit()
-
-defect_pos = atoms[9].position
-del atoms[9]
-
-ready = True
-with jasp('graphene/G-c-final',
-            encut=450,         # From convergence check
-            kpts=(6,6,1),      # From convergence check
-            xc='PBE',          # GGA functional type. Important for the defect.
-            ismear=0,          # Gaussian smearing
-            sigma=0.2,         # "Metallic" system smearing
-            isif=2,            # relax positions only
-            ibrion=2,          # conjugate gradient optimizer
-            nsw=50,            # max number of steps to relax
-            atoms=atoms) as calc:
-    try:
-        calc.calculate()
-        energy = atoms.get_potential_energy()/len(atoms)
-        print_converged(len(atoms), energy, float(get_elapsed_time(calc)))
-    except (VaspSubmitted, VaspQueued):
-        print_inprogress()
-        ready = False
-        pass
-
-if not ready:
-    sys.exit()
-
-print('')
-print('Defect position: {}'.format(defect_pos))
-
-print('')
-file_path = './img/bilayer.png'
-#file_path = './img/G-c-final-repeat-present.png'
-#atoms = atoms.repeat((3,3,1))
-#atoms.rotate('x', -np.pi/4)
-ase_write(file_path, atoms)
-print('[[' + file_path + ']]')
-view(atoms)
-#+END_SRC
-
-#+RESULTS:
-** DONE 2016-05-27 3pm Group meeting presentation
-   CLOSED: [2016-05-31 Tue 15:07] DEADLINE: <2016-05-27 Fri 3pm>
-
-(Meeting cancelled)
-
-*** Concept of gas phase transport
-
-#+BEGIN_SRC python
-from ase import Atom, Atoms
-from ase.visualize import view
-from jasp import *
-import numpy as np
-import matplotlib.pyplot as plt
-import sys
-
-heights = [10., 9., 8., 7., 6., 5., 4., 3., 2.5, 2., 1.5, 1., 0.5, 0.]
-
-def movie(constraint):
-    images = []
-    for i, h in enumerate(heights):
-        with jasp('./dft/transport/g-mono/3x3/pore=1/molec=CO2/' + constraint + '/d={0:0.2f}'.format(h)) as calc:
-            atoms = calc.get_atoms()
-            images.append(atoms)
-    view(images)
-
-free = 'linear-unconst_all'
-unconst_G = 'linear-unconst_G'
-const_all = 'linear-const'
-
-#movie(free)
-#movie(unconst_G)
-movie(const_all)
-#+END_SRC
-
-#+RESULTS:
-
-*** Bond length of molecules change as they transport
-
-[[./img/final-project/G-bond-length.png]]
-
-*** Total energy difference between H2 and CO2
-
-[[./img/final-project/total_energy-comparison.png]]
-
-*** How constraints effect total energy
-
-Hydrogen transport through monolayer graphene. Pore=1
-[[./img/transport/g-mono/3x3/pore=1/molec=H2/TE-comparison.png]]
-
-*** Non-interaction distance convergence
-[[./img/transport/g-mono/3x3/pore=1/molec=H2/TE-comparison-LJ_zoom.png]]
-
-How does this well distance change with other molecules?
-- Running comparisons with CO2 and N2.
-
-*** Pore distance convergence
-What pore interaction distance is acceptable?
-
-[[./img/material/g-mono/4x4/pore=10/vac=16.png]]
-
-[[./img/material/g-mono/5x5/pore=10/vac=16.png]]
-
-[[./img/material/g-mono/6x6/pore=10/vac=16.png]]
-
-*** Questions
-- How well is DFT handling multiple species?
-- - Smearing: sigma is not dependent on per molecule basis
-
-- Pressure can change diffusion pathways (gas phase vs adsorption)
-- - cite:du-2011-separ-hydrog
-- - cite:drahushuk-2012-mechan-gas
-
-* Research
-** Questions
-*** Are the kinetic diameters used in Blankenberg correct?
-cite:blankenburg-2010-porous-graph uses cite:leeuwen-1994-deriv-stock for kinetic diameter of ammonia, even though they're stated for liquids.
-cite:tsuru-2010-permeat-proper shows that certain kinetic diameter calculations may not apply to certain separations.
-*** What is the unit GPU?
-Gas permeance unit
-1 GPU = 0.33 mol/(m^2*s*Pa)
-*** What's a dispersion correction in dft?
-Dipoles occur as a molecule passes through the membrane. They need to be accounted for in the energy calculations.
-*** Ryd compared to eV?
-Stands for Rydberg constant.
-1 eV = 7.350e-2 Ryd
-300 eV = 22.096 Ryd
-*** TODO Best way to calculate a pore's diameter?
-** Properties
-*** Bond lengths
-
-| Molecule | Bond | Bond Length (Å) |
-| H2       | H-H  |            0.74 |
-| CO2      | C=O  |            1.21 |
-| N2       | N=-N |            1.13 |
-
-**** References
-CO2 C=O, H2, N2: CRC Handbook, Section 9, Characteristic Bond Lengths in Free Molecules
-
-*** Common molecules
-Useful numbers:
-- Average energy of a gas particle at room temperature: ~0.037 eV (need cite)
-  - calculated as $E=(3/2)kT$, where $k$ is the Boltzmann constant
-
-#+caption: Properties of common industrial gases.
-#+name: tab:properties-common_gases
-| Molecule      |  Kinetic |
-|               | diameter |
-|               |      (Å) |
-|---------------+----------|
-| He            |     2.60 |
-| H2O           |     2.65 |
-| Ne            |     2.79 |
-| H2            |     2.89 |
-| NH3           |     3.26 |
-| CO2           |     3.30 |
-| Ar            |     3.42 |
-| O2            |     3.46 |
-| Kr            |     3.60 |
-| H2S           |     3.60 |
-| N2            |     3.64 |
-| CO            |     3.76 |
-| CH4           |     3.80 |
-|---------------+----------|
-| CH4           |      3.8 |
-| C2H6          |      --- |
-| C2H4          |      3.9 |
-| C3H8          |      4.3 |
-| n-C4H10       |      4.3 |
-| C3H6          |      4.5 |
-| i-C4H10       |        6 |
-|---------------+----------|
-| Benzene       |     5.85 |
-| Toluene       |     5.85 |
-| p-xylene      |     5.85 |
-| Ethyl-benzene |     6.00 |
-| Cyclohexane   |      6.0 |
-| o-xylene      |     6.80 |
-| m-xylene      |     6.80 |
-
-**** References
-Kinetic diameter
-- He, H2S, CO: [[https://en.wikipedia.org/wiki/Kinetic_diameter][Wiki]]
-- CO2, O2, N2, H2O, CH4, H2: cite:ismail-2015-fundam-gas p14
-- CO2, CO, CH4: cite:li-2010-two-dimen-polyp
-- NH3: cite:blankenburg-2010-porous-graph 
-- Ne, Ar: [[http://www.kayelaby.npl.co.uk/general_physics/2_2/2_2_4.html][NPL]]
-- Kr: [[https://smartech.gatech.edu/handle/1853/50383][Crawford-2013]]
-- He, H2, O2, N2, CO, CO2, CH4, C2H6, C2H4, C3H8, C3H6, n-C4H10, i-C4H10: cite:matteucci-2006-trans-gases Has L-J parameters in same table
-- benz, tol, eth-benz, xylene: cite:baertsch-1996-permeat-aromat
-- cyclohexane: cite:sing-2004-use-molec
-
-*** 2D materials
-
-Structure
-| Material | Stack | Lattice      |
-|          |       | Constant [Å] |
-|----------+-------+--------------|
-| Graphene | Mono  | 2.460        |
-|          |       |              |
-
-
-Stability
-| Material | Stack | Production | Temperature   | Ref                       |
-|          |       |            | Stability [K] |                           |
-|----------+-------+------------+---------------+---------------------------|
-| Graphene | Mono  | CVD        | 2600          | cite:kim-2010-high-temper |
-
-
-
-| Material | Features    | Pore     |
-|          |             | Size (Å) |
-|----------+-------------+----------|
-| Graphene | Pristine    |          |
-| PG       |             | 2.48     |
-| PG-ES1   |             |          |
-| PG-ES2   |             |          |
-| PG-ES3   |             |          |
-| hBN      |             |          |
-
-**** References
-
-Structure
-- Lattice constant
-  - Graphene mono: cite:partoens-2006-from-graph
-
-Pore size
-- Graphene, Pristine: 
-- PG: cite:li-2010-two-dimen-polyp
-** Separations
-
-Materials to research
-- Graphene Monolayer
-- Graphene Bilayer
-- Graphene oxide
-- Boron nitride monolayer
-- Boron nitride bilayer
-
-*** Master Table
-
-Table legend:
-- 2D Material:
-  - hBN: hexagonal boron nitride
-  - PG: Polyphenylene (porous graphene)
-  - PG-ES1: Porous Graphene-E-Stilbene-1
-- Features: Distinctive variations of the material.
-  - Porous: Intentially engineered pores
-  - Defects: Naturally occuring defects from the production process.
-- Func. Groups: Functional groups attached around a pore.
-  - CNT: Carbon nanotubes
-- Methods:
-  - DFT: Density functional theory
-  - Exp: Experimental
-  - MD: Molecular dynamics simulation
-  - TST: Transition state theory
-- Molecules: Numbers denote separation groups. Members of "a" can be separated from "b" and both can be separated from "c". Additionally, "a" transfers across the barrier before "b".
-
-#+caption: Table of separation selectivity groupings found in literature with molecule columns ordered by kinetic diameter.
-#+name: tab:separations-common_gases
-| Reference                          | Methods  | 2D             | Stack   | Features | Func.  | He | H2O | Ne | H2 | NH3 | CO2 | Ar | O2 | N2 | Kr | H2S | CO | CH4 | Note |
-|                                    |          | Material       |         |          | Groups |    |     |    |    |     |     |    |    |    |    |     |    |     |      |
-|------------------------------------+----------+----------------+---------+----------+--------+----+-----+----+----+-----+-----+----+----+----+----+-----+----+-----+------|
-| cite:jiang-2009-porous-graph       | DFT, MD  | Graphene       | Mono    | Porous   | N/H, H |    |     |    | a  |     |     |    |    |    |    |     |    | b   |      |
-| cite:wesołowski-2011-pillar-graph  | MD       | Graphene       | Multi   | Porous   | CNT    | c  |     |    |    |     |     | b  |    |    | a  |     |    |     |      |
-| cite:du-2011-separ-hydrog          | MD       | Graphene       | Mono    | Porous   |        |    |     |    | a  |     |     |    |    | b  |    |     |    |     |      |
-| cite:koenig-2012-selec-molec       | Exp      | Graphene       | Bilayer | Porous   |        |    |     |    | a  |     | a   | b  |    | b  |    |     |    | b   |      |
-| cite:kim-2013-selec-gas            | Exp      | Graphene       | Multi   | Defects  |        |    |     |    |    |     |     |    | a  | b  |    |     |    |     |      |
-| cite:celebi-2014-ultim-permeat     | Exp      | Graphene       | Bilayer | Porous   |        |    |     |    | a  |     | b   |    |    |    |    |     |    |     |      |
-| cite:lei-2014-separ-hydrog         | DFT      | Graphene       | Mono    | Porous   |        |    |     |    |    |     |     |    |    |    |    | a   |    | b   |    3 |
-| cite:liu-2015-selec-trend          | MD       | Graphene       | Mono    | Porous   | N/H    |    |     |    | a  |     | a   | b  |    | b  |    |     |    | b   |      |
-| cite:sun-2015-applic-nanop         | MD       | Graphene       | Mono    | Porous   | N/H    |    |     |    |    |     | a   |    |    | a  |    | a   |    | b   |      |
-|------------------------------------+----------+----------------+---------+----------+--------+----+-----+----+----+-----+-----+----+----+----+----+-----+----+-----+------|
-| cite:blankenburg-2010-porous-graph | DFT, MD  | PG             | Mono    |          |        | a  |     | a  | a  | c   | b   | d  | b  | c  |    |     | c  |     |      |
-| cite:li-2010-two-dimen-polyp       | DFT      | PG             | Mono    |          |        |    |     |    | a  |     | b   |    |    |    |    |     | b  | b   |      |
-| cite:huang-2014-improv-permeab     | DFT, MD  | PG             | Bilayer |          |        |    |     |    | a  |     |     |    |    |    |    |     |    | b   |      |
-| cite:schrier-2012-carbon-dioxid    | MD       | PG-ES1         | Mono    |          |        |    |     |    |    |     | a   |    | b  | b  |    |     |    |     |      |
-| cite:brockway-2013-noble-gas       | DFT, MD  | PG-ES1         | Mono    |          |        | a  |     | a  |    |     | b   | b  | b  | b  |    |     |    | c   |      |
-| cite:tao-2014-tunab-hydrog         | DFT, MD  | PG-ES1         | Mono    |          |        |    |     |    | a  |     | b   |    |    | b  |    |     |    | b   |      |
-|------------------------------------+----------+----------------+---------+----------+--------+----+-----+----+----+-----+-----+----+----+----+----+-----+----+-----+------|
-| cite:nair-2012-unimp-permeat       | Exp, MD  | Graphene oxide | 1 µm    |          |        | b  | a   |    | b  |     |     | b  |    | b  |    |     |    |     |      |
-| cite:li-2013-ultrat-molec          | Exp      | Graphene oxide | 2-18 nm |          |        |    |     |    | a  |     | b   |    |    |    |    |     |    |     |      |
-| cite:li-2013-ultrat-molec          | Exp      | Graphene oxide | 2-18 nm |          |        |    |     |    | a  |     |     |    |    | b  |    |     |    |     |      |
-| cite:li-2013-ultrat-molec          | Exp      | Graphene oxide | 18 nm   |          |        | a  |     |    | a  |     | b   |    | b  | b  |    |     | b  | b   |    1 |
-| cite:kim-2013-selec-gas            | Exp      | Graphene oxide | 3-7 nm  |          |        |    |     |    | a  |     | b   |    |    |    |    |     |    |     |    2 |
-| cite:kim-2013-selec-gas            | Exp      | Graphene oxide | 3-7 nm  |          |        | b  |     |    | b  |     | a   |    | b  | b  |    |     |    | b   |      |
-|------------------------------------+----------+----------------+---------+----------+--------+----+-----+----+----+-----+-----+----+----+----+----+-----+----+-----+------|
-| cite:zhang-2015-hexag-boron        | DFT, MD  | hBN            | Mono    | Porous   | N/H    |    |     |    | a  |     |     |    |    |    |    |     |    | b   |      |
-|------------------------------------+----------+----------------+---------+----------+--------+----+-----+----+----+-----+-----+----+----+----+----+-----+----+-----+------|
-| cite:jiao-2011-graph               | DFT, TST | Graphdiyne     | Mono    |          |        |    |     |    | a  |     | b   |    |    |    |    |     |    | b   |      |
-| cite:zhu-2015-c-n                  | DFT      | C2N            | Mono    |          |        | a  | b   | b  |    |     | b   | b  | b  | b  |    | b   |    | b   |      |
-| cite:li-2015-effic-helium          | DFT, MD  | g-C3N4         | Mono    |          |        | a  |     | b  | b  |     | b   | b  |    | b  |    |     | b  | b   |      |
-
-Notes:
-1. Extrapolated from single-gas permeation results.
-2. Long time scale ~1 hr. At short time scales <0.1 hr, the permeance rate is reversed.
-3. Pore carbons had negative charge (-0.241 e).
-
-*** Atmospheric separations
-N2, O2, Ar, CO2, Ne, He, CH4 
-
-| Reference                          | Methods  | 2D             | Stack   | Features | Func.  | N2 | O2 | Ar | CO2 | Ne | He | CH4 |
-|                                    |          | Material       |         |          | Groups |    |    |    |     |    |    |     |
-|------------------------------------+----------+----------------+---------+----------+--------+----+----+----+-----+----+----+-----|
-| cite:koenig-2012-selec-molec       | Exp      | Graphene       | Bilayer | Porous   |        | b  |    | b  | a   |    |    | b   |
-| cite:kim-2013-selec-gas            | Exp      | Graphene       | Multi   | Defects  |        | b  | a  |    |     |    |    |     |
-| cite:liu-2015-selec-trend          | MD       | Graphene       | Mono    | Porous   | N/H    | b  |    | b  | a   |    |    | b   |
-| cite:sun-2015-applic-nanop         | MD       | Graphene       | Mono    | Porous   | N/H    | a  |    |    | a   |    |    | b   |
-|------------------------------------+----------+----------------+---------+----------+--------+----+----+----+-----+----+----+-----|
-| cite:blankenburg-2010-porous-graph | DFT, MD  | PG             | Mono    |          |        | c  | b  | d  | b   | a  | a  |     |
-| cite:schrier-2012-carbon-dioxid    | MD       | PG-ES1         | Mono    |          |        | b  | b  |    | a   |    |    |     |
-| cite:brockway-2013-noble-gas       | DFT, MD  | PG-ES1         | Mono    |          |        | b  | b  | b  | b   | a  | a  | c   |
-|------------------------------------+----------+----------------+---------+----------+--------+----+----+----+-----+----+----+-----|
-| cite:li-2013-ultrat-molec          | Exp      | Graphene oxide | 18 nm   |          |        | b  | b  |    | b   |    | a  | b   |
-| cite:kim-2013-selec-gas            | Exp      | Graphene oxide | 3-7 nm  |          |        | b  | b  |    | a   |    | b  | b   |
-|------------------------------------+----------+----------------+---------+----------+--------+----+----+----+-----+----+----+-----|
-| cite:zhu-2015-c-n                  | DFT      | C2N            | Mono    |          |        | b  | b  | b  | b   | b  | a  | b   |
-| cite:li-2015-effic-helium          | DFT, MD  | g-C3N4         | Mono    |          |        | b  |    | b  | b   | b  | a  | b   |
-
-*** Water-gas shift
-CO + H2O -> CO2 + H2
-
-| Reference                          | Methods  | 2D             | CO | H2O | CO2 | H2 |
-|                                    |          | Material       |    |     |     |    |
-|------------------------------------+----------+----------------+----+-----+-----+----|
-| cite:celebi-2014-ultim-permeat     | Exp      | Graphene       |    |     | b   | a  |
-|------------------------------------+----------+----------------+----+-----+-----+----|
-| cite:blankenburg-2010-porous-graph | DFT      | PG             | c  |     | b   | a  |
-| cite:li-2010-two-dimen-polyp       | DFT      | PG             | b  |     | b   | a  |
-|------------------------------------+----------+----------------+----+-----+-----+----|
-| cite:tao-2014-tunab-hydrog         | DFT, MD  | PG-ES1         |    |     | b   | a  |
-|------------------------------------+----------+----------------+----+-----+-----+----|
-| cite:nair-2012-unimp-permeat       | Exp, MD  | Graphene oxide |    | a   |     | b  |
-| cite:li-2013-ultrat-molec          | Exp      | Graphene oxide |    |     | b   | a  |
-| cite:li-2013-ultrat-molec          | Exp      | Graphene oxide | b  |     | b   | a  |
-| cite:kim-2013-selec-gas            | Exp      | Graphene oxide |    |     | b   | a  |
-| cite:kim-2013-selec-gas            | Exp      | Graphene oxide |    |     | a   | b  |
-|------------------------------------+----------+----------------+----+-----+-----+----|
-| cite:jiao-2011-graph               | DFT, TST | Graphdiyne     |    |     | b   | a  |
-
-*** Nobel gas separation
-He, Ne, Ar, Kr
-
-| Reference                          | Methods  | 2D             | He | Ne | Ar | Kr |
-|                                    |          | Material       |    |    |    |    |
-|------------------------------------+----------+----------------+----+----+----+----|
-| cite:wesołowski-2011-pillar-graph  | MD       | Graphene       | c  |    | b  | a  |
-|------------------------------------+----------+----------------+----+----+----+----|
-| cite:blankenburg-2010-porous-graph | DFT      | PG             | a  | a  | d  |    |
-|------------------------------------+----------+----------------+----+----+----+----|
-| cite:zhu-2015-c-n                  | DFT      | C2N            | a  | b  | b  |    |
-| cite:li-2015-effic-helium          | DFT, MD  | g-C3N4         | a  | b  | b  |    |
-
-* Papers
-** Graphene
-*** cite:novoselov-2005-two-dimen
-*** cite:geim-2009-graph
-*** *cite:jiang-2009-porous-graph DFT porous graphene separation of H2/CH4
-Selectivity results
-| Graphene monolayer porous N/H functionalized |  10^8 |
-| Graphene monolayer porous H functionalized   | 10^23 |
-| Traditional polymer / silica membranes       |  10^8 |
-*** cite:pontes-2009-barrier-free DFT HCN production with substitutional doping using boron
-*** cite:du-2011-separ-hydrog DFT H2/N2 separation
-*** *cite:koenig-2012-selec-molec Experimental separation of common gases
-*** cite:shan-2012-influen-chemic CO2/N2 separation using cite:jiang-2009-porous-graph funcitonalized groups
-*** TODO cite:drahushuk-2012-mechan-gas MD H2/N2 separation. Explains mechanisms for gases crossing the membrane
-*** cite:kim-2013-selec-gas  Exp O2/N2. Most work done on GO.
-*** cite:miao-2013-first-princ DFT proton/H separation
-*** cite:qin-2013-graph-with H2&He separation from air. Octogon pore + secondary small pore.
-*** cite:ambrosetti-2014-gas-separ Water filtration through porous graphene. No permeation/selectivity data.
-*** cite:celebi-2014-ultim-permeat Exp separation of H2/CO2 with bilayer G. Also a water permeance comparison to Goretex.
-*** cite:tsetseris-2014-graph DFT Boron can pass through pristine graphene under moderate annealing conditions
-*** cite:sun-2015-applic-nanop DFT separation for gases in natural gas processing
-*** cite:wen-2015-inhib-effec Inhibition effect of non-permeating components
-*** cite:achtyl-2015-aqueous-proton Exp/DFT Defect detection. Aqueous proton transfer
-
-*** TODO partoens graphene structure
-** Polyphenylene (Porous Graphene (PG))
-*** TODO cite:bieri-2009-porous-graph Synthesis of PG
-*** *cite:blankenburg-2010-porous-graph Selectivity study of common gases with DFT
-[[./img/blankenburg-2010-porous-graph-3.png]]
-*** cite:schrier-2010-helium-separ Helium isotope separation
-*** cite:li-2010-two-dimen-polyp H2 separation from CO2, CO, CH4
-*** TODO cite:lu-2014-promis-monol DFT O2 separation from harmful gases
-*** cite:huang-2014-improv-permeab Bilayer porous graphene. H2/CH4 separation. High permeance and selectivity
-*** cite:tao-2014-tunab-hydrog DFT PG-ESX study on hydrogen purification
-| Molecule |     Kinetic |
-|          | Diam. (Ang) |
-|----------+-------------|
-| H2       |         2.9 |
-| N2       |        3.64 |
-| CO       |        3.76 |
-| CH4      |         3.8 |
-Note: Agrees with common molecules table.
-
-*** *cite:brockway-2013-noble-gas DFT PG-ESX study similar to Blankenberg's
-*** Notes 
-High temperatures required for permeance of H2 and He would destroy a PG monolayer. cite:huang-2014-improv-permeab
-** hexagonal Boron Nitride (hBN)
-*** cite:corso-2004-boron-nitrid-nanom Boron nitride nanomesh
-Hole in mesh: size 20 Å
-- 'likely driven by the lattice mismatch of the film and the rhodium substrate'
-*** cite:jin-2009-fabric-frees monolayer fabrication with electron irradiation
-*** cite:nag-2010-graph-analog-bn properties of hBN compared to graphene
-*** cite:hu-2014-proton-trans proton transport of graphene, hBN, MoS2
-*** *cite:zhang-2015-hexag-boron H2/CH4 separation. Triangular pores.
-Drahushuk, L. W.; Strano, M. S. Mechanisms of Gas Permeation
-through Single Layer Graphene. Langmuir 2012, 28, 16671−16678.
-** Graphene oxide
-*** *cite:kim-2013-selec-gas
-*** *cite:li-2013-ultrat-molec
-*** cite:yoo-2013-graph-graph
-** Molybdenum disulphide (MoS2)
-*** cite:hong-2015-explor-atomic 
-** Quantum mechanics
-*** Lennard-Jones potential
-[[http://chemwiki.ucdavis.edu/Core/Physical_Chemistry/Physical_Properties_of_Matter/Atomic_and_Molecular_Properties/Intermolecular_Forces/Specific_Interactions/Lennard-Jones_Potential][ChemWiki - UC Davis]]
-
-*** van der Waals radius
-[[http://chemwiki.ucdavis.edu/Core/Theoretical_Chemistry/Chemical_Bonding/General_Principles_of_Chemical_Bonding/Covalent_Bond_Distance%2C_Radius_and_van_der_Waals_Radius][ChemWiki - UC Davis]]
-** Neural networks
-*** *cite:behler-2007-gener-neural
-*** TODO cite:behler-2008-press-induc
-*** TODO cite:behler-2011-neural-networ
-*** TODO cite:behler-2014-repres-poten
-** Review articles
-*** cite:yoo-2013-graph-graph Graphene and graphene oxide uses as barriers
-** Patents
-*** TODO Aperture
-http://www.google.com/patents/US20140263035
-** Non-pertinent
-*** TODO cite:britnell-2012-elect-tunnel hBN as a dielectric
-** To Read
-*** TODO cite:elstner-1998-self-consis
-*** TODO cite:zhu-2006-permean-shoul
-*** TODO cite:zhang-2012-tunab-hydrog
-*** TODO cite:drahushuk-2012-mechan-gas
-*** TODO cite:nieszporek-2015-alkan-separ
-*** TODO cite:liu-2014-mechan-proper
-*** TODO cite:tao-2014-tunab-hydrog
-*** TODO cite:wang-2014-trans-metal
-*** TODO cite:bunch-2008-imper-atomic
-*** TODO cite:leeuwen-1994-deriv-stock Derivation of L-J lengths of liquids.
-*** TODO cite:hauser-2012-methan-selec Methane transfer through graphene, DFT
 * References
 bibliographystyle:unsrtnat
 bibliography:references.bib
