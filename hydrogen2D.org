@@ -21,20 +21,19 @@ Competing possible research avenues:
 - cite:koenig-2012-selec-molec Selective Molecular Sieving Through Porous Graphene - Keonig, Bunch*
 
 ** 2016-05-25 Wed
-
 - cite:liu-2013-permean-h2 
+
+Simulators meeting
+- Jake presented neural network vs reaxff with Au
+
+** 2016-05-26 Thu
+- cite:jiang-2009-porous-graph
 - cite:sun-2014-mechan-molec
 - cite:drahushuk-2016-analy-time Analysis of Time-Varying, Stochastic Gas Transport Through Graphene Membranes - Drahushuk, Keonig, Bunch*, Strano*
 
 
-<<<<<<< HEAD
-- cite:wang-2015-molec-valves Molecular valves for controlling gas phase transport made from discrete ångström-sized pores in graphene - Wang, Drahushuk (Strano)
+- cite:wang-2015-molec-valves Molecular valves for controlling gas phase transport made from discrete ångström-sized pores in graphene - Wang, Drahushuk, Strano*
 
-
-Simulators meeting
-- Jake presented neural network vs reaxff with Au
-** 2016-05-26 Thu
-- 
 
 ** 2016-05-31 Fri
 - 
@@ -52,6 +51,14 @@ Need to redo some of the 'free' transport. The graphene plane simply shifted dow
 *** DONE Check in on monolayer 5x5 and 6x6 pore=10 calculations
     CLOSED: [2016-06-01 Wed 12:26]
 ** 2016-06-01 Wed
+- 
+
+Possible research idea: Look into pore stability of different passivating molecules, including what it takes to remove a passivated species (ie. if N is a more stable passivating species than H, what is the energy barrier for replacing H with N?).
+
+*** DONE Finish structure of pore=10 for bilayer
+    CLOSED: [2016-06-01 Wed 12:26]
+
+** 2016-06-02 Thu
 - 
 
 Possible research idea: Look into pore stability of different passivating molecules, including what it takes to remove a passivated species (ie. if N is a more stable passivating species than H, what is the energy barrier for replacing H with N?).
