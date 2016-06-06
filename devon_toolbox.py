@@ -42,5 +42,6 @@ def write_image(name, atoms):
     directory = file_path[:file_path.rfind('/')]
     if not os.path.exists(directory):
         os.makedirs(directory)
+#    atoms.rotate('x', np.pi/-5) # TODO: do a .copy() instead of this
     ase_write(file_path, atoms)
     return '[[' + file_path + ']]'
