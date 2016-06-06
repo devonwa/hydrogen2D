@@ -28,15 +28,13 @@ Simulators meeting
 
 ** 2016-05-26 Thu
 - cite:jiang-2009-porous-graph
+
+** 2016-05-31 Fri
 - cite:sun-2014-mechan-molec
 - cite:drahushuk-2016-analy-time Analysis of Time-Varying, Stochastic Gas Transport Through Graphene Membranes - Drahushuk, Keonig, Bunch*, Strano*
 
 
 - cite:wang-2015-molec-valves Molecular valves for controlling gas phase transport made from discrete ångström-sized pores in graphene - Wang, Drahushuk, Strano*
-
-
-** 2016-05-31 Fri
-- 
 
 Prepared for a group meeting presentation. Ended up not having one.
 
