@@ -69,3 +69,4 @@ ltxpng
 texput.log
 dft/
 *.png
+presentations/reveal.js

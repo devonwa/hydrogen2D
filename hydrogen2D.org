@@ -30,17 +30,14 @@ Simulators meeting
 ** 2016-05-26 Thu
 - cite:jiang-2009-porous-graph
 
-** 2016-05-31 Fri
+** 2016-05-27 Fri
 - cite:sun-2014-mechan-molec
-- cite:drahushuk-2016-analy-time Analysis of Time-Varying, Stochastic Gas Transport Through Graphene Membranes - Drahushuk, Keonig, Bunch*, Strano*
-
-
-- cite:wang-2015-molec-valves Molecular valves for controlling gas phase transport made from discrete ångström-sized pores in graphene - Wang, Drahushuk, Strano*
 
 Prepared for a group meeting presentation. Ended up not having one.
 
 ** 2016-05-31 Tue
-- cite:partoens-2007-from-graph
+- cite:drahushuk-2016-analy-time Analysis of Time-Varying, Stochastic Gas Transport Through Graphene Membranes - Drahushuk, Keonig, Bunch*, Strano*
+
 Created vaccuum distance graph to deteremine interaction distance of leading atoms in a molecule.
 
 Bilayer graphene unit cell in queue for relaxation.
@@ -50,7 +47,14 @@ Need to redo some of the 'free' transport. The graphene plane simply shifted dow
 *** DONE Check in on monolayer 5x5 and 6x6 pore=10 calculations
     CLOSED: [2016-06-01 Wed 12:26]
 ** 2016-06-01 Wed
-- 
+- cite:shan-2012-influen-chemic
+- cite:schrier-2012-carbon-dioxid
+cite:koenig-2012-selec-molec
+
+- cite:wang-2015-molec-valves Molecular valves for controlling gas phase transport made from discrete ångström-sized pores in graphene - Wang, Drahushuk, Strano*
+   
+- cite:partoens-2007-from-graph
+
 
 Possible research idea: Look into pore stability of different passivating molecules, including what it takes to remove a passivated species (ie. if N is a more stable passivating species than H, what is the energy barrier for replacing H with N?).
 
@@ -58,13 +62,16 @@ Possible research idea: Look into pore stability of different passivating molecu
     CLOSED: [2016-06-01 Wed 12:26]
 
 ** 2016-06-02 Thu
-- 
 
-Possible research idea: Look into pore stability of different passivating molecules, including what it takes to remove a passivated species (ie. if N is a more stable passivating species than H, what is the energy barrier for replacing H with N?).
 
 *** DONE Finish pore=10 for bilayer
     CLOSED: [2016-06-01 Wed 12:26]
 
+** 2016-06-03 Fri
+** 2016-06-06 Mon
+** 2016-06-07 Tue
+** 2016-06-08 Wed
+** 2016-06-09 Thu
 * Meetings
 ** DONE 2016-03-08 4pm
    CLOSED: [2016-03-09 Wed 09:26] DEADLINE: <2016-03-08 Tue 16:00>
@@ -361,6 +368,77 @@ view(atoms)
 #+END_SRC
 
 #+RESULTS:
+** DONE 2016-05-27 3pm Presentation Prep
+   CLOSED: [2016-05-31 Tue 15:07] DEADLINE: <2016-05-27 Fri 3pm>
+
+(Meeting cancelled)
+
+*** Concept of gas phase transport
+
+#+BEGIN_SRC python
+from ase import Atom, Atoms
+from ase.visualize import view
+from jasp import *
+import numpy as np
+import matplotlib.pyplot as plt
+import sys
+
+heights = [10., 9., 8., 7., 6., 5., 4., 3., 2.5, 2., 1.5, 1., 0.5, 0.]
+
+def movie(constraint):
+    images = []
+    for i, h in enumerate(heights):
+        with jasp('./dft/transport/g-mono/3x3/pore=1/molec=CO2/' + constraint + '/d={0:0.2f}'.format(h)) as calc:
+            atoms = calc.get_atoms()
+            images.append(atoms)
+    view(images)
+
+free = 'linear-unconst_all'
+unconst_G = 'linear-unconst_G'
+const_all = 'linear-const'
+
+#movie(free)
+#movie(unconst_G)
+movie(const_all)
+#+END_SRC
+
+#+RESULTS:
+
+*** Bond length of molecules change as they transport
+
+[[./img/final-project/G-bond-length.png]]
+
+*** Total energy difference between H2 and CO2
+
+[[./img/final-project/total_energy-comparison.png]]
+
+*** How constraints effect total energy
+
+Hydrogen transport through monolayer graphene. Pore=1
+[[./img/transport/g-mono/3x3/pore=1/molec=H2/TE-comparison.png]]
+
+*** Non-interaction distance convergence
+[[./img/transport/g-mono/3x3/pore=1/molec=H2/TE-comparison-LJ_zoom.png]]
+
+How does this well distance change with other molecules?
+- Running comparisons with CO2 and N2.
+
+*** Pore distance convergence
+What pore interaction distance is acceptable?
+
+[[./img/material/g-mono/4x4/pore=10/vac=16.png]]
+
+[[./img/material/g-mono/5x5/pore=10/vac=16.png]]
+
+[[./img/material/g-mono/6x6/pore=10/vac=16.png]]
+
+*** Questions
+- How well is DFT handling multiple species?
+- - Smearing: sigma is not dependent on per molecule basis
+
+- Pressure can change diffusion pathways (gas phase vs adsorption)
+- - cite:du-2011-separ-hydrog
+- - cite:drahushuk-2012-mechan-gas
 ** DONE 2016-05-27 3pm Group meeting presentation
    CLOSED: [2016-05-31 Tue 15:07] DEADLINE: <2016-05-27 Fri 3pm>
 
@@ -434,21 +512,116 @@ What pore interaction distance is acceptable?
 - - cite:drahushuk-2012-mechan-gas
 
 * Research
+** Literature
+*** Graphene
+**** cite:novoselov-2005-two-dimen
+**** cite:partoens-2006-from-graph graphene structure unitcell
+**** cite:geim-2009-graph
+**** *cite:jiang-2009-porous-graph DFT porous graphene separation of H2/CH4
+ Selectivity results
+ | Graphene monolayer porous N/H functionalized |  10^8 |
+ | Graphene monolayer porous H functionalized   | 10^23 |
+ | Traditional polymer / silica membranes       |  10^8 |
+**** cite:pontes-2009-barrier-free DFT HCN production with substitutional doping using boron
+**** DONE cite:du-2011-separ-hydrog DFT H2/N2 separation
+     CLOSED: [2016-06-01 Wed 14:59]
+**** DONE *cite:koenig-2012-selec-molec Experimental separation of common gases
+     CLOSED: [2016-06-01 Wed 14:59]
+**** cite:shan-2012-influen-chemic CO2/N2 separation using cite:jiang-2009-porous-graph funcitonalized groups
+**** DONE cite:drahushuk-2012-mechan-gas MD H2/N2 separation. Explains mechanisms for gases crossing the membrane
+     CLOSED: [2016-06-01 Wed 14:59]
+**** cite:kim-2013-selec-gas  Exp O2/N2. Most work done on GO.
+**** cite:miao-2013-first-princ DFT proton/H separation
+**** cite:qin-2013-graph-with H2&He separation from air. Octogon pore + secondary small pore.
+**** cite:ambrosetti-2014-gas-separ Water filtration through porous graphene. No permeation/selectivity data.
+**** cite:celebi-2014-ultim-permeat Exp separation of H2/CO2 with bilayer G. Also a water permeance comparison to Goretex.
+**** cite:tsetseris-2014-graph DFT Boron can pass through pristine graphene under moderate annealing conditions
+**** cite:sun-2015-applic-nanop DFT separation for gases in natural gas processing
+**** cite:wen-2015-inhib-effec Inhibition effect of non-permeating components
+**** cite:achtyl-2015-aqueous-proton Exp/DFT Defect detection. Aqueous proton transfer
+
+*** Polyphenylene (Porous Graphene (PG))
+**** cite:bieri-2009-porous-graph Synthesis of PG
+**** *cite:blankenburg-2010-porous-graph Selectivity study of common gases with DFT
+ [[./img/blankenburg-2010-porous-graph-3.png]]
+**** cite:schrier-2010-helium-separ Helium isotope separation
+**** cite:li-2010-two-dimen-polyp H2 separation from CO2, CO, CH4
+**** cite:lu-2014-promis-monol DFT O2 separation from harmful gases
+**** cite:huang-2014-improv-permeab Bilayer porous graphene. H2/CH4 separation. High permeance and selectivity
+**** cite:tao-2014-tunab-hydrog DFT PG-ESX study on hydrogen purification
+ | Molecule |     Kinetic |
+ |          | Diam. (Ang) |
+ |----------+-------------|
+ | H2       |         2.9 |
+ | N2       |        3.64 |
+ | CO       |        3.76 |
+ | CH4      |         3.8 |
+ Note: Agrees with common molecules table.
+
+**** *cite:brockway-2013-noble-gas DFT PG-ESX study similar to Blankenberg's
+**** Notes 
+ High temperatures required for permeance of H2 and He would destroy a PG monolayer. cite:huang-2014-improv-permeab
+*** hexagonal Boron Nitride (hBN)
+**** cite:corso-2004-boron-nitrid-nanom Boron nitride nanomesh
+ Hole in mesh: size 20 Å
+ - 'likely driven by the lattice mismatch of the film and the rhodium substrate'
+**** cite:jin-2009-fabric-frees monolayer fabrication with electron irradiation
+**** cite:nag-2010-graph-analog-bn properties of hBN compared to graphene
+**** cite:hu-2014-proton-trans proton transport of graphene, hBN, MoS2
+**** *cite:zhang-2015-hexag-boron H2/CH4 separation. Triangular pores.
+ Drahushuk, L. W.; Strano, M. S. Mechanisms of Gas Permeation
+ through Single Layer Graphene. Langmuir 2012, 28, 16671−16678.
+*** Graphene oxide
+**** *cite:kim-2013-selec-gas
+**** *cite:li-2013-ultrat-molec
+**** cite:yoo-2013-graph-graph
+*** Molybdenum disulphide (MoS2)
+**** cite:hong-2015-explor-atomic 
+*** Quantum mechanics
+**** Lennard-Jones potential
+ [[http://chemwiki.ucdavis.edu/Core/Physical_Chemistry/Physical_Properties_of_Matter/Atomic_and_Molecular_Properties/Intermolecular_Forces/Specific_Interactions/Lennard-Jones_Potential][ChemWiki - UC Davis]]
+
+**** van der Waals radius
+ [[http://chemwiki.ucdavis.edu/Core/Theoretical_Chemistry/Chemical_Bonding/General_Principles_of_Chemical_Bonding/Covalent_Bond_Distance%2C_Radius_and_van_der_Waals_Radius][ChemWiki - UC Davis]]
+*** Neural networks
+**** *cite:behler-2007-gener-neural
+**** TODO cite:behler-2008-press-induc
+**** TODO cite:behler-2011-neural-networ
+**** TODO cite:behler-2014-repres-poten
+*** Review articles
+**** cite:yoo-2013-graph-graph Graphene and graphene oxide uses as barriers
+*** Patents
+**** TODO Aperture
+ http://www.google.com/patents/US20140263035
+*** Non-pertinent
+**** TODO cite:britnell-2012-elect-tunnel hBN as a dielectric
+*** To Read
+**** TODO cite:elstner-1998-self-consis
+**** TODO cite:zhu-2006-permean-shoul
+**** TODO cite:zhang-2012-tunab-hydrog
+**** TODO cite:drahushuk-2012-mechan-gas
+**** TODO cite:nieszporek-2015-alkan-separ
+**** TODO cite:liu-2014-mechan-proper
+**** TODO cite:tao-2014-tunab-hydrog
+**** TODO cite:wang-2014-trans-metal
+**** TODO cite:bunch-2008-imper-atomic
+**** TODO cite:leeuwen-1994-deriv-stock Derivation of L-J lengths of liquids.
+**** TODO cite:hauser-2012-methan-selec Methane transfer through graphene, DFT
 ** Questions
-*** Are the kinetic diameters used in Blankenberg correct?
+** Are the kinetic diameters used in Blankenberg correct?
 cite:blankenburg-2010-porous-graph uses cite:leeuwen-1994-deriv-stock for kinetic diameter of ammonia, even though they're stated for liquids.
 cite:tsuru-2010-permeat-proper shows that certain kinetic diameter calculations may not apply to certain separations.
-*** What is the unit GPU?
+** What is the unit GPU?
 Gas permeance unit
 1 GPU = 0.33 mol/(m^2*s*Pa)
-*** What's a dispersion correction in dft?
+** What's a dispersion correction in dft?
 Dipoles occur as a molecule passes through the membrane. They need to be accounted for in the energy calculations.
-*** Ryd compared to eV?
+** Ryd compared to eV?
 Stands for Rydberg constant.
 1 eV = 7.350e-2 Ryd
 300 eV = 22.096 Ryd
-*** TODO Best way to calculate a pore's diameter?
-*** What should I compare H2 transport with?
+** TODO Best way to calculate a pore's diameter?
+** What should I compare H2 transport with?
 - cite:koenig-2012-selec-molec 
 - cite:jiang-2009-porous-graph 
 - cite:blankenburg-2010-porous-graph
@@ -683,102 +856,7 @@ Use the following works to generate a table with comparisons of H2 transport
 - cite:jiang-2009-porous-graph 
 - cite:blankenburg-2010-porous-graph
 
-* Papers
-** Graphene
-*** cite:novoselov-2005-two-dimen
-*** cite:partoens-2006-from-graph graphene structure unitcell
-*** cite:geim-2009-graph
-*** *cite:jiang-2009-porous-graph DFT porous graphene separation of H2/CH4
-Selectivity results
-| Graphene monolayer porous N/H functionalized |  10^8 |
-| Graphene monolayer porous H functionalized   | 10^23 |
-| Traditional polymer / silica membranes       |  10^8 |
-*** cite:pontes-2009-barrier-free DFT HCN production with substitutional doping using boron
-*** DONE cite:du-2011-separ-hydrog DFT H2/N2 separation
-    CLOSED: [2016-06-01 Wed 14:59]
-*** DONE *cite:koenig-2012-selec-molec Experimental separation of common gases
-    CLOSED: [2016-06-01 Wed 14:59]
-*** cite:shan-2012-influen-chemic CO2/N2 separation using cite:jiang-2009-porous-graph funcitonalized groups
-*** DONE cite:drahushuk-2012-mechan-gas MD H2/N2 separation. Explains mechanisms for gases crossing the membrane
-    CLOSED: [2016-06-01 Wed 14:59]
-*** cite:kim-2013-selec-gas  Exp O2/N2. Most work done on GO.
-*** cite:miao-2013-first-princ DFT proton/H separation
-*** cite:qin-2013-graph-with H2&He separation from air. Octogon pore + secondary small pore.
-*** cite:ambrosetti-2014-gas-separ Water filtration through porous graphene. No permeation/selectivity data.
-*** cite:celebi-2014-ultim-permeat Exp separation of H2/CO2 with bilayer G. Also a water permeance comparison to Goretex.
-*** cite:tsetseris-2014-graph DFT Boron can pass through pristine graphene under moderate annealing conditions
-*** cite:sun-2015-applic-nanop DFT separation for gases in natural gas processing
-*** cite:wen-2015-inhib-effec Inhibition effect of non-permeating components
-*** cite:achtyl-2015-aqueous-proton Exp/DFT Defect detection. Aqueous proton transfer
-
-** Polyphenylene (Porous Graphene (PG))
-*** cite:bieri-2009-porous-graph Synthesis of PG
-*** *cite:blankenburg-2010-porous-graph Selectivity study of common gases with DFT
-[[./img/blankenburg-2010-porous-graph-3.png]]
-*** cite:schrier-2010-helium-separ Helium isotope separation
-*** cite:li-2010-two-dimen-polyp H2 separation from CO2, CO, CH4
-*** cite:lu-2014-promis-monol DFT O2 separation from harmful gases
-*** cite:huang-2014-improv-permeab Bilayer porous graphene. H2/CH4 separation. High permeance and selectivity
-*** cite:tao-2014-tunab-hydrog DFT PG-ESX study on hydrogen purification
-| Molecule |     Kinetic |
-|          | Diam. (Ang) |
-|----------+-------------|
-| H2       |         2.9 |
-| N2       |        3.64 |
-| CO       |        3.76 |
-| CH4      |         3.8 |
-Note: Agrees with common molecules table.
-
-*** *cite:brockway-2013-noble-gas DFT PG-ESX study similar to Blankenberg's
-*** Notes 
-High temperatures required for permeance of H2 and He would destroy a PG monolayer. cite:huang-2014-improv-permeab
-** hexagonal Boron Nitride (hBN)
-*** cite:corso-2004-boron-nitrid-nanom Boron nitride nanomesh
-Hole in mesh: size 20 Å
-- 'likely driven by the lattice mismatch of the film and the rhodium substrate'
-*** cite:jin-2009-fabric-frees monolayer fabrication with electron irradiation
-*** cite:nag-2010-graph-analog-bn properties of hBN compared to graphene
-*** cite:hu-2014-proton-trans proton transport of graphene, hBN, MoS2
-*** *cite:zhang-2015-hexag-boron H2/CH4 separation. Triangular pores.
-Drahushuk, L. W.; Strano, M. S. Mechanisms of Gas Permeation
-through Single Layer Graphene. Langmuir 2012, 28, 16671−16678.
-** Graphene oxide
-*** *cite:kim-2013-selec-gas
-*** *cite:li-2013-ultrat-molec
-*** cite:yoo-2013-graph-graph
-** Molybdenum disulphide (MoS2)
-*** cite:hong-2015-explor-atomic 
-** Quantum mechanics
-*** Lennard-Jones potential
-[[http://chemwiki.ucdavis.edu/Core/Physical_Chemistry/Physical_Properties_of_Matter/Atomic_and_Molecular_Properties/Intermolecular_Forces/Specific_Interactions/Lennard-Jones_Potential][ChemWiki - UC Davis]]
-
-*** van der Waals radius
-[[http://chemwiki.ucdavis.edu/Core/Theoretical_Chemistry/Chemical_Bonding/General_Principles_of_Chemical_Bonding/Covalent_Bond_Distance%2C_Radius_and_van_der_Waals_Radius][ChemWiki - UC Davis]]
-** Neural networks
-*** *cite:behler-2007-gener-neural
-*** TODO cite:behler-2008-press-induc
-*** TODO cite:behler-2011-neural-networ
-*** TODO cite:behler-2014-repres-poten
-** Review articles
-*** cite:yoo-2013-graph-graph Graphene and graphene oxide uses as barriers
-** Patents
-*** TODO Aperture
-http://www.google.com/patents/US20140263035
-** Non-pertinent
-*** TODO cite:britnell-2012-elect-tunnel hBN as a dielectric
-** To Read
-*** TODO cite:elstner-1998-self-consis
-*** TODO cite:zhu-2006-permean-shoul
-*** TODO cite:zhang-2012-tunab-hydrog
-*** TODO cite:drahushuk-2012-mechan-gas
-*** TODO cite:nieszporek-2015-alkan-separ
-*** TODO cite:liu-2014-mechan-proper
-*** TODO cite:tao-2014-tunab-hydrog
-*** TODO cite:wang-2014-trans-metal
-*** TODO cite:bunch-2008-imper-atomic
-*** TODO cite:leeuwen-1994-deriv-stock Derivation of L-J lengths of liquids.
-*** TODO cite:hauser-2012-methan-selec Methane transfer through graphene, DFT
-* Snippets
+* Scripts
 ** Toolbox
 #+BEGIN_SRC python :tangle devon_toolbox.py
 import os
