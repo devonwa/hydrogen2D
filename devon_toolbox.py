@@ -26,10 +26,21 @@ def bp(info=None):
     sys.exit()
 
 
-def paint_atoms(atoms, indices, symbol="N"):
+def paint_atoms(atoms, indices, sym=None, layers=None):
     """Update the chemical symbol of atoms in the list of indices."""
-    for i in indices:
-        atoms[i].symbol = symbol
+    if sym is not None:
+        symbols = sym
+    else:
+        symbols = ["N", "O", "B", "F"]
+
+    if layers is not None:
+        for i in indices:
+            for j, l in enumerate(layers):
+                if i in l:
+                    atoms[i].symbol = symbols[j % len(symbols)]
+    else:
+        for i in indices:
+            atoms[i].symbol = symbols[0]
 
 
 def make_pore(atoms, indices):

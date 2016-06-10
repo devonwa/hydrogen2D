@@ -369,7 +369,6 @@ view(atoms)
 #+RESULTS:
 ** DONE 2016-05-27 3pm Presentation Prep
    CLOSED: [2016-05-31 Tue 15:07] DEADLINE: <2016-05-27 Fri 3pm>
-
 (Meeting cancelled)
 
 *** Concept of gas phase transport
@@ -438,77 +437,155 @@ What pore interaction distance is acceptable?
 - Pressure can change diffusion pathways (gas phase vs adsorption)
 - - cite:du-2011-separ-hydrog
 - - cite:drahushuk-2012-mechan-gas
-** DONE 2016-05-27 3pm Group meeting presentation
-   CLOSED: [2016-05-31 Tue 15:07] DEADLINE: <2016-05-27 Fri 3pm>
+** 2016-06-10 3pm Group meeting presentation
+   DEADLINE: <2016-05-27 Fri 3pm>
 
-(Meeting cancelled)
-
-*** Concept of gas phase transport
+*** 0640 final project
+**** Concept movie
 
 #+BEGIN_SRC python
-from ase import Atom, Atoms
-from ase.visualize import view
 from jasp import *
-import numpy as np
-import matplotlib.pyplot as plt
-import sys
+from ase.visualize import view
 
-heights = [10., 9., 8., 7., 6., 5., 4., 3., 2.5, 2., 1.5, 1., 0.5, 0.]
+fp_dir = '~/techela/s16-06640/final-project/' # Directory of final project.
 
-def movie(constraint):
-    images = []
-    for i, h in enumerate(heights):
-        with jasp('./dft/transport/g-mono/3x3/pore=1/molec=CO2/' + constraint + '/d={0:0.2f}'.format(h)) as calc:
-            atoms = calc.get_atoms()
-            images.append(atoms)
-    view(images)
+heights = [3., 2.5, 2., 1.5, 1., 0.5, 0., -0.5, -1., -1.5, -2, -2.5, -3]
 
-free = 'linear-unconst_all'
-unconst_G = 'linear-unconst_G'
-const_all = 'linear-const'
+images_h2 = []
+images_co2 = []
 
-#movie(free)
-#movie(unconst_G)
-movie(const_all)
+for h in heights:
+
+    with jasp(fp_dir + 'transport/G-c-HHc-constraints-yes-hook-d={0:0.2f}'.format(h)) as calc:
+        images_h2.append(calc.get_atoms())
+
+    with jasp(fp_dir + 'transport/G-c-CO2-transport-yes-hook-d={0:0.2f}'.format(h)) as calc:
+        images_co2.append(calc.get_atoms())
+
+#view(images_co2)
+#view(images_h2) 
 #+END_SRC
 
 #+RESULTS:
 
-*** Bond length of molecules change as they transport
+Limitations:
+- Carbon atoms in graphene plane are fixed
+- One atom in each molecule is chosen to be fixed, with other atoms constrained with a Hookean constraint
+  - Preserved molecule structure
+  - Introduced new error (empirical correction)
 
+
+**** Bond length change
 [[./img/final-project/G-bond-length.png]]
 
-*** Total energy difference between H2 and CO2
+The bonds of the molecules used Hookean constraints. If the atoms within a molecule got beyond a certain distance, an artificial energy penalty would be imposed to persuade the geometry relaxation to maintain the integrity of the molecule's structure.
+
+Hookean pro/con:
+- Preserved molecule structure
+- Introduced new error (empirical correction)
+
+**** Barrier energy
 
 [[./img/final-project/total_energy-comparison.png]]
 
-*** How constraints effect total energy
+Energy barriers:
+    H2:  1.879 eV
+    CO2: 4.643 eV
 
-Hydrogen transport through monolayer graphene. Pore=1
-[[./img/transport/g-mono/3x3/pore=1/molec=H2/TE-comparison.png]]
+Significantly large energy barrier, even for H2.
 
-*** Non-interaction distance convergence
-[[./img/transport/g-mono/3x3/pore=1/molec=H2/TE-comparison-LJ_zoom.png]]
+Literature comparison: cite:jiang-2009-porous-graph
+    H2: 0.22 eV
+    6x6 repeated graphene monolayer.
+    Pore = 10 removed carbons. H passivated.
+[[./img/ref/jiang-2009-h2passivated.png]]
+[[./img/material/g-mono/3x3/pore=1/final.png]]
 
-How does this well distance change with other molecules?
-- Running comparisons with CO2 and N2.
 
-*** Pore distance convergence
-What pore interaction distance is acceptable?
+*** Vacuum distance for convergence
 
-[[./img/material/g-mono/4x4/pore=10/vac=16.png]]
+#+CAPTION: Vaccuum distance convergence. Height represents distance between the molecule's closest atom and the graphene plane.
+#+NAME: fig:vaccuum-molecule-distance
+[[./img/results/convergence-vaccuum-pore=1.png]]
 
-[[./img/material/g-mono/5x5/pore=10/vac=16.png]]
 
-[[./img/material/g-mono/6x6/pore=10/vac=16.png]]
+Converged distance appears to be around 4 Å.
 
-*** Questions
-- How well is DFT handling multiple species?
-- - Smearing: sigma is not dependent on per molecule basis
+cite:sun-2014-mechan-molec reports between 5-6 Å is the distance of non-interaction for these molecules. They used classical MD with LJ potentials.
 
-- Pressure can change diffusion pathways (gas phase vs adsorption)
-- - cite:du-2011-separ-hydrog
-- - cite:drahushuk-2012-mechan-gas
+Final project max distance for both molecules was 3 Å. CO2 calculations probably affected since the minimum should have been lower, meaning the barrier energy would be higher.
+
+*** Monolayer graphene pore distance convergence
+
+#+CAPTION: The effect of distance between pores on energy and calculation time.
+#+NAME: fig:g-mono-energy_vs_pore_distance
+[[./img/results/monolayer-energy_vs_pore_distance.png]]
+**** Structures
+
+Distance = 4.92. Structure = 2x2
+[[./img/results/monolayer-energy_vs_pore_distance-pore=1-size=2.png]]
+Distance = 7.38. Structure = 3x3
+[[./img/results/monolayer-energy_vs_pore_distance-pore=1-size=3.png]]
+Distance = 9.84. Structure = 4x4
+[[./img/results/monolayer-energy_vs_pore_distance-pore=1-size=4.png]]
+Distance = 12.3. Structure = 5x5
+[[./img/results/monolayer-energy_vs_pore_distance-pore=1-size=5.png]]
+Distance = 14.76. Structure = 6x6
+[[./img/results/monolayer-energy_vs_pore_distance-pore=1-size=6.png]]
+
+#+BEGIN_SRC python
+
+#+END_SRC
+
+#+RESULTS:
+
+**** Pore=10 comparison
+
+Note that the 4x4 structure is the smallest possible size for a pore with 10 removed carbon atoms.
+
+Distance = 9.84. Structure = 4x4
+[[./img/results/monolayer-energy_vs_pore_distance-pore=10-size=4.png]]
+Distance = 12.3. Structure = 5x5
+[[./img/results/monolayer-energy_vs_pore_distance-pore=10-size=5.png]]
+#+CAPTION: The effect of distance between pores on energy and calculation time.
+#+NAME: fig:g-mono-energy_vs_pore_distance
+[[./img/results/monolayer-energy_vs_pore_distance-pore=10.png]]
+
+*** Bilayer graphene neural network sidebar
+Proposed project: Use a neural network trained on different bilayer graphene pore structures to 
+
+Sidebar: Determine minimum energy structures of different pore configurations for smaller structures first. Use this information to inform the larger structures.
+
+Motivation:
+- DFT relaxations bilayer graphene with significant pore size would take too long.
+- Current etching of pores does not allow for the geometric accuracy. (cite:koenig-2012-selec-molec: heavily cited experimental graphene transport paper uses bilayer graphene but didn't determine exact pore structure after etching.)
+- Graphene was found to reknit itself, so minimum energy pore structures are important. cite:zan-2012-graph-reknit
+[[./img/ref/zan-2012-reknit.png]]
+- This smaller project can be done on monolayer graphene at the same time with minimal effort and faster speeds.
+
+Where I'm at with this:
+- Created a function for determining candidates for etching based on current index.
+- Working on the structure for managing all the calculations and removing duplicates.
+
+get_neighbors example:
+#+BEGIN_SRC python
+from jasp import *
+from ase import Atoms, Atom
+import devon_toolbox as dtb
+
+with jasp('dft/material/g-bi/final') as calc:
+    atoms = calc.get_atoms()
+i = 3
+atoms = atoms.repeat([i,i,1])
+
+#dtb.bp(atoms)
+struct = dtb.structure(atoms, layers=2)
+index = 16
+neighbors = dtb.get_neighbors(atoms, index, struct['layers'][0])
+neighbors.append(index)
+dtb.paint_atoms(atoms, neighbors, layers=struct['layers'])
+dtb.bp(atoms)
+#+END_SRC
 
 * Research
 ** Literature
@@ -857,6 +934,7 @@ Use the following works to generate a table with comparisons of H2 transport
 
 * Scripts
 ** Toolbox
+
 #+BEGIN_SRC python :tangle devon_toolbox.py :results drawer
 import os
 import sys
@@ -886,10 +964,21 @@ def bp(info=None):
     sys.exit()
 
 
-def paint_atoms(atoms, indices, symbol="N"):
+def paint_atoms(atoms, indices, sym=None, layers=None):
     """Update the chemical symbol of atoms in the list of indices."""
-    for i in indices:
-        atoms[i].symbol = symbol
+    if sym is not None:
+        symbols = sym
+    else:
+        symbols = ["N", "O", "B", "F"]
+
+    if layers is not None:
+        for i in indices:
+            for j, l in enumerate(layers):
+                if i in l:
+                    atoms[i].symbol = symbols[j % len(symbols)]
+    else:
+        for i in indices:
+            atoms[i].symbol = symbols[0]
 
 
 def make_pore(atoms, indices):
@@ -1068,14 +1157,19 @@ with jasp('dft/material/g-bi/final') as calc:
 i = 3
 atoms = atoms.repeat([i,i,1])
 
-struct = dtb.structure(atoms)
-neighbors = dtb.get_neighbors(atoms, 17, struct['layers'][0])
-dtb.paint_atoms(atoms, neighbors)
+struct = dtb.structure(atoms, layers=2)
+index = 16
+neighbors = dtb.get_neighbors(atoms, index, struct['layers'][0])
+neighbors.append(index)
+dtb.paint_atoms(atoms, neighbors, layers=struct['layers'])
 dtb.bp(atoms)
 #+END_SRC
 
 #+RESULTS:
-
+: [2, 3, 6, 7, 10, 11, 14, 15, 18, 19, 22, 23, 26, 27, 30, 31, 34, 35]
+: 
+: [0, 1, 4, 5, 8, 9, 12, 13, 16, 17, 20, 21, 24, 25, 28, 29, 32, 33]
+: 
 
 ** 2016-03-07: Remote copying
 *Note 2016-05-18* - Copying is better done by maintaining the git repo. 
@@ -1324,7 +1418,7 @@ for n in nsw:
 
  The calculation did not converge for nsw=10 (probably should have expected).
 
-** Material
+** TODO Material
 *** Graphene monolayer
 **** Pristine
 
@@ -1579,8 +1673,10 @@ with jasp('./dft/' + name,
 
 As expected, the energy is the same as the energies of the non-centered calculations.
 
-***** INPROGRESS 4x4, 5x5, 6x6
-****** INPROGRESS Same kpts
+***** DONE 4x4, 5x5, 6x6
+      CLOSED: [2016-06-10 Fri 10:48]
+****** DONE Same kpts
+       CLOSED: [2016-06-10 Fri 10:48]
 Calculate the energies for a monolayer of graphene with a single carbon pore for larger unitcells (more spacing between the pores).
 
 #+BEGIN_SRC python :results drawer
@@ -1655,7 +1751,7 @@ size=5x5
 Final structure calculation: Energy/f.u. = -9.056. Calculation time: 872 min.
 size=6x6
 [[./img/material/g-mono/6x6/pore=1/convergence/size.png]]
-Final structure calculation: In progress.
+Final structure calculation: Energy/f.u. = -9.107. Calculation time: 2167 min.
 :END:
 
 ****** DONE kpts differing by size
@@ -1719,12 +1815,28 @@ for i, p, k in zip(sizes, pores, kpts):
 #+END_SRC
 
 #+RESULTS:
+:RESULTS:
+size=2x2
+[[./img/material/g-mono/2x2/pore=1/convergence/size/kpts=5.png]]
+Final structure calculation: Energy/f.u. = -8.180. Calculation time: 3 min.
+size=3x3
+[[./img/material/g-mono/3x3/pore=1/convergence/size/kpts=5.png]]
+Final structure calculation: Energy/f.u. = -8.746. Calculation time: 18 min.
+size=4x4
+[[./img/material/g-mono/4x4/pore=1/convergence/size/kpts=5.png]]
+Final structure calculation: Energy/f.u. = -8.958. Calculation time: 120 min.
+size=5x5
+[[./img/material/g-mono/5x5/pore=1/convergence/size/kpts=1.png]]
+Final structure calculation: Energy/f.u. = -9.044. Calculation time: 340 min.
+size=6x6
+[[./img/material/g-mono/6x6/pore=1/convergence/size/kpts=1.png]]
+Final structure calculation: Energy/f.u. = -9.090. Calculation time: 736 min.
+:END:
 
 **** TODO Pore=10 (Ten carbon defect)
-***** DONE 4x4
-      CLOSED: [2016-06-02 Thu 14:47]
+***** TODO 4x4
 ****** TODO final
-change path to /final
+TODO: This does not match the results to the other k-point values. Check the nsw convergence test (running now) to see if it affects the energy.
 
 #+BEGIN_SRC python :results drawer
 from ase import Atom, Atoms
@@ -1764,7 +1876,7 @@ del atoms[11:15]
 del atoms[5]
 
 
-name = 'material/g-mono/4x4/pore=10/vac=16'
+name = 'material/g-mono/4x4/pore=10/final'
 
 with jasp('./dft/' + name,
             encut=520,
@@ -1779,25 +1891,24 @@ with jasp('./dft/' + name,
     try:
         calc.calculate()
         energy = atoms.get_potential_energy()/len(atoms)
-        print_converged(len(atoms), energy, float(get_elapsed_time(calc)))
+        dtb.status_converged(energy, float(get_elapsed_time(calc)))
     except (VaspSubmitted, VaspQueued):
-        print_inprogress()
+        dtb.status_inprogress()
         ready = False
         pass
 
-file_path = './img/' + name + '.png'
-ase_write(file_path, atoms.repeat((3,3,1)))
-print('[[' + file_path + ']]')
+dtb.print_image(name, atoms)
 #+END_SRC
 
 #+RESULTS:
 :RESULTS:
 Graphene 4x4 pore=10:
-Final structure calculation: Atoms: 22. Energy/f.u. = -8.167. Calculation time: 1933 min.
-[[./img/material/g-mono/4x4/pore=10/vac=16.png]]
+Final structure calculation: Energy/f.u. = -8.167. Calculation time: 1933 min.
+[[./img/material/g-mono/4x4/pore=10/final.png]]
 :END:
 
-****** INPROGRESS Convergence: kpts
+****** DONE Convergence: kpts
+       CLOSED: [2016-06-10 Fri 09:32]
 
 #+BEGIN_SRC python :results drawer
 import numpy as np
@@ -1860,10 +1971,67 @@ for k in kpts:
 Graphene 4x4 pore=10:
 [[./img/material/g-mono/4x4/pore=10/convergence.png]]
 kpts=1x1x1
-Final structure calculation: In progress.
+Final structure calculation: Energy/f.u. = -8.128. Calculation time: 25 min.
 kpts=3x3x1
-Final structure calculation: In progress.
+Final structure calculation: Energy/f.u. = -8.112. Calculation time: 96 min.
 kpts=5x5x1
+Final structure calculation: Energy/f.u. = -8.112. Calculation time: 202 min.
+:END:
+
+****** INPROGRESS Convergence: nsw
+
+#+BEGIN_SRC python :results drawer
+import numpy as np
+import sys
+
+from ase import Atom, Atoms
+from ase.io import write as ase_write
+from ase.visualize import view
+from jasp import *
+JASPRC['queue.walltime'] = '10:00:00'
+
+import devon_toolbox as dtb
+
+
+with jasp("dft/material/g-mono/final") as calc:
+    atoms = calc.get_atoms()
+
+i = 4
+atoms = atoms.repeat((i,i,1))
+
+print('Graphene 4x4 pore=10:'.format(i))
+del atoms[26]
+del atoms[17:21]
+del atoms[11:15]
+del atoms[5]
+
+name = 'material/g-mono/4x4/pore=10/convergence/nsw=50'
+dtb.print_image(name, atoms)
+
+with jasp('./dft/' + name,
+            encut=520,
+            kpts=(3,3,1),
+            xc='PBE',          # GGA functional type
+            ismear=0,          # Gaussian smearing
+            sigma=0.2,         # "Metallic" system smearing
+            isif=2,            # relax positions only
+            ibrion=2,          # conjugate gradient optimizer
+            nsw=50,             # max number of steps to relax
+            atoms=atoms) as calc:
+    try:
+        calc.calculate()
+        energy = atoms.get_potential_energy()/len(atoms)
+        dtb.status_converged(energy, float(get_elapsed_time(calc)))
+    except (VaspSubmitted, VaspQueued):
+        dtb.status_inprogress()
+        ready = False
+        pass
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+Graphene 4x4 pore=10:
+[[./img/material/g-mono/4x4/pore=10/convergence/nsw=50.png]]
 Final structure calculation: In progress.
 :END:
 
@@ -2008,7 +2176,7 @@ Final structure calculation: Energy/f.u. = -8.604. Calculation time: 1098 min.
 
 Looks to be converged within 0.001 eV with a 3x3x1 k-point grid. A 1x1x1 grid is within ~0.02 eV. 
 
-***** TODO 6x6
+***** INPROGRESS 6x6
 
 #+BEGIN_SRC python :results drawer
 import numpy as np
@@ -2228,8 +2396,8 @@ Final structure calculation: Atoms: 34. Energy/f.u. = -8.759. Calculation time: 
 [[./img/material/g-bi/3x3/pore=1.png]]
 :END:
 
-***** INPROGRESS 4x4
-
+***** TODO 4x4
+****** INPROGRESS final
 #+BEGIN_SRC python :results drawer
 from ase import Atom, Atoms
 from jasp import *
@@ -2271,6 +2439,75 @@ with jasp('./dft/' + name,
 #+RESULTS:
 :RESULTS:
 [[./img/material/g-bi/4x4/pore=1.png]]
+Final structure calculation: In progress.
+:END:
+
+****** INPROGRESS nsw=0, kpts=1
+#+BEGIN_SRC python :results drawer
+from ase import Atom, Atoms
+from jasp import *
+
+import devon_toolbox as dtb
+
+
+with jasp('dft/material/g-bi/final') as calc:
+    atoms = calc.get_atoms()
+dtb.set_vacuum(atoms, 16)
+i = 4
+atoms = atoms.repeat([i,i,1])
+pore = [41, 42]
+dtb.make_pore(atoms, pore)
+
+name = 'material/g-bi/{0:0.0f}x{0:0.0f}/pore=1/convergence/nsw=0'.format(i)
+dtb.print_image(name, atoms)
+
+with jasp('./dft/' + name,
+            encut=520,
+            kpts=(3,3,1),
+            xc='PBE',          # GGA functional type
+            ismear=0,          # Gaussian smearing
+            sigma=0.2,         # "Metallic" system smearing
+            isif=2,            # relax positions only
+            ibrion=2,          # conjugate gradient optimizer
+            nsw=0,            # max number of steps to relax
+            atoms=atoms) as calc:
+    try:
+        calc.calculate()
+        energy = atoms.get_potential_energy()/len(atoms)
+        dtb.status_converged(energy, float(get_elapsed_time(calc)))
+    except (VaspSubmitted, VaspQueued):
+        dtb.status_inprogress()
+        ready = False
+        pass
+
+name = 'material/g-bi/{0:0.0f}x{0:0.0f}/pore=1/convergence/kpts=1'.format(i)
+dtb.print_image(name, atoms)
+
+with jasp('./dft/' + name,
+            encut=520,
+            kpts=(1,1,1),
+            xc='PBE',          # GGA functional type
+            ismear=0,          # Gaussian smearing
+            sigma=0.2,         # "Metallic" system smearing
+            isif=2,            # relax positions only
+            ibrion=2,          # conjugate gradient optimizer
+            nsw=0,            # max number of steps to relax
+            atoms=atoms) as calc:
+    try:
+        calc.calculate()
+        energy = atoms.get_potential_energy()/len(atoms)
+        dtb.status_converged(energy, float(get_elapsed_time(calc)))
+    except (VaspSubmitted, VaspQueued):
+        dtb.status_inprogress()
+        ready = False
+        pass
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+[[./img/material/g-bi/4x4/pore=1/convergence/nsw=0.png]]
+Final structure calculation: In progress.
+[[./img/material/g-bi/4x4/pore=1/convergence/kpts=1.png]]
 Final structure calculation: In progress.
 :END:
 
@@ -2509,7 +2746,7 @@ with jasp('./dft/' + name,
 Final structure calculation: In progress.
 :END:
 
-** Transport
+** TODO Transport
 *** Graphene monolayer
 **** Linear NEB
 ***** TODO H2 linear-const-const
@@ -2710,7 +2947,7 @@ Distance: -2.00. Energy = -155.269. Calculation time: 477 min.
 
 The free-free calculation did not converge at a molecule height of -1.0 Ang.
 
-**** Linear - 3x3 pore=1
+**** TODO Linear - 3x3 pore=1
 This is the type of transport I used for the final project in 0640. Essentially, I believe it tries to simulate an ab-initio MD calculation, which I need to look into.
 
 Pros:
@@ -2721,9 +2958,8 @@ Cons:
 - Meaningful calculations are too costly.
 - Pore distances must be kept small.
 
-***** DONE H2
-      CLOSED: [2016-06-09 Thu 09:12]
-
+***** H2
+****** const-const, const-free. Same params as final project
 Somewhat done for now. The unconstrained graphene + constrained H2 molecule calculations did not finish in time. Unfortunately, that is the one that would be most accurate to what is really going on with the transport.
 
 #+BEGIN_SRC python :results drawer
@@ -2921,6 +3157,152 @@ Distance: -2.00. Energy = -155.269. Calculation time: 477 min.
 :END:
 
 The free-free calculation did not converge at a molecule height of -1.0 Ang.
+
+****** INPROGRESS free-const
+
+#+BEGIN_SRC python :results drawer
+import copy
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.interpolate import interp1d
+import sys
+
+from ase import Atom, Atoms
+from ase.constraints import FixAtoms
+from ase.visualize import view
+from jasp import *
+
+import devon_toolbox as dtb
+
+
+def print_converged(i, energy, time):
+    print("Distance: {:5.2f}. Energy = {:8.3f}. Calculation time: {:3.0f} min.".format(i, energy, time/60.))
+
+def print_inprogress(i):
+    print("Distance: {:5.2f}. In progress.".format(i))
+
+def print_unconverged(i):
+    print("Distance: {:5.2f}. Did not converge.".format(i))
+
+
+# Graphene base
+with jasp('dft/material/g-mono/3x3/pore=1/final') as calc:
+    graphene = calc.get_atoms()
+
+dtb.set_vacuum(graphene, 20)
+defect_pos = np.array([5.681, 0., 10.]) # defect position
+
+
+# Transport initial images. Distance of molecule's center from grahene plane
+#heights = [10., 9., 8., 7., 6., 5., 4., 3., 2.5, 2., 1.5, 1., 0.5, 0., -0.5, -1., -1.5, -2.]
+heights = [10., 9., 8., 7., 6., 5., 4., 3., 2.5, 2., 1.5, 1., 0.5, 0., -0.5, -1.5, -2.]
+atoms =  [Atoms(graphene) for i in range(len(heights))]
+HH_bond = 0.74 # Bond length [Ang]
+for i, h in enumerate(heights):
+    H2 = Atoms([Atom('H', defect_pos + (0, 0, h - HH_bond/2.)),
+                Atom('H', defect_pos + (0, 0, h + HH_bond/2.))])
+    atoms[i].extend(H2)
+
+
+# Hydrogen fixed position constraint
+for atom in atoms[0]:
+    if atom.symbol == 'H':
+        hydrogen_constraint = [FixAtoms(indices=[atom.index])]
+        break
+
+
+# Graphene total constraint
+# (for comparison with final project results)
+graphene_constraint = [FixAtoms(indices=[atom.index for atom in atoms[0] if atom.symbol=='C'])]
+
+
+# Unconstrained graphene, constrained molecule
+atoms_uncon = copy.deepcopy(atoms)
+for i in range(len(heights)):
+    atoms_uncon[i].set_constraint(hydrogen_constraint)
+
+
+ready = True
+def calculate(name, atoms, TE):
+    for i, h in enumerate(heights):
+        with jasp('./dft/' + name + '/d={0:0.2f}'.format(h),
+                    encut=520,
+                    kpts=(5,5,1),
+                    xc='PBE',          # GGA functional type
+                    ismear=0,          # Gaussian smearing
+                    sigma=0.2,         # "Metallic" system smearing
+                    isif=2,            # relax positions only
+                    ibrion=2,          # conjugate gradient optimizer
+                    nsw=0,            # max number of steps to relax
+                    atoms=atoms[i]) as calc:
+            try:
+                calc.calculate()
+                energy = atoms[i].get_potential_energy()
+                TE.append(energy)
+                print_converged(h, energy, float(get_elapsed_time(calc)))
+            except (VaspSubmitted, VaspQueued):
+                print_inprogress(h)
+                ready = False
+                pass
+
+
+base_name = 'transport/g-mono/3x3/pore=1/molec=H2/'
+
+print('Unconstrained graphene, constrained leading hydrogen:')
+name_uncon = base_name + 'linear-free-const'
+TE_uncon = []
+calculate(name_uncon, atoms_uncon, TE_uncon)
+
+if not ready:
+    sys.exit()
+sys.exit()
+
+# Consider the change in energy from lowest energy state
+TE_uncon = np.array(TE_uncon)
+TE_uncon -= min(TE_uncon)
+
+
+def plot_spline(x, y, plt, style):
+    spline = interp1d(x, y, kind='cubic')
+    x_lin = np.linspace(-2,10,200)
+    plt.plot(x_lin, spline(x_lin), style)
+
+
+# Plot a comparison of the total energies of each constraint type
+print('')
+file_path = './img/' + base_name + 'TE-comparison.png'
+plt.plot(heights, TE_uncon, 'go', label='Leading H atom constrained')
+plot_spline(heights, TE_uncon, plt, 'g-')
+plt.xlabel('Center of molecule height ($\AA$)')
+plt.ylabel('Total Energy (eV)')
+plt.xlim([0,10])
+#plt.ylim([0,0.1])
+plt.legend()
+plt.savefig(file_path)
+print('[[' + file_path + ']]')
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+Unconstrained graphene, constrained leading hydrogen:
+Distance: 10.00. In progress.
+Distance:  9.00. In progress.
+Distance:  8.00. In progress.
+Distance:  7.00. In progress.
+Distance:  6.00. In progress.
+Distance:  5.00. In progress.
+Distance:  4.00. In progress.
+Distance:  3.00. In progress.
+Distance:  2.50. In progress.
+Distance:  2.00. In progress.
+Distance:  1.50. In progress.
+Distance:  1.00. In progress.
+Distance:  0.50. In progress.
+Distance:  0.00. In progress.
+Distance: -0.50. In progress.
+Distance: -1.50. In progress.
+Distance: -2.00. In progress.
+:END:
 
 ***** DONE N2
       CLOSED: [2016-06-08 Wed 16:05]
@@ -3290,19 +3672,11 @@ for i, h in enumerate(heights):
         BL_co2[1].append(atoms.get_distance(18,19))
 
 
-def plot_spline(x, y, plt, style):
-    spline = interp1d(x, y, kind='cubic')
-    x_lin = np.linspace(x[0],x[-1],200)
-    plt.plot(x_lin, spline(x_lin), style)
-
 file_path = './img/final-project/G-bond-length.png'
 plt.plot(h_rel, BL_h, 'ro-', label='H2')
 plt.plot(heights, BL_co2[0], 'go-', label='CO2 #1')
 plt.plot(heights, BL_co2[1], 'bo-', label='CO2 #2')
-#plot_spline(h_rel, BL_h, plt, 'r-')
-#plot_spline(heights, BL_co2[0], plt, 'g-')
-#plot_spline(heights, BL_co2[1], plt, 'b-')
-#plt.xlabel('Molecule distance from graphene plane ($\AA$)')
+plt.xlabel('Molecule center distance from graphene plane ($\AA$)')
 plt.ylabel('Bond length ($\AA$)')
 plt.ylim([0.5,3])
 plt.xlim([-3,3])
@@ -3394,6 +3768,8 @@ Max energy: 1.879 eV
 Max energy: 4.643 eV
 [[./img/final-project/total_energy-comparison.png]]
 :END:
+
+Barrier peaks could mean clustering around the pores.
 
 ** TODO Transport. Pore=1
 #+BEGIN_SRC python
@@ -3498,7 +3874,7 @@ print('[[' + file_path + ']]')
 
 #+RESULTS:
 
-** DONE Vaccuum distance convergence
+** DONE Vacuum distance convergence
    CLOSED: [2016-06-08 Wed 15:59]
 Look at the distance the molecule away from the graphene plane is to know when it appears to be a free molecule in space and does not exhibit changes in energy due to interaction.
 
@@ -3540,8 +3916,8 @@ for i, (molec, dist, TE) in enumerate(zip(molecs, dists, TEs)):
 
 for dist, TE in zip(dists, TEs):
     plt.plot(dist, TE)
-plt.xlabel('Height ($\AA$)')
-plt.ylabel('Total Energy (eV)')
+plt.xlabel('Closest atom distance from graphene plane ($\AA$)')
+plt.ylabel('$\Delta$ Energy (eV)')
 plt.xlim([0,8])
 plt.ylim([-0.5,2])
 plt.legend(molecs)
@@ -3666,9 +4042,7 @@ matplotlib.pyplot
 :END:
 
 ** TODO Height of carbon atoms around a functionalized graphene pore
-** TODO Monolayer graphene pore distance convergence
-TODO: Update p10times with k-points convergence time for 4x4
-
+** Monolayer graphene pore distance convergence
 Show that as the graphene layers get larger, the negative effect of the pore on the total energy decreases.
 
 #+BEGIN_SRC python :results drawer
@@ -3708,29 +4082,19 @@ with jasp("dft/material/g-mono/final") as calc:
 px = np.linspace(dists[0], dists[-1])
 py = [energy for i in px]
 
-# Pore=10 comparison
-p10dists = [dists[sizes.index(4)], dists[sizes.index(5)]]
-p10energies = [-8.167, -8.604]
-p10times = [1933, 966]
 
 path = 'results/monolayer-energy_vs_pore_distance'
-
-dtb.print_image(path + '-size=2', images[0])
-dtb.print_image(path + '-size=4', images[2])
-dtb.print_image(path + '-size=6', images[-1])
 
 ax1 = plt.gca()
 ax1.plot(px, py, 'g--', label="Pristine graphene")
 ax1.plot(dists, energies, 'go', label="Pore=1")
 spline = dtb.spline(dists, energies)
 ax1.plot(spline[0], spline[1], 'g-')
-ax1.plot(p10dists, p10energies, 'gd-', label="Pore=10")
 
 ax2 = plt.gca().twinx()
 ax2.plot(dists, times, 'ro', label="Pore=1")
 spline = dtb.spline(dists, times)
 ax2.plot(spline[0], spline[1], 'r-')
-ax2.plot(p10dists, p10times, 'rd-', label="Pore=10")
 
 ax1.set_xlabel("Distance between pore centers ($\AA$)")
 ax1.set_ylabel("Energy per atom (eV/f.u.)", color='g')
@@ -3742,16 +4106,58 @@ ax2.legend(loc='upper right')
 caption = "The effect of distance between pores on energy and calculation time."
 name = "g-mono-energy_vs_pore_distance"
 dtb.print_image(path + '.png', plt, name, caption)
+
+for i, [s, d] in enumerate(zip(sizes, dists)):
+    print("Distance = {0}. Structure = {1}x{1}".format(d, s))
+    if s in [2, 3]:
+        r = 3
+    else:
+        r = 2
+    dtb.print_image(path + '-pore=1-size={}'.format(s), images[i].repeat([r,r,1]))
+
+
+# Pore=10 comparison
+p10dists = [dists[sizes.index(4)], dists[sizes.index(5)]]
+p10energies = [-8.128, -8.604]
+p10times = [96, 966]
+p10sizes = [4, 5]
+p10images = []
+
+for i, [s, d] in enumerate(zip(p10sizes, p10dists)):
+    with jasp('dft/material/g-mono/{0}x{0}/pore=10/final'.format(s)) as calc:
+        p10images.append(calc.get_atoms())
+    print("Distance = {0}. Structure = {1}x{1}".format(d, s))
+    dtb.print_image(path + '-pore=10-size={}'.format(s), p10images[i].repeat([2,2,1]))
+
+ax1.plot(p10dists, p10energies, 'gd-', label="Pore=10")
+ax2.plot(p10dists, p10times, 'rd-', label="Pore=10")
+ax1.legend(loc='upper left')
+ax2.legend(loc='upper right')
+dtb.print_image(path + '-pore=10.png', plt, name, caption)
 #+END_SRC
 
 #+RESULTS:
 :RESULTS:
-[[./img/results/monolayer-energy_vs_pore_distance-size=2.png]]
-[[./img/results/monolayer-energy_vs_pore_distance-size=4.png]]
-[[./img/results/monolayer-energy_vs_pore_distance-size=6.png]]
 #+CAPTION: The effect of distance between pores on energy and calculation time.
 #+NAME: fig:g-mono-energy_vs_pore_distance
 [[./img/results/monolayer-energy_vs_pore_distance.png]]
+Distance = 4.92. Structure = 2x2
+[[./img/results/monolayer-energy_vs_pore_distance-pore=1-size=2.png]]
+Distance = 7.38. Structure = 3x3
+[[./img/results/monolayer-energy_vs_pore_distance-pore=1-size=3.png]]
+Distance = 9.84. Structure = 4x4
+[[./img/results/monolayer-energy_vs_pore_distance-pore=1-size=4.png]]
+Distance = 12.3. Structure = 5x5
+[[./img/results/monolayer-energy_vs_pore_distance-pore=1-size=5.png]]
+Distance = 14.76. Structure = 6x6
+[[./img/results/monolayer-energy_vs_pore_distance-pore=1-size=6.png]]
+Distance = 9.84. Structure = 4x4
+[[./img/results/monolayer-energy_vs_pore_distance-pore=10-size=4.png]]
+Distance = 12.3. Structure = 5x5
+[[./img/results/monolayer-energy_vs_pore_distance-pore=10-size=5.png]]
+#+CAPTION: The effect of distance between pores on energy and calculation time.
+#+NAME: fig:g-mono-energy_vs_pore_distance
+[[./img/results/monolayer-energy_vs_pore_distance-pore=10.png]]
 :END:
 
 Approaches the pristine limit but calculation time goes way up. This is also one of the best case scenarios - a single missing carbon atom. As the ammount of carbon atoms removed increases, the energy goes up.
@@ -3825,3 +4231,5 @@ print('[[' + file_path + ']]')
 #+END_SRC
 
 #+RESULTS:
+:RESULTS:
+:END:
