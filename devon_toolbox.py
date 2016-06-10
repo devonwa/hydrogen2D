@@ -1,15 +1,19 @@
 import os
 import sys
-import numpy as np
+from types import ModuleType
 
 from ase import Atom, Atoms
 from ase.io import write as ase_write
 from ase.visualize import view
 from jasp import *
+import numpy as np
+import matplotlib.pyplot as plt
 
+import seaborn as sns
+sns.set_style("white")
 
 def bp(info=None):
-    """Breakpoint. View something and stop the rest of the script."""
+    """A breakpoint to view something and stop the rest of the script."""
     if isinstance(info, Atoms):
         view(info)    
     elif isinstance(info, list):
@@ -32,6 +36,7 @@ def make_pore(atoms, indices):
     """Delete atoms at indices to create a pore."""
     for index in sorted(indices, reverse=True):
         del atoms[index]
+
 
 def status_converged(energy, time):
     print("Final structure calculation: Energy/f.u. = {:0.3f}. Calculation time: {:.0f} min.".format(energy, time/60.))
@@ -124,15 +129,64 @@ def closest_atom_to_height(atoms, height):
     return closest
 
 
-def print_image(name, atoms):
-    print(write_image(name, atoms))
+def spline(x, y, points=200):
+    """Return x and y spline values over the same range as x."""
+    from scipy.interpolate import interp1d
+    spline = interp1d(x, y, kind='cubic')
+    x_lin = np.linspace(x[0], x[-1], points)
+    y_interp = spline(x_lin)
+
+    return [x_lin, y_interp]
 
 
-def write_image(name, atoms):
-    file_path = './img/' + name + '.png'
+def get_neighbors(atoms, index, layer, cutoff=4.0):
+    """Return neighbor indices of the atom at index for a cutoff distance.
+
+    Determines a list of neighboring atoms to the index atom. It uses a cutoff distance to determine the absolute distance away from an atom that would constitute it as a neighbor.
+
+    Args:
+        atoms (Atoms): Cell of atoms with multiple layers of a 2D material.
+        index (int): atoms[index] is the atom used to find its neighbors.
+        layer (List[int]): Indices of atoms in the layer of question.
+        cutoff (float): If an atom's position away is less than cutoff, it is a neighbor.
+        
+    Returns:
+        A list of indices (int) of neighbors in atoms.
+    """
+    neighbors = []
+    pos = atoms[index].position
+    layer_atoms = [a for a in atoms if a.index in layer]
+    for a in layer_atoms:
+        dist = np.linalg.norm(a.position - pos)
+        if dist <= cutoff and dist is not 0.000:
+            neighbors.append(a.index)
+
+    return neighbors
+
+
+def print_image(path, data, fig_name=None, caption=None):
+    if caption is not None:
+        print('#+CAPTION: {}'.format(caption))
+    if fig_name is not None:
+        print('#+NAME: fig:{}'.format(fig_name))
+    print(write_image(path, data))
+
+
+def write_image(path, data, options=None):
+    file_path = './img/' + path
     directory = file_path[:file_path.rfind('/')]
     if not os.path.exists(directory):
         os.makedirs(directory)
-#    atoms.rotate('x', np.pi/-5) # TODO: do a .copy() instead of this
-    ase_write(file_path, atoms)
+    
+    if isinstance(data, ModuleType):
+        if data.__name__ == "matplotlib.pyplot":
+            data.savefig(file_path)
+    elif isinstance(data, Atoms):
+        #atoms.rotate('x', np.pi/-5) # TODO: do a .copy() instead of this
+        file_path += '.png'
+        ase_write(file_path, data)
+
+    else:
+        print("No functionality for type = {}".format(type(data)))
+
     return '[[' + file_path + ']]'
