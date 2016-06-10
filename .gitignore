@@ -68,5 +68,6 @@ desktop.ini
 ltxpng
 texput.log
 dft/
+img/
 *.png
 presentations/reveal.js
