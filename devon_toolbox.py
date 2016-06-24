@@ -17,13 +17,63 @@ def bp(info=None):
     if isinstance(info, Atoms):
         view(info)    
     elif isinstance(info, list):
-        for i in info:
-            print(i)
-            print("")
-    else:
+        if all(isinstance(i, Atoms) for i in info):
+            view(info)
+        else:
+            for i in info:
+                print(i)
+                print("")
+    elif info is not None:
         print(info)
 
     sys.exit()
+
+
+def center(atoms):
+    """Return the position (x,y,z) of the center of the cell."""
+    cell = np.array(atoms.get_cell())
+    center = (cell[0] + cell[1]) / 2
+    center += cell[2] / 2
+    return center
+
+
+def is_the_same(x, fun, *args):
+    """True if the object is unchanged during the function call."""
+    import copy
+    y = copy.deepcopy(x)
+    fun(*args)
+    return x == y
+
+
+def get_neighbors(atoms, index, layer, cutoff=4.0):
+    """Return neighbor indices of the atom at index for a cutoff distance.
+
+    Determines a list of neighboring atoms to the index atom. It uses a cutoff distance to determine the absolute distance away from an atom that would constitute it as a neighbor.
+
+    Args:
+        atoms (Atoms): Cell of atoms with multiple layers of a 2D material.
+        index (int): atoms[index] is the atom used to find its neighbors.
+        layer (List[int]): Indices of atoms in the layer of question.
+        cutoff (float): If an atom's position away is less than cutoff, it is a neighbor.
+        
+    Returns:
+        A list of indices (int) of neighbors in atoms.
+    """
+    neighbors = []
+    pos = atoms[index].position
+    layer_atoms = [a for a in atoms if a.index in layer]
+    for a in layer_atoms:
+        dist = np.linalg.norm(a.position - pos)
+        if dist <= cutoff and dist > 0.001:
+            neighbors.append(a.index)
+
+    return neighbors
+
+
+def make_pore(atoms, indices):
+    """Delete atoms at indices to create a pore."""
+    for index in sorted(indices, reverse=True):
+        del atoms[index]
 
 
 def paint_atoms(atoms, indices, sym=None, layers=None):
@@ -41,24 +91,6 @@ def paint_atoms(atoms, indices, sym=None, layers=None):
     else:
         for i in indices:
             atoms[i].symbol = symbols[0]
-
-
-def make_pore(atoms, indices):
-    """Delete atoms at indices to create a pore."""
-    for index in sorted(indices, reverse=True):
-        del atoms[index]
-
-
-def status_converged(energy, time):
-    print("Final structure calculation: Energy/f.u. = {:0.3f}. Calculation time: {:.0f} min.".format(energy, time/60.))
-
-
-def status_inprogress():
-    print("Final structure calculation: In progress.")
-
-
-def status_unconverged(i):
-    print("Distance: {:5.2f}. Did not converge.".format(i))
 
 
 def set_vacuum(atoms, vacuum):
@@ -81,6 +113,30 @@ def set_vacuum(atoms, vacuum):
 
     for atom in atoms:
         atom.position[2] = center_new - (center_old - atom.position[2])
+
+def result(name, calc, fu=None):
+    """Print a brief calculation report."""
+    atoms = calc.get_atoms()
+    energy = atoms.get_potential_energy()
+
+    if energy is None:
+        stat = "Inprogress."
+    else:
+        time = calc.get_elapsed_time()
+        stat = "Energy = {:0.4f}. Calc time: {:.0f} min.".format(energy, time/60.)
+
+    print(name + ": " + stat)
+
+def status_converged(energy, time):
+    print("Final structure calculation: Energy/f.u. = {:0.3f}. Calculation time: {:.0f} min.".format(energy, time/60.))
+
+
+def status_inprogress():
+    print("Final structure calculation: In progress.")
+
+
+def status_unconverged(i):
+    print("Distance: {:5.2f}. Did not converge.".format(i))
 
 
 def structure(atoms, layers=1, molecs=0, thresh=2.0):
@@ -126,6 +182,24 @@ def structure(atoms, layers=1, molecs=0, thresh=2.0):
     return structure
 
 
+def closest_atom(atoms, position, exclude=None):
+    """Return the index of the atom closest to a position."""
+    choices = [a.index for a in atoms]
+
+    if exclude is not None:
+        choices = [i for i in choices if i not in exclude]
+
+    closest = None
+    min_dist = None
+    for i in choices:
+        dist = np.linalg.norm(atoms[i].position - position)
+        if np.absolute(dist) < min_dist or closest is None:
+            min_dist = dist
+            closest = i
+
+    return closest
+
+
 def closest_atom_to_height(atoms, height):
     """Return the first atom closest to height in the z-direction."""
     closest = atoms[0]
@@ -148,31 +222,6 @@ def spline(x, y, points=200):
     y_interp = spline(x_lin)
 
     return [x_lin, y_interp]
-
-
-def get_neighbors(atoms, index, layer, cutoff=4.0):
-    """Return neighbor indices of the atom at index for a cutoff distance.
-
-    Determines a list of neighboring atoms to the index atom. It uses a cutoff distance to determine the absolute distance away from an atom that would constitute it as a neighbor.
-
-    Args:
-        atoms (Atoms): Cell of atoms with multiple layers of a 2D material.
-        index (int): atoms[index] is the atom used to find its neighbors.
-        layer (List[int]): Indices of atoms in the layer of question.
-        cutoff (float): If an atom's position away is less than cutoff, it is a neighbor.
-        
-    Returns:
-        A list of indices (int) of neighbors in atoms.
-    """
-    neighbors = []
-    pos = atoms[index].position
-    layer_atoms = [a for a in atoms if a.index in layer]
-    for a in layer_atoms:
-        dist = np.linalg.norm(a.position - pos)
-        if dist <= cutoff and dist is not 0.000:
-            neighbors.append(a.index)
-
-    return neighbors
 
 
 def print_image(path, data, fig_name=None, caption=None):
