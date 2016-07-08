@@ -6,9 +6,7 @@
 
 * Journal
 ** 2016-05-19 Thu
-- cite:zan-2012-graph-reknit Graphene Reknits Its Holes - Zan, Novoselov*
-
-Competing possible research avenues:
+- cite:zan-2012-graph-reknit ues:
 1. Repairing graphene
 2. Stacked-graphene aperture effect
   2.1. Neural network?
@@ -903,16 +901,209 @@ i = 3
 atoms = atoms.repeat([i,i,1])
 
 #dtb.bp(atoms)
-struct = dtb.structure(atoms, layers=2)
+struct = td.structure(atoms, layers=2)
 index = 16
-neighbors = dtb.get_neighbors(atoms, index, struct['layers'][0])
+neighbors = td.get_neighbors(atoms, index, struct['layers'][0])
 neighbors.append(index)
 dtb.paint_atoms(atoms, neighbors, layers=struct['layers'])
 dtb.bp(atoms)
  #+END_SRC
 
-** 2016-06-24 3pm Group meeting
+** DONE 2016-06-24 3pm Group meeting
+   CLOSED: [2016-07-06 Wed 13:22]
 ** 2016-07-06 3pm Group meeting presentation
+*** 2D structure module - twodee
+For mainting helper functions for manipulating 2D materials
+[[./twodee.py]]
+
+**** Tests
+Tests maintained in this file at [[twodee tests]].
+
+***** create_base
+
+Plan to incorporate into ASE DB.
+
+   #+BEGIN_SRC python :results drawer
+import devon_toolbox as dtb
+import twodee as td
+
+atoms = td.create_base("graphene", size=5)
+
+dtb.bp(atoms)
+   #+END_SRC
+
+   #+RESULTS:
+
+***** center_layer
+
+   #+BEGIN_SRC python :results drawer
+import devon_toolbox as dtb
+import twodee as td
+
+atoms = td.create_base("graphene", layers=2, size=4)
+layers = td.layers(atoms)
+center1 = td.center_layer(atoms, layers[0])
+center2 = td.center_layer(atoms, layers[1])
+c1 = td.closest_atom(atoms, center1)
+c2 = td.closest_atom(atoms, center2)
+dtb.paint_atoms(atoms, [c1, c2])
+dtb.bp(atoms)
+   #+END_SRC
+
+   #+RESULTS:
+   :RESULTS:
+   :END:
+
+***** edges
+
+   #+BEGIN_SRC python :results drawer
+import devon_toolbox as dtb
+import twodee as td
+
+unitcell = td.create_base("graphene", layers=2)
+atoms = td.create_base("graphene", layers=2, size=5)
+
+e = td.edges(atoms, unitcell)
+dtb.paint_atoms(atoms, e)
+dtb.bp(atoms)
+dtb.bp([e])
+   #+END_SRC
+
+   #+RESULTS:
+   :RESULTS:
+   :END:
+
+***** get_neighbors
+
+Show layers[0] and layers[1]
+
+#+BEGIN_SRC python
+import devon_toolbox as dtb
+import twodee as td
+
+atoms = td.create_base("graphene", layers=2, size=5)
+index = 45
+layers = td.layers(atoms)
+neighbors = td.get_neighbors(atoms, index, layers[0], cutoff=1.5)
+dtb.paint_atoms(atoms, [index])
+dtb.paint_atoms(atoms, neighbors, sym='O')
+dtb.bp(atoms)
+#+END_SRC
+
+***** is_connected
+
+   #+BEGIN_SRC python
+import devon_toolbox as dtb
+import twodee as td
+
+graphene_cutoff = 1.5 # Angstrom. Should put this somewhere more permanent.
+
+unitcell = td.create_base("graphene", layers=1)
+size = 3
+atoms = td.create_base("graphene", layers=1, size=size)
+
+edges = td.edges(atoms, unitcell)#
+
+dtb.bp(atoms)
+print(td.is_connected(atoms, [8, 9, 10]))
+print(td.is_connected(atoms, [8, 10, 14]))
+print(td.is_connected(atoms, [9]))
+dtb.bp()
+   #+END_SRC
+
+   #+RESULTS:
+   : True
+   : False
+   : True
+
+*** Pore candidate selection algorithm
+**** Constraints
+1. The pore may not appear to break the structure of the graphene plane.
+[[./img/presentation/group-meeting-20160706/edges.png]]
+
+2. "Islands" of carbon atoms are not allowed.
+[[./img/presentation/group-meeting-20160706/island.png]]
+
+3. Removed carbons must be neighbors.
+[[./img/presentation/group-meeting-20160706/bad_pore.png]]
+
+Example pics:
+#+BEGIN_SRC python :results silent
+import devon_toolbox as dtb
+import twodee as td
+
+unitcell = td.create_base("graphene", layers=1)
+size = 4
+atoms = td.create_base("graphene", layers=1, size=size)
+edges = td.edges(atoms, unitcell)
+island = [13, 14, 15, 20, 22, 23, 28, 29, 30, 19, 26, 27]
+bad_pore = [10, 11, 12, 23, 30, 31]
+
+a = atoms.copy()
+dtb.paint_atoms(a, edges)
+dtb.print_image('presentation/group-meeting-20160706/edges', a)
+
+a = atoms.copy()
+dtb.paint_atoms(a, edges)
+dtb.paint_atoms(a, island, sym="O")
+dtb.print_image('presentation/group-meeting-20160706/island', a)
+
+a = atoms.copy()
+dtb.paint_atoms(a, edges)
+dtb.paint_atoms(a, bad_pore, sym="O")
+dtb.print_image('presentation/group-meeting-20160706/bad_pore', a)
+#+END_SRC
+
+
+*Why constraints?*
+The amount of combinations for pores will be very large, even with constraints. It will be more useful to look at "more likely" pore candidates for our calculations. However, this does not address the possibility that the material would prefer one of the structures that are being disregarded.
+
+**** First pass - Tree branching
+[[~/hydrogen2D/img/movies/candidates-islands/size=3.gif]]
+[[~/hydrogen2D/img/movies/candidates-islands/size=4.gif]]
+[[~/hydrogen2D/img/movies/candidates-islands/size=5.gif]]
+
+Issue: Creates islands
+
+Possible solution: Manipulate the algorithm to step farther back within its recursion loop to start a new tree branch.
+
+- Difficult to conceptualize
+- Even harder to prove it accurately captures all combinations
+
+**** Second pass - Exclusion from all combinations
+
+[[~/hydrogen2D/img/movies/candidates/candidates-size=3.gif]]
+
+Notes:
+1. Show a comparison of how the two algorithms move by showing the gifs side-by-side. Draw diagrams.
+2. Show td.is_connected() loop structure
+
+|          Graphene size |   Pore size | Calculation time |
+| (unitcell repititions) | (# carbons) |        (seconds) |
+|------------------------+-------------+------------------|
+|                      3 |           1 |              0.1 |
+|                      3 |           2 |              0.3 |
+|                      3 |           3 |              0.5 |
+|                      3 |           4 |              0.6 |
+|                      3 |           5 |              0.5 |
+|                      3 |           6 |              0.2 |
+|                      3 |           7 |              0.1 |
+|                      4 |           1 |              0.7 |
+|                      4 |           2 |              5.3 |
+|                      4 |           3 |             26.9 |
+|                      4 |           4 |             95.1 |
+
+**** Third pass - Improvements
+1. Speed increases: Storing larger lists, instead of calling functions like get_neighbors each time (moves from O(n^2) to O(n)).
+
+2. Reliability: Write a method for determiniing if all combinations meeting the constraints are accounted for (more difficult).
+
+**** Future
+How to select the best structures for DFT calculations and training a neural network?
+1. Start with a hand-curated set that are often found in literature.
+2. Use the previous algorith to determine all combinations. Select from a group that have been shown to have the most promise from a faster calculation type (MD).
+
+
 ** 2016-07-15 3pm Group meeting
 ** 2016-08-12 3pm Group meeting presentation
 * Research
@@ -1421,431 +1612,134 @@ Suggest more points to improve the resolution of a total energy curve for a tran
 
 #+END_SRC
 
-* Toolbox
+** 2016-07-07: ASE Neighbors
 
-#+BEGIN_SRC python :tangle devon_toolbox.py :results drawer
-import os
-import sys
-from types import ModuleType
-
-from ase import Atom, Atoms
-from ase.io import write as ase_write
-from ase.visualize import view
-from jasp import *
-import numpy as np
-import matplotlib.pyplot as plt
-
-import seaborn as sns
-sns.set_style("white")
-
-def bp(info=None):
-    """A breakpoint to view something and stop the rest of the script."""
-    if isinstance(info, Atoms):
-        view(info)    
-    elif isinstance(info, list):
-        if all(isinstance(i, Atoms) for i in info):
-            view(info)
-        else:
-            for i in info:
-                print(i)
-                print("")
-    elif info is not None:
-        print(info)
-
-    sys.exit()
-
-
-def center(atoms):
-    """Return the position (x,y,z) of the center of the cell."""
-    cell = np.array(atoms.get_cell())
-    center = (cell[0] + cell[1]) / 2
-    center += cell[2] / 2
-    return center
-
-
-def is_the_same(x, fun, *args):
-    """True if the object is unchanged during the function call."""
-    import copy
-    y = copy.deepcopy(x)
-    fun(*args)
-    return x == y
-
-
-def get_neighbors(atoms, index, layer, cutoff=4.0):
-    """Return neighbor indices of the atom at index for a cutoff distance.
-
-    Determines a list of neighboring atoms to the index atom. It uses a cutoff distance to determine the absolute distance away from an atom that would constitute it as a neighbor.
-
-    Args:
-        atoms (Atoms): Cell of atoms with multiple layers of a 2D material.
-        index (int): atoms[index] is the atom used to find its neighbors.
-        layer (List[int]): Indices of atoms in the layer of question.
-        cutoff (float): If an atom's position away is less than cutoff, it is a neighbor.
-        
-    Returns:
-        A list of indices (int) of neighbors in atoms.
-    """
-    neighbors = []
-    pos = atoms[index].position
-    layer_atoms = [a for a in atoms if a.index in layer]
-    for a in layer_atoms:
-        dist = np.linalg.norm(a.position - pos)
-        if dist <= cutoff and dist > 0.001:
-            neighbors.append(a.index)
-
-    return neighbors
-
-
-def make_pore(atoms, indices):
-    """Delete atoms at indices to create a pore."""
-    for index in sorted(indices, reverse=True):
-        del atoms[index]
-
-
-def paint_atoms(atoms, indices, sym=None, layers=None):
-    """Update the chemical symbol of atoms in the list of indices."""
-    if sym is not None:
-        symbols = sym
-    else:
-        symbols = ["N", "O", "B", "F"]
-
-    if layers is not None:
-        for i in indices:
-            for j, l in enumerate(layers):
-                if i in l:
-                    atoms[i].symbol = symbols[j % len(symbols)]
-    else:
-        for i in indices:
-            atoms[i].symbol = symbols[0]
-
-
-def set_vacuum(atoms, vacuum):
-    """Center atoms in the z-direction in a cell of size vacuum.
-
-    Centers atoms in a unitcell with space above and below of 1/2 * vacuum. Assumes the current unitcell is centered and cell length changes only in the z-direction.
-    
-    Args:
-        atoms (Atoms): Unitcell of atoms
-        vacuum (float): Height of new unitcell
-
-    Returns:
-        An Atoms object with the new cell height.
-    """
-    cell = atoms.get_cell()
-    center_old = cell[2][2] / 2.
-    center_new = vacuum / 2.
-    cell[2][2] = vacuum
-    atoms.set_cell(cell)
-
-    for atom in atoms:
-        atom.position[2] = center_new - (center_old - atom.position[2])
-
-def result(name, calc, fu=None):
-    """Print a brief calculation report."""
-    atoms = calc.get_atoms()
-    energy = atoms.get_potential_energy()
-
-    if energy is None:
-        stat = "Inprogress."
-    else:
-        time = calc.get_elapsed_time()
-        stat = "Energy = {:0.4f}. Calc time: {:.0f} min.".format(energy, time/60.)
-
-    print(name + ": " + stat)
-
-def status_converged(energy, time):
-    print("Final structure calculation: Energy/f.u. = {:0.3f}. Calculation time: {:.0f} min.".format(energy, time/60.))
-
-
-def status_inprogress():
-    print("Final structure calculation: In progress.")
-
-
-def status_unconverged(i):
-    print("Distance: {:5.2f}. Did not converge.".format(i))
-
-
-def structure(atoms, layers=1, molecs=0, thresh=2.0):
-    """Return lists of the indices of different structures in a unitcell.
-    
-    Specifically used for my 2D material transport structures to retrieve layers and molecules. Starts from height of z=0 and moves upwards. Note: A k-means algorithm could work well here, but the one currently (2016-06-06) in scipy did not work reliably here due to some randomness. It may be worthwhile to look into it more if we want to define molecules in 3D space.
-
-    Args:
-        atoms (Atoms): Unitcell of atoms
-        layers (int): Number of layers
-        molecs (int): Number of molecules. 0 or 1. >1 not implemented.
-        thresh (float): Total height of a layer.
-
-    Returns:
-        Dict containing indices of atoms representing layers and molecules.
-        
-        Example:
-        {'layers': [[0, 1, 4, 5], [2, 3, 6, 7]]
-         'molecs': [8,9]}
-    """
-    structure = {}
-    structure['layers'] = []
-    structure['molecs'] = []
-    unaccounted = [atom for atom in atoms]
-    
-    for layer in range(layers):
-        anchor = closest_atom_to_height(unaccounted, 0)
-
-        group = []
-        for atom in unaccounted:
-            dist = abs(anchor.position[2] - atom.position[2])
-            if dist <= thresh:
-                group.append(atom)
-
-
-        indices = [g.index for g in group]
-        structure['layers'].append(indices)
-        unaccounted = [a for a in unaccounted if a.index not in indices]
-    
-    if molecs > 0:
-        structure['molecs'].append([a.index for a in unaccounted])
-
-    return structure
-
-
-def closest_atom(atoms, position, exclude=None):
-    """Return the index of the atom closest to a position."""
-    choices = [a.index for a in atoms]
-
-    if exclude is not None:
-        choices = [i for i in choices if i not in exclude]
-
-    closest = None
-    min_dist = None
-    for i in choices:
-        dist = np.linalg.norm(atoms[i].position - position)
-        if np.absolute(dist) < min_dist or closest is None:
-            min_dist = dist
-            closest = i
-
-    return closest
-
-
-def closest_atom_to_height(atoms, height):
-    """Return the first atom closest to height in the z-direction."""
-    closest = atoms[0]
-    min_dist = abs(height - closest.position[2])
-
-    for atom in atoms:
-        dist = abs(height - atom.position[2])
-        if dist < min_dist:
-            closest = atom
-            min_dist = dist
-
-    return closest
-
-
-def spline(x, y, points=200):
-    """Return x and y spline values over the same range as x."""
-    from scipy.interpolate import interp1d
-    spline = interp1d(x, y, kind='cubic')
-    x_lin = np.linspace(x[0], x[-1], points)
-    y_interp = spline(x_lin)
-
-    return [x_lin, y_interp]
-
-
-def print_image(path, data, fig_name=None, caption=None):
-    if caption is not None:
-        print('#+CAPTION: {}'.format(caption))
-    if fig_name is not None:
-        print('#+NAME: fig:{}'.format(fig_name))
-    print(write_image(path, data))
-
-
-def write_image(path, data, options=None):
-    file_path = './img/' + path
-    directory = file_path[:file_path.rfind('/')]
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-    
-    if isinstance(data, ModuleType):
-        if data.__name__ == "matplotlib.pyplot":
-            data.savefig(file_path)
-    elif isinstance(data, Atoms):
-        #atoms.rotate('x', np.pi/-5) # TODO: do a .copy() instead of this
-        file_path += '.png'
-        ase_write(file_path, data)
-
-    else:
-        print("No functionality for type = {}".format(type(data)))
-
-    return '[[' + file_path + ']]'
-#+END_SRC
-
-#+RESULTS:
-:RESULTS:
-:END:
-
-*** Examples
-**** get_neighbors
 #+BEGIN_SRC python
-from jasp import *
-from ase import Atoms, Atom
+from ase.neighborlist import NeighborList
+
 import devon_toolbox as dtb
+import twodee as td
 
-with jasp('dft/material/g-bi/final') as calc:
-    atoms = calc.get_atoms()
-i = 3
-atoms = atoms.repeat([i,i,1])
 
-struct = dtb.structure(atoms, layers=2)
-index = 16
-neighbors = dtb.get_neighbors(atoms, index, struct['layers'][0])
-neighbors.append(index)
-dtb.paint_atoms(atoms, neighbors, layers=struct['layers'])
+atoms = td.create_base("graphene", size=5)
+nblist = NeighborList([0.75 for i in range(len(atoms))],
+                      bothways=True,
+                      self_interaction=False)
+nblist.update(atoms)
+
+nbs = nblist.get_neighbors(11)[0]
+dtb.paint_atoms(atoms, nbs)
 dtb.bp(atoms)
+dtb.bp(nbs)
 #+END_SRC
 
 #+RESULTS:
-: [2, 3, 6, 7, 10, 11, 14, 15, 18, 19, 22, 23, 26, 27, 30, 31, 34, 35]
-: 
-: [0, 1, 4, 5, 8, 9, 12, 13, 16, 17, 20, 21, 24, 25, 28, 29, 32, 33]
-: 
+: (array([12, 20, 10]), array([[0, 0, 0],
+:        [0, 0, 0],
+:        [0, 0, 0]]))
 
-* TODO twodee
+** 2016-07-07: Making better .gif's with ImageMagick
+Currently, the following command leaves a lot of unwanted artifacts in .gif's of the pore candidate selection algorithm.
 
-Functions to facilitate easy 2D material unitcell manipulation.
+#+BEGIN_SRC sh :results silent
+cd ./img/scripts/20160707-imagemagick/size=3/pore=5/
+convert -delay 30 -loop 0 *.png ../../bad_example.gif
+#+END_SRC
 
-#+BEGIN_SRC python :tangle twodee.py :results drawer
-from ase import Atoms, Atom
-import numpy as np
-from vasp import Vasp
+Output: [[file+sys:./img/scripts/20160707-imagemagick/bad_example.gif]]
 
+Issues:
+- Red dots have grey outline from previous carbons.
+- Entire image occasionally goes grey.
+
+Below are new attempts using different imagemagick command line arguments.
+
+#+BEGIN_SRC sh :results silent
+cd ./img/scripts/20160707-imagemagick/size=3/pore=5/
+convert -delay 30 -loop 0 +dither -colorspace rgb *.png ../../test1.gif
+#+END_SRC
+
+
+
+* twodee tests
+
+Functions to facilitate easy 2D material unitcell manipulation. Show what each function does.
+
+** candidates
+
+#+BEGIN_SRC python :results drawer
 import devon_toolbox as dtb
+import twodee as td
+import time
 
+graphene_cutoff = 1.5 # Angstrom. Should put this somewhere more permanent.
 
-## Graphene class with neighbor cutoffs
+unitcell = td.create_base("graphene", layers=1)
+size = 3
+atoms = td.create_base("graphene", layers=1, size=size)
 
-def center_layer(atoms, layer):
-    """Return the position (x,y,z) of the center of a layer of atoms.
+edges = td.edges(atoms, unitcell)
+indices = [a.index for a in atoms if a.index not in edges]
 
-    Args:
-        atoms (Atoms): Cell of atoms.
-        layer (List[int]): Indices of atoms in layer."""
-    cell = np.array(atoms.get_cell())
-    center = (cell[0] + cell[1]) / 2
-    atoms = [a for a in atoms if a.index in layer]
-    center += [0, 0, np.mean([a.position[2] for a in atoms])]
-    return center
+pore_sizes = range(len(indices))
+#pore_sizes = [1, 2, 3, 4]
+times = []
+for pore_size in pore_sizes:
+    start = time.time()
+    cans = td.candidates(atoms, edge=edges, size=pore_size)
+    end = time.time()
+    times.append(end - start)
 
+#    images = []
+#    dtb.paint_atoms(atoms, edges)
+#    for i, c in enumerate(cans):
+#        a = atoms.copy()
+#        dtb.paint_atoms(a, c, sym="O")
+#        file_name = 'tmp/size={1}/pore={2}/{0:0>4}'
+#        file_name = file_name.format(i, size, pore_size)
+#        dtb.write_image(file_name, a)
 
-def create_base(mat='graphene', layers=1, size=1):
-    """Return a relaxed structure of the base material with n layers."""
-    name = 'vasp/base/mat={0}/layers={1}'.format(mat, layers)
-    atoms = Vasp(name).get_atoms()
-
-    atoms = atoms.repeat([size, size, 1])
-    return atoms
-
-
-def edges(atoms, unitcell):
-    """Return lists of indices of edge atoms in each layer.
-
-    Args:
-        atoms (Atoms): Superstructure of atoms
-        unitcell (Atoms): Unitcell making up the superstructure
-    """
-    edges = []
-    [u1, u2, u3] = unitcell.get_cell()
-    [a1, a2, a3] = atoms.get_cell()
-    repeats = a1[0] / u1[0]
-    for u in unitcell:
-        edges.append(u.index)
-        for i in range(1, int(repeats)):
-            pos1 = u.position + i * u1
-            pos2 = u.position + i * u2
-            edges.append(dtb.closest_atom(atoms, pos2))
-            edges.append(dtb.closest_atom(atoms, pos1))
-
-    return edges
-
-
-def get_neighbors(atoms, index, layer, cutoff=4.0):
-    """Return neighbor indices of the atom at index for a cutoff distance.
-
-    Determines a list of neighboring atoms to the index atom. It uses a cutoff distance to determine the absolute distance away from an atom that would constitute it as a neighbor.
-
-    Args:
-        atoms (Atoms): Cell of atoms with multiple layers of a 2D material.
-        index (int): atoms[index] is the atom used to find its neighbors.
-        layer (List[int]): Indices of atoms in the layer of question.
-        cutoff (float): If an atom's position away is less than cutoff, it is a neighbor.
-        
-    Returns:
-        A list of indices (int) of neighbors in atoms.
-    """
-    neighbors = []
-    pos = atoms[index].position
-    layer_atoms = [a for a in atoms if a.index in layer]
-    for a in layer_atoms:
-        dist = np.linalg.norm(a.position - pos)
-        if dist <= cutoff and dist is not 0.000:
-            neighbors.append(a.index)
-
-    return neighbors
-
-
-def layers(atoms, thresh=2.0):
-    """Return lists of the indices of atoms in layers, top layer first.
-
-    Note that the threshold could cause inaccuracy after a drastic relaxation.
-    """
-    height = atoms.get_cell()[2][2]
-    layers = []
-    unaccounted = [atom for atom in atoms]
-    while len(unaccounted) > 0:
-        anchor = dtb.closest_atom_to_height(unaccounted, height)
-
-        group = []
-        for atom in unaccounted:
-            dist = abs(anchor.position[2] - atom.position[2])
-            if dist <= thresh:
-                group.append(atom)
-
-        indices = [g.index for g in group]
-        layers.append(indices)
-        unaccounted = [a for a in unaccounted if a.index not in indices]
-    
-    return layers
-
-
-def set_vacuum(atoms, vacuum):
-    """Center atoms in the z-direction in a cell of size vacuum.
-
-    Centers atoms in a unitcell with space above and below of 1/2 * vacuum. Assumes the current unitcell is centered and cell length changes only in the z-direction.
-    
-    Args:
-        atoms (Atoms): Unitcell of atoms
-        vacuum (float): Height of new unitcell
-
-    Returns:
-        An Atoms object with the new cell height.
-    """
-    cell = atoms.get_cell()
-    center_old = cell[2][2] / 2.
-    center_new = vacuum / 2.
-    cell[2][2] = vacuum
-    atoms.set_cell(cell)
-
-    for atom in atoms:
-        atom.position[2] = center_new - (center_old - atom.position[2])
+dtb.bp(times)
+dtb.bp(cans)
 #+END_SRC
 
 #+RESULTS:
 :RESULTS:
+0.0287690162659
+
+0.0328578948975
+
+0.0481550693512
+
+0.0676600933075
+
+0.074282169342
+
+0.0620141029358
+
+0.0432910919189
+
+0.0310881137848
+
 :END:
 
-** Function examples
 
-Show what each function does.
+|          Graphene size |   Pore size | Calculation time |
+| (unitcell repititions) | (# carbons) |        (seconds) |
+|------------------------+-------------+------------------|
+|                      3 |           1 |              0.1 |
+|                      3 |           2 |              0.3 |
+|                      3 |           3 |              0.5 |
+|                      3 |           4 |              0.6 |
+|                      3 |           5 |              0.5 |
+|                      3 |           6 |              0.2 |
+|                      3 |           7 |              0.1 |
+|                      4 |           1 |              0.7 |
+|                      4 |           2 |              5.3 |
+|                      4 |           3 |             26.9 |
+|                      4 |           4 |             95.1 |
 
-*** candidates
+** candidates - leaves islands
 
 #+BEGIN_SRC python :results drawer
 from sets import Set
@@ -1858,7 +1752,7 @@ graphene_cutoff = 1.5 # Angstrom. Should put this somewhere more permanent.
 
 def candidates(atoms, layers, exclude=None, depth=None):
     pos_center = td.center_layer(atoms, layers[0])
-    center_atom = dtb.closest_atom(atoms, pos_center)
+    center_atom = td.closest_atom(atoms, pos_center)
     can = [center_atom]
     cans = [can]
 
@@ -1871,7 +1765,7 @@ def candidates(atoms, layers, exclude=None, depth=None):
 
 def candidates_loop(atoms, indices, can, cans, index, depth, step=1):
     layer = [i for i in indices] #TODO devon: Clean up get_neighbors.
-    neighbors = dtb.get_neighbors(atoms, index, layer, graphene_cutoff)
+    neighbors = td.get_neighbors(atoms, index, layer, graphene_cutoff)
 
     if len(neighbors) == 1:
         n = neighbors[0]
@@ -1897,13 +1791,13 @@ layers = td.layers(atoms)
 edges = td.edges(atoms, unitcell)#
 cans = candidates(atoms, layers, exclude=edges)
 
-dtb.bp(cans)
+dtb.bp([cans])
 images = []
 dtb.paint_atoms(atoms, edges)
 for i, c in enumerate(cans):
     a = atoms.copy()
     dtb.paint_atoms(a, c, sym="O")
-    dtb.write_image('tmp/algo-movie/size={1}/{0:0>4}'.format(i, size), a)
+    dtb.write_image('movies/candidates-islands/size={1}/{0:0>4}'.format(i, size), a)
 
 dtb.bp()
 dtb.bp(cans)
@@ -1911,69 +1805,23 @@ dtb.bp(cans)
 
 #+RESULTS:
 :RESULTS:
-[9]
-
-[8, 9]
-
-[8, 9, 10]
-
-[8, 9, 10, 11]
-
-[8, 9, 10, 11, 16]
-
-[8, 9, 10, 11, 15, 16]
-
-[8, 9, 10, 11, 14, 15, 16]
-
-[8, 9, 10, 11, 16, 17]
-
-[8, 9, 10, 11, 15, 16, 17]
-
-[8, 9, 10, 11, 14, 15, 16, 17]
-
-[8, 9, 14]
-
-[8, 9, 14, 15]
-
-[8, 9, 14, 15, 16]
-
-[8, 9, 11, 14, 15, 16]
-
-[8, 9, 14, 15, 16, 17]
-
-[8, 9, 11, 14, 15, 16, 17]
-
-[9, 10]
-
-[9, 10, 11]
-
-[9, 10, 11, 16]
-
-[9, 10, 11, 15, 16]
-
-[9, 10, 11, 14, 15, 16]
-
-[9, 10, 11, 16, 17]
-
-[9, 10, 11, 15, 16, 17]
-
-[9, 10, 11, 14, 15, 16, 17]
-
-[9, 14]
-
-[9, 14, 15]
-
-[9, 14, 15, 16]
-
-[9, 11, 14, 15, 16]
-
-[9, 14, 15, 16, 17]
-
-[9, 11, 14, 15, 16, 17]
+[[9], [8, 9], [9, 10], [9, 10, 11], [9, 10, 11, 16], [9, 10, 11, 15, 16], [9, 10, 11, 14, 15, 16], [9, 10, 11, 16, 17], [9, 14], [9, 14, 15], [9, 14, 15, 16], [9, 11, 14, 15, 16], [9, 14, 15, 16, 17]]
 
 :END:
 
-*** center_layer
+
+#+BEGIN_SRC python
+A = [1, 2, 3, 4, 5]
+for a in A:    
+    if a == 2 or a == 6 and len(A) < 10:
+        A.append(6)
+print A
+#+END_SRC
+
+#+RESULTS:
+: [1, 2, 3, 4, 5, 6, 6, 6, 6, 6]
+
+** center_layer
 
 #+BEGIN_SRC python :results drawer
 import devon_toolbox as dtb
@@ -1983,8 +1831,8 @@ atoms = td.create_base("graphene", layers=2, size=4)
 layers = td.layers(atoms)
 center1 = td.center_layer(atoms, layers[0])
 center2 = td.center_layer(atoms, layers[1])
-c1 = dtb.closest_atom(atoms, center1)
-c2 = dtb.closest_atom(atoms, center2)
+c1 = td.closest_atom(atoms, center1)
+c2 = td.closest_atom(atoms, center2)
 dtb.paint_atoms(atoms, [c1, c2])
 dtb.bp(atoms)
 #+END_SRC
@@ -1993,20 +1841,20 @@ dtb.bp(atoms)
 :RESULTS:
 :END:
 
-*** create_base
+** create_base
 
 #+BEGIN_SRC python :results drawer
 import devon_toolbox as dtb
 import twodee as td
 
-atoms = td.create_base("graphene", size=3)
+atoms = td.create_base("graphene", size=5)
 
 dtb.bp(atoms)
 #+END_SRC
 
 #+RESULTS:
 
-*** edges
+** edges
 
 #+BEGIN_SRC python :results drawer
 import devon_toolbox as dtb
@@ -2024,6 +1872,92 @@ dtb.bp([e])
 #+RESULTS:
 :RESULTS:
 :END:
+
+** is_connected
+
+#+BEGIN_SRC python
+import devon_toolbox as dtb
+import twodee as td
+import time
+
+
+graphene_cutoff = 1.5 # Angstrom. Should put this somewhere more permanent.
+
+
+def candidates(atoms, edge=None, size=None):
+    """Return candidate pore indices combinations."""
+    from itertools import combinations
+
+    cans = []
+    indices = [a.index for a in atoms if a.index not in edge]
+
+    nblist = NeighborList([graphene_cutoff for i in range(len(atoms))],
+                          bothways=True,
+                          self_interaction=False)
+    nblist.update(atoms)
+
+
+    def constraint_check(pores):
+        for pore in pores:
+            remains = [a.index for a in atoms if a.index not in pore]
+            if is_connected(nblist, remains) and is_connected(nblist, pore):
+                cans.append(pore)
+
+    if size is not None:
+        pores = combinations(indices, size)
+        constraint_check(pores)
+    else:
+        for i in range(1, len(indices)):
+            pores = combinations(indices, i)
+            constraint_check(pores)
+
+    return cans
+
+unitcell = td.create_base("graphene", layers=1)
+size = 3
+atoms = td.create_base("graphene", layers=1, size=size)
+
+edges = td.edges(atoms, unitcell)#
+
+#dtb.bp(atoms)
+start = time.time()
+print(td.is_connected(atoms, [8, 9, 10]))
+end = time.time()
+print(end-start)
+start = time.time()
+print(td.is_connected_working(atoms, [8, 9, 10]))
+end = time.time()
+print(end-start)
+print(td.is_connected_working(atoms, [8, 9, 10]))
+print(td.is_connected(atoms, [8, 10, 14]))
+print(td.is_connected(atoms, [9]))
+dtb.bp()
+#+END_SRC
+
+#+RESULTS:
+: True
+: 0.0273470878601
+: False
+: 0.00108289718628
+: False
+: True
+
+** get_neighbors
+
+Presentation: show layers[0] and layers[1]
+
+#+BEGIN_SRC python
+import devon_toolbox as dtb
+import twodee as td
+
+atoms = td.create_base("graphene", layers=2, size=5)
+index = 45
+layers = td.layers(atoms)
+neighbors = td.get_neighbors(atoms, index, layers[0], cutoff=1.5)
+dtb.paint_atoms(atoms, [index])
+dtb.paint_atoms(atoms, neighbors, sym='O')
+dtb.bp(atoms)
+#+END_SRC
 
 * jasp
 ** Testing
