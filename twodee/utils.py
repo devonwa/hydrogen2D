@@ -5,12 +5,9 @@ from types import ModuleType
 from ase import Atom, Atoms
 from ase.io import write as ase_write
 from ase.visualize import view
-from jasp import *
 import numpy as np
 import matplotlib.pyplot as plt
 
-import seaborn as sns
-sns.set_style("white")
 
 
 def bp(info=None):

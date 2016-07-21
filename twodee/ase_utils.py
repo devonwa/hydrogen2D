@@ -7,10 +7,6 @@ from vasp import Vasp
 graphene_cutoff = 0.75  # Angstrom. Should make this more permanent.
 
 
-def tester():
-    print("tested")
-
-
 def candidates(atoms, edge=None, size=None):
     """Return candidate pore indices combinations."""
     from itertools import combinations
@@ -210,10 +206,11 @@ def layers(atoms, thresh=2.0):
 
 
 def make_pore(atoms, indices):
-    """Delete atoms at indices to create a pore."""
-    # TODO devon: do atoms.copy() and return atoms instead of altering current list.
+    """Create a new atoms object without 'indices' to create a pore."""
+    atoms = atoms.copy()
     for index in sorted(indices, reverse=True):
         del atoms[index]
+    return atoms
 
 
 def pore_string(pore, leading_zeros=3):
