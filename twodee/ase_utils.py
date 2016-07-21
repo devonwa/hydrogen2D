@@ -3,10 +3,12 @@ from ase.neighborlist import NeighborList
 import numpy as np
 from vasp import Vasp
 
-import devon_toolbox as dtb
-
 
 graphene_cutoff = 0.75  # Angstrom. Should make this more permanent.
+
+
+def tester():
+    print("tested")
 
 
 def candidates(atoms, edge=None, size=None):
@@ -97,7 +99,7 @@ def center_layer(atoms, layer):
 
 def create_base(mat='graphene', layers=1, size=1):
     """Return a relaxed structure of the base material with n layers."""
-    name = 'vasp/base/mat={0}/layers={1}'.format(mat, layers)
+    name = 'vasp/type=base/mat={0}/layers={1}'.format(mat, layers)
     atoms = Vasp(name).get_atoms()
 
     atoms = atoms.repeat([size, size, 1])
@@ -209,9 +211,22 @@ def layers(atoms, thresh=2.0):
 
 def make_pore(atoms, indices):
     """Delete atoms at indices to create a pore."""
+    # TODO devon: do atoms.copy() and return atoms instead of altering current list.
     for index in sorted(indices, reverse=True):
         del atoms[index]
 
+
+def pore_string(pore, leading_zeros=3):
+    """Return a unique name for the pore list."""
+    name = ""
+    format_str = "{0:0" + str(leading_zeros) + "d}"
+    for p in sorted(pore):
+        name += format_str.format(p)
+
+    if name == "":
+        return "0" * leading_zeros
+    else:
+        return name
 
 def set_vacuum(atoms, vacuum):
     """Center atoms in the z-direction in a cell of size vacuum.

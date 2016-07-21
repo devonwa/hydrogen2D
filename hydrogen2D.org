@@ -911,7 +911,8 @@ dtb.bp(atoms)
 
 ** DONE 2016-06-24 3pm Group meeting
    CLOSED: [2016-07-06 Wed 13:22]
-** 2016-07-06 3pm Group meeting presentation
+** DONE 2016-07-06 3pm Group meeting presentation
+   CLOSED: [2016-07-18 Mon 16:40]
 *** 2D structure module - twodee
 For mainting helper functions for manipulating 2D materials
 [[./twodee.py]]
@@ -1103,8 +1104,8 @@ How to select the best structures for DFT calculations and training a neural net
 1. Start with a hand-curated set that are often found in literature.
 2. Use the previous algorith to determine all combinations. Select from a group that have been shown to have the most promise from a faster calculation type (MD).
 
-
-** 2016-07-15 3pm Group meeting
+** DONE 2016-07-15 3pm Group meeting
+   CLOSED: [2016-07-18 Mon 16:40]
 ** 2016-08-12 3pm Group meeting presentation
 * Research
 ** Literature
@@ -1572,8 +1573,6 @@ for i, energy, force in zip(ENCUTS, energies_en, forces_en):
 #+RESULTS:
 : Still processing: ~/tmp/vasp_test/molecules/c2h6-en-300
 
-** TODO Better movies
-
 ** 2016-05-31: View atoms
 #+BEGIN_SRC python
 from ase import Atom, Atoms
@@ -1654,16 +1653,229 @@ Issues:
 
 Below are new attempts using different imagemagick command line arguments.
 
+White background:
 #+BEGIN_SRC sh :results silent
 cd ./img/scripts/20160707-imagemagick/size=3/pore=5/
-convert -delay 30 -loop 0 +dither -colorspace rgb *.png ../../test1.gif
+convert -delay 30 *.png -loop 0 -background white -alpha remove ../../white_bg.gif
+#+END_SRC
+
+Transparent background (*not working*):
+#+BEGIN_SRC sh :results silent
+cd ./img/scripts/20160707-imagemagick/size=3/pore=5/
+convert -delay 30 *.png -loop 0 -background white -alpha remove ../../tmp.gif
+convert ../../tmp.gif -fuzz 50% -transparent white ../../transparent_bg.gif
+#+END_SRC
+
+Other arguments tried:
+#+BEGIN_EXAMPLE
+-layers optimize  # messed up colors halfway through
+-dither FloydSteinberg
+#+END_EXAMPLE
+
+** 2016-07-08: Collect png's from subdirectories for a gif
+
+#+BEGIN_SRC python
+def convert_subdirectories(path, delay=30, name=None):
+    from subprocess import call
+    import os
+
+    path = os.path.dirname(path)
+    walk = os.walk(path)
+    subdirs = sorted(next(walk)[1])
+
+    for s in subdirs:
+        cwd = os.path.join(path, s)
+        pngs = os.path.join(cwd, "*.png")
+        gif = os.path.join(path, s + ".gif")
+        cmd_convert = "convert -delay {2} {0} -loop 0 -background white -alpha remove {1}".format(pngs, gif, delay)
+        call(cmd_convert, shell=True)
+
+    combined = ""
+    for s in subdirs:
+        combined += os.path.join(path, s + ".gif ")
+    if name is None:
+        name = os.path.basename(path) + ".gif"
+    name = os.path.join(path, name)
+    cmd_combine = "convert " + combined + name
+    call(cmd_combine, shell=True)
+
+
+path = "./img/scripts/20160707-imagemagick/size=3/"  # directory in front of subdirectories containing .png's
+print(convert_subdirectories(path))
+#+END_SRC
+
+#+RESULTS:
+: None
+
+** 2016-07-13: Kill duplicate jobs
+
+*Warning*: This is unsafe since there is no specification of the user. If someone else submits a job in the middle of your batch, you could end up deleting their job.
+
+#+BEGIN_SRC python :results drawer
+from ase import Atoms, Atom
+import numpy as np
+from vasp import Vasp
+from vasp.vasprc import VASPRC
+import numpy as np
+VASPRC['queue.walltime'] = '24:00:00'
+
+import devon_toolbox as dtb
+
+
+#import inspect
+#dtb.bp(inspect.getfile(Vasp))
+a = 2.46
+a1 = a * np.array([3.0**0.5/2., -1./2., 0.])
+a2 = a * np.array([3.0**0.5/2., 1./2., 0.])
+a3 = np.array([0., 0., 18.])
+
+atoms = Atoms([Atom('C', 1./2. * a3),
+                  Atom('C', 1./3. * a1 + 1./3. * a2 + 1./2. * a3)],
+                  cell=[a1, a2, a3])
+
+
+name = 'tmp/script/duplicates-kpts={}'
+calcs = [Vasp(name.format(k),
+            xc='PBE',          # GGA functional type
+            encut=520,
+            kpts=[k,k,1],
+            nsw=0,            # max number of steps to relax
+            atoms=atoms)
+         for k in np.arange(10,15,2)]
+
+[c.calculate() for c in calcs]
+
+dtb.bp()
+nrg = [calc.potential_energy for calc in calcs]
+
+print('energy = {0} eV'.format(atoms.get_potential_energy()))
+dtb.print_image(name, atoms)
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+/home-guest/devonw/hydrogen2D/tmp/script/duplicates-kpts=10 submitted: 1424259.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/tmp/script/duplicates-kpts=10 submitted: 1424260.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/tmp/script/duplicates-kpts=12 submitted: 1424261.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/tmp/script/duplicates-kpts=12 submitted: 1424262.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/tmp/script/duplicates-kpts=14 submitted: 1424263.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/tmp/script/duplicates-kpts=14 submitted: 1424264.gilgamesh.cheme.cmu.edu
+:END:
+
+
+#+BEGIN_SRC python
+from subprocess import call
+
+start = 1423042
+end = 1423147
+
+cmd = "qdel"
+for i in range(start, end+1):
+    if i % 2 == 1:
+        cmd += " {}".format(i)
+print(cmd)
+#call(cmd, shell=True)
+#+END_SRC
+
+#+RESULTS:
+: qdel 1423043 1423045 1423047 1423049 1423051 1423053 1423055 1423057 1423059 1423061 1423063 1423065 1423067 1423069 1423071 1423073 1423075 1423077 1423079 1423081 1423083 1423085 1423087 1423089 1423091 1423093 1423095 1423097 1423099 1423101 1423103 1423105 1423107 1423109 1423111 1423113 1423115 1423117 1423119 1423121 1423123 1423125 1423127 1423129 1423131 1423133 1423135 1423137 1423139 1423141 1423143 1423145 1423147
+
+** 2016-07-13: Stats with a loop
+From pycon 2016 https://www.youtube.com/watch?v=Iq9DzN6mvYA
+
+#+BEGIN_SRC python
+from numpy.random import randint
+
+M = 0
+for i in range(50000):
+    trials = randint(2, size=30)
+    if (trials.sum() >= 22):
+        M += 1
+p = M / 50000.
+print(p)
+#+END_SRC
+
+#+RESULTS:
+: 0.0085
+
+** 2016-07-19: Walk a directory and create/update an ase-db
+
+My calculations are stored in the vasp/ directory of this project. Let's make a script to collect all calculations and put them into an ase database.
+
+#+BEGIN_SRC python
+from ase.db import connect
+import os
+import re
+from vasp import Vasp
+from vasp.vasprc import VASPRC
+VASPRC['mode'] = None
+
+
+import devon_toolbox as dtb
+
+
+db = connect('database/script-20160719.db')
+old_size = sum(1 for _ in db.select())
+
+db_paths = []
+for d in db.select():
+    db_paths.append(d.data.path)
+
+for pwd in os.walk('vasp'):
+    path = os.path.abspath(pwd[0])
+    files = pwd[2]
+    if path in db_paths:
+        continue
+    regex = '[0-9]*.gilgamesh.cheme.cmu.edu.OU'
+    output_file = [f for f in files if re.search(regex, f)]
+    if output_file:
+        calc = Vasp(path)
+        if not calc.in_queue() and calc.potential_energy is None:
+            dead_file = os.path.join(pwd[0], output_file[0])
+            os.remove(dead_file)
+            print("Deleted dead file: {}".format(dead_file))
+        else:
+            calc.write_db('./database/script-20160719.db', parser='=',
+                        overwrite=False,
+                        data={'ctime': calc.get_elapsed_time()})
+            print("Added file to DB: {}".format(os.path.join(pwd[0], output_file[0])))
+
+new_size = sum(1 for _ in db.select())
+added = new_size - old_size
+print("{} total entries. {} new entries added.".format(new_size, added))
+#+END_SRC
+
+#+RESULTS:
+
+** 2016-07-21: Make twodee and dtb a module named twodee
+
+Move utility code into the [[file+sys:./twodee/][twodee module]].
+
+#+BEGIN_SRC python
+print(list(globals()))
+
+import twodee as td
+
+print("")
+print(list(globals()))
+
+print("")
+td.bp("Test")
 #+END_SRC
 
 
+#+RESULTS:
+: ['__builtins__', '__name__', '__file__', '__doc__', '__package__']
+: 
+: ['__builtins__', '__file__', '__package__', 'GInitiallyUnowned', '__name__', 'td', '__doc__']
+: 
+: Test
 
-* twodee tests
+
+* twodee
 
 Functions to facilitate easy 2D material unitcell manipulation. Show what each function does.
+
 
 ** candidates
 
@@ -1672,24 +1884,24 @@ import devon_toolbox as dtb
 import twodee as td
 import time
 
-graphene_cutoff = 1.5 # Angstrom. Should put this somewhere more permanent.
-
 unitcell = td.create_base("graphene", layers=1)
-size = 3
+size = 4
 atoms = td.create_base("graphene", layers=1, size=size)
 
 edges = td.edges(atoms, unitcell)
 indices = [a.index for a in atoms if a.index not in edges]
 
-pore_sizes = range(len(indices))
-#pore_sizes = [1, 2, 3, 4]
+pore_sizes = range(len(indices)+1)
+#pore_sizes = [0, 1, 2, 3, 4, 5]
 times = []
+cans = []
 for pore_size in pore_sizes:
     start = time.time()
-    cans = td.candidates(atoms, edge=edges, size=pore_size)
+    cans.append(td.candidates(atoms, edge=edges, size=pore_size))
     end = time.time()
     times.append(end - start)
 
+# Image generator for .gifs
 #    images = []
 #    dtb.paint_atoms(atoms, edges)
 #    for i, c in enumerate(cans):
@@ -1699,45 +1911,116 @@ for pore_size in pore_sizes:
 #        file_name = file_name.format(i, size, pore_size)
 #        dtb.write_image(file_name, a)
 
-dtb.bp(times)
-dtb.bp(cans)
+
+print("| Graphene size | Pore size | # of candidates | Algo. time |")
+print("| (unitcell repititions) | (# carbons) | | (seconds) |")
+for (p, c, t) in zip(pore_sizes, cans, times):
+    print("| {} | {} | {} | {:0.2f} |".format(size, p, len(c), t)) 
+
+tot_num = 0
+tot_time = 0
+for (c, t) in zip(cans, times):
+    tot_num += len(c)
+    tot_time += t
+print("Total number of candidates: {}. Total time: {:0.2f} sec".format(tot_num, tot_time))
 #+END_SRC
 
 #+RESULTS:
 :RESULTS:
-0.0287690162659
-
-0.0328578948975
-
-0.0481550693512
-
-0.0676600933075
-
-0.074282169342
-
-0.0620141029358
-
-0.0432910919189
-
-0.0310881137848
-
+|          Graphene size |   Pore size | # of candidates | Algo. time |
+| (unitcell repititions) | (# carbons) |                 |  (seconds) |
+|                      4 |           0 |               1 |       0.05 |
+|                      4 |           1 |              18 |       0.09 |
+|                      4 |           2 |              21 |       0.38 |
+|                      4 |           3 |              32 |       1.70 |
+|                      4 |           4 |              54 |       5.97 |
+|                      4 |           5 |             102 |      15.69 |
+|                      4 |           6 |             183 |      32.08 |
+|                      4 |           7 |             310 |      51.44 |
+|                      4 |           8 |             502 |      66.04 |
+|                      4 |           9 |             730 |      67.64 |
+|                      4 |          10 |             954 |      57.04 |
+|                      4 |          11 |            1102 |      38.68 |
+|                      4 |          12 |            1061 |      21.33 |
+|                      4 |          13 |             808 |       9.32 |
+|                      4 |          14 |             460 |       3.28 |
+|                      4 |          15 |             186 |       0.89 |
+|                      4 |          16 |              53 |       0.22 |
+|                      4 |          17 |              10 |       0.07 |
+|                      4 |          18 |               1 |       0.05 |
+Total number of candidates: 6588. Total time: 371.95 sec
 :END:
 
 
-|          Graphene size |   Pore size | Calculation time |
-| (unitcell repititions) | (# carbons) |        (seconds) |
-|------------------------+-------------+------------------|
-|                      3 |           1 |              0.1 |
-|                      3 |           2 |              0.3 |
-|                      3 |           3 |              0.5 |
-|                      3 |           4 |              0.6 |
-|                      3 |           5 |              0.5 |
-|                      3 |           6 |              0.2 |
-|                      3 |           7 |              0.1 |
-|                      4 |           1 |              0.7 |
-|                      4 |           2 |              5.3 |
-|                      4 |           3 |             26.9 |
-|                      4 |           4 |             95.1 |
+|          Graphene size |   Pore size | Old algo. time | New algo. time |
+| (unitcell repititions) | (# carbons) |      (seconds) |      (seconds) |
+|------------------------+-------------+----------------+----------------|
+|                      3 |           0 |                |           0.03 |
+|                      3 |           1 |            0.1 |           0.03 |
+|                      3 |           2 |            0.3 |           0.05 |
+|                      3 |           3 |            0.5 |           0.07 |
+|                      3 |           4 |            0.6 |           0.07 |
+|                      3 |           5 |            0.5 |           0.06 |
+|                      3 |           6 |            0.2 |           0.04 |
+|                      3 |           7 |            0.1 |           0.03 |
+|                      3 |           8 |                |           0.03 |
+|                      4 |           0 |                |           0.05 |
+|                      4 |           1 |            0.7 |           0.09 |
+|                      4 |           2 |            5.3 |           0.37 |
+|                      4 |           3 |           26.9 |           1.69 |
+|                      4 |           4 |           95.1 |           5.87 |
+|                      4 |           5 |                |          15.58 |
+
+
+
+*** Results - size=2
+
+|          Graphene size |   Pore size | # of candidates | Algo. time |
+| (unitcell repititions) | (# carbons) |                 |  (seconds) |
+|                      2 |           0 |               1 |       0.01 |
+|                      2 |           1 |               2 |       0.01 |
+|                      2 |           2 |               1 |       0.01 |
+Total number of candidates: 4. Total time: 0.04 sec
+
+*** Results - size=3
+
+|          Graphene size |   Pore size | # of candidates | Algo. time |
+| (unitcell repititions) | (# carbons) |                 |  (seconds) |
+|                      3 |           0 |               1 |       0.03 |
+|                      3 |           1 |               8 |       0.03 |
+|                      3 |           2 |               8 |       0.05 |
+|                      3 |           3 |              10 |       0.07 |
+|                      3 |           4 |              12 |       0.07 |
+|                      3 |           5 |              14 |       0.06 |
+|                      3 |           6 |              13 |       0.04 |
+|                      3 |           7 |               6 |       0.03 |
+|                      3 |           8 |               1 |       0.03 |
+Total number of candidates: 73. Total time: 0.41 sec
+
+*** Results - size=4
+
+|          Graphene size |   Pore size | # of candidates | Algo. time |
+| (unitcell repititions) | (# carbons) |                 |  (seconds) |
+|                      4 |           0 |               1 |       0.05 |
+|                      4 |           1 |              18 |       0.09 |
+|                      4 |           2 |              21 |       0.38 |
+|                      4 |           3 |              32 |       1.70 |
+|                      4 |           4 |              54 |       5.97 |
+|                      4 |           5 |             102 |      15.69 |
+|                      4 |           6 |             183 |      32.08 |
+|                      4 |           7 |             310 |      51.44 |
+|                      4 |           8 |             502 |      66.04 |
+|                      4 |           9 |             730 |      67.64 |
+|                      4 |          10 |             954 |      57.04 |
+|                      4 |          11 |            1102 |      38.68 |
+|                      4 |          12 |            1061 |      21.33 |
+|                      4 |          13 |             808 |       9.32 |
+|                      4 |          14 |             460 |       3.28 |
+|                      4 |          15 |             186 |       0.89 |
+|                      4 |          16 |              53 |       0.22 |
+|                      4 |          17 |              10 |       0.07 |
+|                      4 |          18 |               1 |       0.05 |
+Total number of candidates: 6588. Total time: 371.95 sec
 
 ** candidates - leaves islands
 
@@ -1959,7 +2242,7 @@ dtb.paint_atoms(atoms, neighbors, sym='O')
 dtb.bp(atoms)
 #+END_SRC
 
-* jasp
+* jasp (deprecated)
 ** Testing
 *** DONE nsw test
     CLOSED: [2016-06-09 Thu 09:19]
@@ -4617,11 +4900,11 @@ Distance:  0.00. Energy = -169.706. Calculation time: 424 min.
 
 Calculations using the new Vasp().
 
-** Tests
+** Convergence
 
-Mostly tests for energy convergence based on different calculation parameters.
+Tests for energy convergence based on different calculation parameters.
 
-*** DONE base/mat=graphene/layers=1 - kpts
+*** DONE mat=graphene/layers=1/size=1/pore=0 - kpts
     CLOSED: [2016-06-22 Wed 10:11]
 
 #+BEGIN_SRC python :results drawer
@@ -4646,7 +4929,7 @@ ks = [3, 5, 7, 9, 11, 13, 15, 17]
 energies = []
 for k in ks:
     atoms = unitcell.copy()
-    name = 'vasp/test/base/mat=graphene/layers=1/kpts={0}'.format(k)
+    name = 'vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/kpts={0}'.format(k)
     calc = Vasp(name,
                 xc='PBE',          # GGA functional type
                 encut=520,
@@ -4676,12 +4959,12 @@ kpts=11 x 11 x 1: Energy = -18.4479. Calc time: 1 min.
 kpts=13 x 13 x 1: Energy = -18.4494. Calc time: 1 min.
 kpts=15 x 15 x 1: Energy = -18.4446. Calc time: 2 min.
 kpts=17 x 17 x 1: Energy = -18.4477. Calc time: 1 min.
-[[./img/vasp/test/base/mat=graphene/layers=1/kpts=17.png]]
+[[./img/vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/kpts=17.png]]
 :END:
 
 An 11x11x1 k-point grid is converged within 10 meV.
 
-*** DONE base/mat=graphene/layers=1 - ediffg
+*** DONE mat=graphene/layers=1/size=1/pore=0 - ediffg
     CLOSED: [2016-06-22 Wed 10:11]
 
 #+BEGIN_SRC python :results drawer
@@ -4705,7 +4988,7 @@ ediffgs = [1e-2, 1e-3, 1e-4, -0.1, -0.05, -0.01]
 
 for e in ediffgs:
     atoms = unitcell.copy()
-    name = 'vasp/test/base/mat=graphene/layers=1/ediffg={0}'.format(e)
+    name = 'vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/ediffg={0}'.format(e)
     calc = Vasp(name,
                 xc='PBE',          # GGA functional type
                 encut=520,
@@ -4732,8 +5015,8 @@ ediffg=-0.0100: Energy = -18.4222. Calc time: 0 min.
 
 This is a simple unitcell so the time wasn't greatly affected. Would be better to check this against a complicated pore structure.
 
-*** DONE base/mat=graphene/layers=1 - sigma
-    CLOSED: [2016-06-22 Wed 10:42]
+*** DONE mat=graphene/layers=1/size=1/pore=0 - sigma
+    CLOSED: [2016-07-19 Tue 15:02]
 
 #+BEGIN_SRC python :results drawer
 from ase import Atoms, Atom
@@ -4756,7 +5039,7 @@ sigmas = [0.01, 0.05, 0.1, 0.15, 0.2, 0.25]
 
 for s in sigmas:
     atoms = unitcell.copy()
-    name = 'vasp/test/base/mat=graphene/layers=1/sigma={0}'.format(s)
+    name = 'vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/sigma={0}'.format(s)
     calc = Vasp(name,
                 xc='PBE',          # GGA functional type
                 encut=520,
@@ -4780,7 +5063,7 @@ sigma=0.20: Energy = -18.4329. Calc time: 1 min.
 sigma=0.25: Energy = -18.4336. Calc time: 1 min.
 :END:
 
-*** DONE base/mat=graphene/layers=1 - cell size
+*** DONE mat=graphene/layers=1/size=1/pore=0 - cell size
     CLOSED: [2016-06-22 Wed 10:26]
 
 #+BEGIN_SRC python :results drawer
@@ -4801,16 +5084,16 @@ unitcell = Atoms([Atom('C', 1./2. * a3),
                   Atom('C', 1./3. * a1 + 1./3. * a2 + 1./2. * a3)],
                   cell=[a1, a2, a3])
 
-zs = [6, 10, 14, 16, 18, 20, 22]
+zs = [6, 10, 14, 16, 18, 20, 22, 24, 26]
 energies = []
 for z in zs:
     atoms = unitcell.copy()
     dtb.set_vacuum(atoms, z)
-    name = 'vasp/test/base/mat=graphene/layers=1/vac={0}'.format(z)
+    name = 'vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/vac={0}'.format(z)
     calc = Vasp(name,
                 xc='PBE',          # GGA functional type
                 encut=520,
-                kpts=[7,7,1],
+                kpts=[11,11,1],
                 ismear=0,          # Gaussian smearing
                 sigma=0.2,         # "Metallic" system smearing
                 isif=2,            # relax positions only
@@ -4829,19 +5112,386 @@ if None not in energies:
 
 #+RESULTS:
 :RESULTS:
-vacuum z= 6: Energy = -18.4404. Calc time: 0 min.
-vacuum z=10: Energy = -18.4600. Calc time: 0 min.
-vacuum z=14: Energy = -18.4589. Calc time: 0 min.
-vacuum z=16: Energy = -18.4601. Calc time: 1 min.
-vacuum z=18: Energy = -18.4602. Calc time: 0 min.
-vacuum z=20: Energy = -18.4602. Calc time: 1 min.
-vacuum z=22: Energy = -18.4602. Calc time: 0 min.
-[[./img/vasp/test/base/mat=graphene/layers=1/vac=22.png]]
+vacuum z= 6: Energy = -18.4281. Calc time: 0 min.
+vacuum z=10: Energy = -18.4477. Calc time: 0 min.
+vacuum z=14: Energy = -18.4466. Calc time: 0 min.
+vacuum z=16: Energy = -18.4471. Calc time: 0 min.
+vacuum z=18: Energy = -18.4479. Calc time: 1 min.
+vacuum z=20: Energy = -18.4480. Calc time: 1 min.
+vacuum z=22: Energy = -18.4480. Calc time: 0 min.
+vacuum z=24: Energy = -18.4469. Calc time: 1 min.
+vacuum z=26: Energy = -18.4471. Calc time: 1 min.
+[[./img/vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/vac=26.png]]
 :END:
 
 The structure is converged within 10 meV at a vacuum distance of 16 Å between graphene layers.
 
-*** DONE base/mat=graphene/layers=2 - kpts-z
+*** DONE mat=graphene/layers=1/size=1/pore=0 - ismear
+    CLOSED: [2016-07-13 Wed 11:40]
+
+#+BEGIN_SRC python :results drawer
+from ase import Atoms, Atom
+import matplotlib.pyplot as plt
+import numpy as np
+from vasp import Vasp
+
+import devon_toolbox as dtb
+
+
+a = 2.46
+a1 = a * np.array([3.0**0.5/2., -1./2., 0.])
+a2 = a * np.array([3.0**0.5/2., 1./2., 0.])
+a3 = np.array([0., 0., 18.])
+
+unitcell = Atoms([Atom('C', 1./2. * a3),
+                  Atom('C', 1./3. * a1 + 1./3. * a2 + 1./2. * a3)],
+                  cell=[a1, a2, a3])
+
+ismears = [0, 1]
+energies = []
+for ismear in ismears:
+    atoms = unitcell.copy()
+    name = 'vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/ismear={0}'.format(ismear)
+    calc = Vasp(name,
+                xc='PBE',          # GGA functional type
+                encut=520,
+                kpts=[11,11,1],
+                ismear=ismear,          # Gaussian smearing
+                sigma=0.2,         # "Metallic" system smearing
+                isif=2,            # relax positions only
+                ibrion=2,          # conjugate gradient optimizer
+                nsw=50,            # max number of steps to relax
+                atoms=atoms)
+    dtb.result('vacuum ismear={0:2d}'.format(ismear), calc)
+    energies.append(atoms.get_potential_energy())
+#+END_SRC
+#+RESULTS:
+:RESULTS:
+vacuum ismear= 0: Energy = -18.4479. Calc time: 1 min.
+vacuum ismear= 1: Energy = -18.4475. Calc time: 1 min.
+:END:
+
+*** DONE mat=graphene/layers=1/size=2/pore=1 - kpts
+    CLOSED: [2016-07-20 Wed 15:17]
+
+#+BEGIN_SRC python :results drawer
+from ase import Atoms, Atom
+import matplotlib.pyplot as plt
+import numpy as np
+from vasp import Vasp
+
+import devon_toolbox as dtb
+import twodee as td
+
+
+atoms = td.create_base("graphene", layers=1, size=2)
+pore = [6]
+td.make_pore(atoms, pore)
+
+ks = [1, 3, 5, 7, 9, 11, 13]
+energies = []
+for k in ks:
+    name = 'vasp/type=conv/mat=graphene/layers=1/size=2/pore=1/kpts={0}'.format(k)
+    calc = Vasp(name,
+                xc='PBE',
+                encut=520,
+                kpts=[k,k,1],
+                nsw=0,            # max number of steps to relax
+                atoms=atoms)
+
+#    calc.calculate()
+    dtb.result('kpts={0:2.0f} x {0:2.0f} x 1'.format(k), calc)
+    energies.append(calc.potential_energy)
+
+plt.plot(ks, energies)
+plt.xlabel("k-points (i x i x 1)")
+plt.ylabel("Total energy [eV]")
+dtb.print_image(name + '.png', plt)
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+kpts= 1 x  1 x 1: Energy = -53.5153. Calc time: 1 min.
+kpts= 3 x  3 x 1: Energy = -56.9233. Calc time: 1 min.
+kpts= 5 x  5 x 1: Energy = -57.2501. Calc time: 2 min.
+kpts= 7 x  7 x 1: Energy = -57.2524. Calc time: 3 min.
+kpts= 9 x  9 x 1: Energy = -57.2337. Calc time: 5 min.
+kpts=11 x 11 x 1: Energy = -57.2349. Calc time: 7 min.
+kpts=13 x 13 x 1: Energy = -57.2358. Calc time: 8 min.
+[[./img/vasp/type=conv/mat=graphene/layers=1/size=2/pore=1/kpts=13.png]]
+:END:
+
+*** DONE mat=graphene/layers=1/size=3/pore=3 - kpts
+    CLOSED: [2016-07-18 Mon 16:25]
+
+#+BEGIN_SRC python :results drawer
+from ase import Atoms, Atom
+import matplotlib.pyplot as plt
+import numpy as np
+from vasp import Vasp
+
+import devon_toolbox as dtb
+import twodee as td
+
+
+atoms = td.create_base("graphene", layers=1, size=3)
+pore = [8, 9, 10]
+td.make_pore(atoms, pore)
+
+ks = [1, 3, 5, 7, 9, 11, 13]
+energies = []
+for k in ks:
+    name = 'vasp/type=conv/mat=graphene/layers=1/size=3/pore=3/kpts={0}'.format(k)
+    calc = Vasp(name,
+                xc='PBE',
+                encut=520,
+                kpts=[k,k,1],
+                nsw=0,            # max number of steps to relax
+                atoms=atoms)
+    dtb.result('kpts={0:2.0f} x {0:2.0f} x 1'.format(k), calc)
+    energies.append(calc.potential_energy)
+
+plt.plot(ks, energies)
+plt.xlabel("k-points (i x i x 1)")
+plt.ylabel("Total energy [eV]")
+dtb.print_image(name + '.png', plt)
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+kpts= 1 x  1 x 1: Energy = -126.4745. Calc time: 5 min.
+kpts= 3 x  3 x 1: Energy = -125.6713. Calc time: 42 min.
+kpts= 5 x  5 x 1: Energy = -125.7027. Calc time: 40 min.
+kpts= 7 x  7 x 1: Energy = -125.7031. Calc time: 86 min.
+kpts= 9 x  9 x 1: Energy = -125.7022. Calc time: 112 min.
+kpts=11 x 11 x 1: Energy = -125.7025. Calc time: 166 min.
+kpts=13 x 13 x 1: Energy = -125.7024. Calc time: 213 min.
+[[./img/vasp/type=conv/mat=graphene/layers=1/size=3/pore=3/kpts=13.png]]
+:END:
+
+K-points are converged to 10 meV at a grid of 5x5x1.
+
+*** INPROGRESS mat=graphene/layers=1/size=4/pore=0,3,4,5 - kpts
+
+#+BEGIN_SRC python :results drawer
+from ase import Atoms, Atom
+import matplotlib.pyplot as plt
+import numpy as np
+from vasp import Vasp
+
+import devon_toolbox as dtb
+import twodee as td
+
+
+size = 4
+supercell = td.create_base("graphene", layers=1, size=size)
+pores = [[], [10, 11, 12], [10, 11, 12, 18], [10, 11, 12, 13, 18]]
+
+ks = [1, 3, 5, 7, 9]
+energies = []
+for pore in pores:
+    atoms = supercell.copy()
+    td.make_pore(atoms, pore)
+    for k in ks:
+        name = 'vasp/type=conv/mat=graphene/layers=1/size=4/pore={}/kpts={}'.format(len(pore), k)
+        calc = Vasp(name,
+                    xc='PBE',
+                    encut=520,
+                    kpts=[k,k,1],
+                    nsw=0,            # max number of steps to relax
+                    atoms=atoms)
+
+#        calc.calculate()
+#        calc.potential_energy
+        dtb.result('kpts={0:2.0f} x {0:2.0f} x 1'.format(k), calc)
+#        energies.append(calc.potential_energy)
+#
+#dtb.bp()
+#plt.plot(ks, energies)
+#plt.xlabel("k-points (i x i x 1)")
+#plt.ylabel("Total energy [eV]")
+#dtb.print_image(name + '.png', plt)
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+kpts= 1 x  1 x 1: Energy = -295.657. Calc time: 30 min.
+kpts= 3 x  3 x 1: Energy = -295.050. Calc time: 122 min.
+kpts= 5 x  5 x 1: Energy = -295.164. Calc time: 248 min.
+kpts= 7 x  7 x 1: Energy = -295.164. Calc time: 192 min.
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=4/pore=0/kpts=9 Queued: 1427836.gilgamesh.cheme.cmu.edu
+kpts= 9 x  9 x 1: Inprogress.
+kpts= 1 x  1 x 1: Energy = -254.750. Calc time: 42 min.
+kpts= 3 x  3 x 1: Energy = -254.313. Calc time: 218 min.
+kpts= 5 x  5 x 1: Energy = -254.317. Calc time: 209 min.
+kpts= 7 x  7 x 1: Energy = -254.317. Calc time: 492 min.
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=4/pore=3/kpts=9 Queued: 1427837.gilgamesh.cheme.cmu.edu
+kpts= 9 x  9 x 1: Inprogress.
+kpts= 1 x  1 x 1: Energy = -243.580. Calc time: 68 min.
+kpts= 3 x  3 x 1: Energy = -243.175. Calc time: 78 min.
+kpts= 5 x  5 x 1: Energy = -243.190. Calc time: 262 min.
+kpts= 7 x  7 x 1: Energy = -243.191. Calc time: 301 min.
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=4/pore=4/kpts=9 Queued: 1427838.gilgamesh.cheme.cmu.edu
+kpts= 9 x  9 x 1: Inprogress.
+kpts= 1 x  1 x 1: Energy = -232.257. Calc time: 31 min.
+kpts= 3 x  3 x 1: Energy = -231.688. Calc time: 243 min.
+kpts= 5 x  5 x 1: Energy = -231.691. Calc time: 372 min.
+kpts= 7 x  7 x 1: Energy = -231.693. Calc time: 458 min.
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=4/pore=5/kpts=9 Queued: 1427839.gilgamesh.cheme.cmu.edu
+kpts= 9 x  9 x 1: Inprogress.
+:END:
+
+K-points are converged to 10 meV at a grid of 5x5x1.
+
+*** INPROGRESS mat=graphene/layers=1/size=5/pore=0,1,2,3,4,5 - kpts
+
+#+BEGIN_SRC python :results drawer
+from ase import Atoms, Atom
+import matplotlib.pyplot as plt
+import numpy as np
+from vasp import Vasp
+
+import devon_toolbox as dtb
+import twodee as td
+
+
+size = 5
+supercell = td.create_base("graphene", layers=1, size=size)
+pores = [[], [12], [12, 13], [12, 13, 14], [12, 13, 14, 22], [12, 13, 14, 22, 15]]
+
+ks = [1, 3, 5, 7]
+energies = []
+for pore in pores:
+    atoms = supercell.copy()
+    td.make_pore(atoms, pore)
+    for k in ks:
+        name = 'vasp/type=conv/mat=graphene/layers=1/size={}/pore={}/kpts={}'.format(size, len(pore), k)
+        calc = Vasp(name,
+                    xc='PBE',
+                    encut=520,
+                    kpts=[k,k,1],
+                    nsw=0,            # max number of steps to relax
+                    atoms=atoms)
+
+#        calc.calculate()
+#        dtb.result('kpts={0:2.0f} x {0:2.0f} x 1'.format(k), calc)
+        energies.append(calc.potential_energy)
+Vasp.stop_if(None in energies)
+#
+#plt.plot(ks, energies)
+#plt.xlabel("k-points (i x i x 1)")
+#plt.ylabel("Total energy [eV]")
+#dtb.print_image(name + '.png', plt)
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=0/kpts=1 Queued: 1427913.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=0/kpts=1 Queued: 1427913.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=0/kpts=3 Queued: 1427914.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=0/kpts=3 Queued: 1427914.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=0/kpts=5 Queued: 1427915.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=0/kpts=5 Queued: 1427915.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=0/kpts=7 Queued: 1427916.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=0/kpts=7 Queued: 1427916.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=1/kpts=1 Queued: 1427917.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=1/kpts=1 Queued: 1427917.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=1/kpts=3 Queued: 1427918.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=1/kpts=3 Queued: 1427918.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=1/kpts=5 Queued: 1427919.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=1/kpts=5 Queued: 1427919.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=1/kpts=7 Queued: 1427920.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=1/kpts=7 Queued: 1427920.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=2/kpts=1 Queued: 1427921.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=2/kpts=1 Queued: 1427921.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=2/kpts=3 Queued: 1427922.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=2/kpts=3 Queued: 1427922.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=2/kpts=5 Queued: 1427923.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=2/kpts=5 Queued: 1427923.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=2/kpts=7 Queued: 1427924.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=2/kpts=7 Queued: 1427924.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=3/kpts=1 Queued: 1427925.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=3/kpts=1 Queued: 1427925.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=3/kpts=3 Queued: 1427926.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=3/kpts=3 Queued: 1427926.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=3/kpts=5 Queued: 1427927.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=3/kpts=5 Queued: 1427927.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=3/kpts=7 Queued: 1427928.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=3/kpts=7 Queued: 1427928.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=4/kpts=1 Queued: 1427929.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=4/kpts=1 Queued: 1427929.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=4/kpts=3 Queued: 1427930.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=4/kpts=3 Queued: 1427930.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=4/kpts=5 Queued: 1427931.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=4/kpts=5 Queued: 1427931.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=4/kpts=7 Queued: 1427932.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=4/kpts=7 Queued: 1427932.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=5/kpts=1 Queued: 1427933.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=5/kpts=1 Queued: 1427933.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=5/kpts=3 Queued: 1427934.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=5/kpts=3 Queued: 1427934.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=5/kpts=5 Queued: 1427935.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=5/kpts=5 Queued: 1427935.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=5/kpts=7 Queued: 1427936.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=5/kpts=7 Queued: 1427936.gilgamesh.cheme.cmu.edu
+:END:
+
+*** DONE mat=graphene/layers=1/size=3/pore=3 - kpts relaxed
+    CLOSED: [2016-07-18 Mon 16:27]
+
+#+BEGIN_SRC python :results drawer
+from ase import Atoms, Atom
+import matplotlib.pyplot as plt
+import numpy as np
+from vasp import Vasp
+
+import devon_toolbox as dtb
+import twodee as td
+
+
+atoms = td.create_base("graphene", layers=1, size=3)
+pore = [8, 9, 10]
+td.make_pore(atoms, pore)
+
+ks = [1, 3, 5, 7, 9, 11]
+energies = []
+for k in ks:
+    name = 'vasp/type=conv/mat=graphene/layers=1/size=3/pore=3/kpts_relax={0}'.format(k)
+    calc = Vasp(name,
+                xc='PBE',
+                encut=520,
+                kpts=[k,k,1],
+                ismear=0,          # Gaussian smearing
+                sigma=0.2,         # "Metallic" system smearing
+                isif=2,            # relax positions only
+                ibrion=2,          # conjugate gradient optimizer
+                nsw=50,            # max number of steps to relax
+                atoms=atoms)
+    dtb.result('kpts={0:2.0f} x {0:2.0f} x 1'.format(k), calc)
+#    calc.calculate()
+    energies.append(calc.potential_energy)
+
+#dtb.bp()
+plt.plot(ks, energies)
+plt.xlabel("k-points (i x i x 1)")
+plt.ylabel("Total energy [eV]")
+dtb.print_image(name + '.png', plt)
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+kpts= 1 x  1 x 1: Energy = -128.1060. Calc time: 143 min.
+kpts= 3 x  3 x 1: Energy = -126.2168. Calc time: 161 min.
+kpts= 5 x  5 x 1: Energy = -126.2441. Calc time: 323 min.
+kpts= 7 x  7 x 1: Energy = -126.2423. Calc time: 311 min.
+kpts= 9 x  9 x 1: Energy = -126.2426. Calc time: 719 min.
+kpts=11 x 11 x 1: Energy = -126.2425. Calc time: 973 min.
+[[./img/vasp/type=conv/mat=graphene/layers=1/size=3/pore=3/kpts_relax=11.png]]
+:END:
+
+A k-point grid of 5x5x1 is sufficient for convergence of 10 meV.
+
+*** DONE mat=graphene/layers=2/size=1/pore=0 - kpts-z
     CLOSED: [2016-06-22 Wed 11:39]
 
 #+BEGIN_SRC python :results drawer
@@ -4880,7 +5530,7 @@ ks = [1, 2, 3]
 energies = []
 for k in ks:
     atoms = unitcell.copy()
-    name = 'vasp/test/base/mat=graphene/layers=2/kptsz={0}'.format(k)
+    name = 'vasp/type=conv/mat=graphene/layers=2/size=1/pore=0/kptsz={0}'.format(k)
     calc = Vasp(name,
                 xc='PBE',          # GGA functional type
                 encut=520,
@@ -4906,7 +5556,7 @@ if None not in energies:
 kptsz=1: Energy = -36.8821. Calc time: 2 min.
 kptsz=2: Energy = -36.8820. Calc time: 2 min.
 kptsz=3: Energy = -36.8821. Calc time: 9 min.
-[[./img/vasp/test/base/mat=graphene/layers=2/kptsz=3.png]]
+[[./img/vasp/type=conv/mat=graphene/layers=2/size=1/pore=0/kptsz=3.png]]
 :END:
 
 No change, as expected.
@@ -4935,7 +5585,7 @@ atoms = Atoms([Atom('C', 1./2. * a3),
                   Atom('C', 1./3. * a1 + 1./3. * a2 + 1./2. * a3)],
                   cell=[a1, a2, a3])
 
-name = 'vasp/base/mat=graphene/layers=1'
+name = 'vasp/type=base/mat=graphene/layers=1'
 calc = Vasp(name,
             xc='PBE',          # GGA functional type
             encut=520,
@@ -4947,14 +5597,14 @@ calc = Vasp(name,
             nsw=50,            # max number of steps to relax
             atoms=atoms)
 
-print('energy = {0} eV'.format(atoms.get_potential_energy()))
+dtb.result("Final bilayer graphene", calc)
 dtb.print_image(name, atoms)
 #+END_SRC
 
 #+RESULTS:
 :RESULTS:
-energy = -18.44932999 eV
-[[./img/vasp/base/mat=graphene/layers=1.png]]
+Final bilayer graphene: Energy = -18.4493. Calc time: 0 min.
+[[./img/vasp/type=base/mat=graphene/layers=1.png]]
 :END:
 
 *** DONE mat=graphene/layers=2
@@ -4991,7 +5641,7 @@ atoms = Atoms([Atom('C', rA1),
                cell=[a1, a2, a3])
 
 
-name = 'vasp/base/mat=graphene/layers=2'
+name = 'vasp/type=base/mat=graphene/layers=2'
 calc = Vasp(name,
             xc='PBE',          # GGA functional type
             encut=520,
@@ -5003,15 +5653,1191 @@ calc = Vasp(name,
             nsw=50,            # max number of steps to relax
             atoms=atoms)
 
-dtb.result("Final bilayer graphene:", calc)
+dtb.result("Final bilayer graphene", calc)
 dtb.print_image(name, atoms)
 #+END_SRC
 
 #+RESULTS:
 :RESULTS:
-Final bilayer graphene:: Energy = -36.8838. Calc time: 1 min.
-[[./img/vasp/base/mat=graphene/layers=2.png]]
+Final bilayer graphene: Energy = -36.8838. Calc time: 1 min.
+[[./img/vasp/type=base/mat=graphene/layers=2.png]]
 :END:
+
+** Equations of state
+*** DONE mat=graphene/layers=1/size=1/pore=0
+    CLOSED: [2016-07-18 Mon 11:56]
+
+#+BEGIN_SRC python :results drawer
+from ase import Atoms, Atom
+import numpy as np
+import matplotlib.pyplot as plt
+from vasp import Vasp
+
+import devon_toolbox as dtb
+
+A = np.linspace(2, 3, 50)
+
+energies = []
+for a in A:
+    a1 = a * np.array([3.0**0.5/2., -1./2., 0.])
+    a2 = a * np.array([3.0**0.5/2., 1./2., 0.])
+    a3 = np.array([0., 0., 16.])
+
+    atoms = Atoms([Atom('C', 1./2. * a3),
+                    Atom('C', 1./3. * a1 + 1./3. * a2 + 1./2. * a3)],
+                    cell=[a1, a2, a3])
+
+    name = 'vasp/type=eos/mat=graphene/layers=1/size=1/pore=0/lc={0:0.3f}'.format(a)
+    calc = Vasp(name,
+                xc='PBE',          # GGA functional type
+                encut=520,
+                kpts=[11,11,1],
+                ismear=0,          # Gaussian smearing
+                sigma=0.2,         # "Metallic" system smearing
+                atoms=atoms)
+
+    energy = calc.potential_energy / len(atoms)
+    energies.append(energy)
+
+plt.plot(A, energies)
+plt.xlabel('Lattice constant ($\AA$)')
+plt.ylabel('Energy (eV/atom)')
+plt.title('Graphene Equation of State')
+file_path = 'eos_graphene.png'
+dtb.print_image(file_path, plt)
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+[[./img/eos_graphene.png]]
+:END:
+
+*** DONE mat=graphene/layers=1/size=3/pore=3
+    CLOSED: [2016-07-18 Mon 11:56]
+
+Should atoms be allowed to relax positions? Don't include these calculation in the neural networks for the time being.
+
+#+BEGIN_SRC python :results drawer
+from ase import Atoms, Atom
+import numpy as np
+import matplotlib.pyplot as plt
+from vasp import Vasp
+
+import devon_toolbox as dtb
+import twodee as td
+
+A = np.linspace(2, 3, 50)
+
+energies = []
+for a in A:
+    a1 = a * np.array([3.0**0.5/2., -1./2., 0.])
+    a2 = a * np.array([3.0**0.5/2., 1./2., 0.])
+    a3 = np.array([0., 0., 16.])
+
+    atoms = Atoms([Atom('C', 1./2. * a3),
+                    Atom('C', 1./3. * a1 + 1./3. * a2 + 1./2. * a3)],
+                    cell=[a1, a2, a3])
+    atoms = atoms.repeat([3, 3, 1])
+    pore = [8, 9, 10]
+    td.make_pore(atoms, pore)
+
+    name = 'vasp/type=eos/mat=graphene/layers=1/size=3/pore=3/lc={0:0.3f}'.format(a)
+    calc = Vasp(name,
+                xc='PBE',          # GGA functional type
+                encut=520,
+                kpts=[11,11,1],
+                ismear=0,          # Gaussian smearing
+                sigma=0.2,         # "Metallic" system smearing
+                atoms=atoms)
+
+    energy = calc.potential_energy / len(atoms)
+    energies.append(energy)
+
+plt.plot(A, energies)
+plt.xlabel('Lattice constant ($\AA$)')
+plt.ylabel('Energy (eV/atom)')
+plt.title('Graphene/size=3/pore=3 Equation of State')
+file_path = 'eos_graphene_size=3_pore=3.png'
+dtb.print_image(file_path, plt)
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+[[./img/eos_graphene_size=3_pore=3.png]]
+:END:
+
+** Point energy calculations
+*** DONE mat=graphene/layers=1/size=2/pore=*
+    CLOSED: [2016-07-20 Wed 16:21]
+
+#+BEGIN_SRC python :results drawer
+from ase import Atoms, Atom
+import numpy as np
+import matplotlib.pyplot as plt
+from vasp import Vasp
+
+import devon_toolbox as dtb
+import twodee as td
+
+unitcell = td.create_base("graphene", layers=1)
+size = 2
+atoms = td.create_base("graphene", layers=1, size=size)
+
+edges = td.edges(atoms, unitcell)
+indices = [a.index for a in atoms if a.index not in edges]
+
+pore_sizes = range(len(indices)+1)
+cans = []
+for pore_size in pore_sizes:
+    cans.append(td.candidates(atoms, edge=edges, size=pore_size))
+
+energies = []
+for c in cans:
+    for pore in c:
+        a = atoms.copy()
+        td.make_pore(a, pore)
+        pname = td.pore_string(pore)
+        name = 'vasp/type=point/mat=graphene/layers=1/size={0}/pore={1}/{2}'.format(size, len(pore), pname)
+        calc = Vasp(name,
+                    xc='PBE',
+                    encut=520,
+                    kpts=[9, 9, 1],
+                    nsw=0,
+                    atoms=a)
+#        calc.calculate()
+        dtb.result('pore={0}'.format(pname), calc, per_atom=True)
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+pore=000: Energy/atom = -9.223. Calc time: 5 min.
+pore=006: Energy/atom = -8.176. Calc time: 5 min.
+pore=007: Energy/atom = -8.176. Calc time: 4 min.
+pore=006007: Energy/atom = -7.738. Calc time: 8 min.
+:END:
+
+*** DONE mat=graphene/layers=1/size=3/pore=*
+    CLOSED: [2016-07-18 Mon 16:23]
+
+#+BEGIN_SRC python :results drawer
+from ase import Atoms, Atom
+import numpy as np
+import matplotlib.pyplot as plt
+from vasp import Vasp
+
+import devon_toolbox as dtb
+import twodee as td
+
+unitcell = td.create_base("graphene", layers=1)
+size = 3
+atoms = td.create_base("graphene", layers=1, size=size)
+
+edges = td.edges(atoms, unitcell)
+indices = [a.index for a in atoms if a.index not in edges]
+
+pore_sizes = range(len(indices)+1)
+cans = []
+for pore_size in pore_sizes:
+    cans.append(td.candidates(atoms, edge=edges, size=pore_size))
+
+energies = []
+for c in cans:
+    for pore in c:
+        a = atoms.copy()
+        td.make_pore(a, pore)
+        pname = td.pore_string(pore)
+        name = 'vasp/type=point/mat=graphene/layers=1/size={0}/pore={1}/{2}'.format(size, len(pore), pname)
+        calc = Vasp(name,
+                    xc='PBE',
+                    encut=520,
+                    kpts=[5, 5, 1],
+                    nsw=0,
+                    atoms=a)
+#        calc.calculate()
+        dtb.result('pore={0}'.format(pname), calc, per_atom=True)
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+pore=000: Energy/atom = -9.222. Calc time: 49 min.
+pore=008: Energy/atom = -8.746. Calc time: 51 min.
+pore=009: Energy/atom = -8.746. Calc time: 34 min.
+pore=010: Energy/atom = -8.746. Calc time: 52 min.
+pore=011: Energy/atom = -8.746. Calc time: 45 min.
+pore=014: Energy/atom = -8.746. Calc time: 41 min.
+pore=015: Energy/atom = -8.746. Calc time: 33 min.
+pore=016: Energy/atom = -8.746. Calc time: 48 min.
+pore=017: Energy/atom = -8.746. Calc time: 40 min.
+pore=008009: Energy/atom = -8.624. Calc time: 62 min.
+pore=009010: Energy/atom = -8.624. Calc time: 40 min.
+pore=009014: Energy/atom = -8.624. Calc time: 43 min.
+pore=010011: Energy/atom = -8.624. Calc time: 67 min.
+pore=011016: Energy/atom = -8.624. Calc time: 60 min.
+pore=014015: Energy/atom = -8.624. Calc time: 34 min.
+pore=015016: Energy/atom = -8.624. Calc time: 64 min.
+pore=016017: Energy/atom = -8.624. Calc time: 44 min.
+pore=008009010: Energy/atom = -8.380. Calc time: 50 min.
+pore=008009014: Energy/atom = -8.380. Calc time: 51 min.
+pore=009010011: Energy/atom = -8.380. Calc time: 59 min.
+pore=009010014: Energy/atom = -8.380. Calc time: 54 min.
+pore=009014015: Energy/atom = -8.380. Calc time: 72 min.
+pore=010011016: Energy/atom = -8.380. Calc time: 30 min.
+pore=011015016: Energy/atom = -8.380. Calc time: 28 min.
+pore=011016017: Energy/atom = -8.380. Calc time: 53 min.
+pore=014015016: Energy/atom = -8.380. Calc time: 27 min.
+pore=015016017: Energy/atom = -8.380. Calc time: 29 min.
+pore=008009010011: Energy/atom = -8.114. Calc time: 59 min.
+pore=008009010014: Energy/atom = -8.162. Calc time: 13 min.
+pore=008009014015: Energy/atom = -8.114. Calc time: 35 min.
+pore=009010011014: Energy/atom = -8.165. Calc time: 25 min.
+pore=009010011016: Energy/atom = -8.165. Calc time: 24 min.
+pore=009010014015: Energy/atom = -8.165. Calc time: 46 min.
+pore=009014015016: Energy/atom = -8.165. Calc time: 26 min.
+pore=010011015016: Energy/atom = -8.165. Calc time: 43 min.
+pore=010011016017: Energy/atom = -8.114. Calc time: 111 min.
+pore=011014015016: Energy/atom = -8.165. Calc time: 67 min.
+pore=011015016017: Energy/atom = -8.162. Calc time: 16 min.
+pore=014015016017: Energy/atom = -8.114. Calc time: 32 min.
+pore=008009010011014: Energy/atom = -7.975. Calc time: 31 min.
+pore=008009010011016: Energy/atom = -7.886. Calc time: 42 min.
+pore=008009010014015: Energy/atom = -7.975. Calc time: 64 min.
+pore=008009014015016: Energy/atom = -7.886. Calc time: 60 min.
+pore=009010011014015: Energy/atom = -7.879. Calc time: 31 min.
+pore=009010011014016: Energy/atom = -7.879. Calc time: 45 min.
+pore=009010011015016: Energy/atom = -7.879. Calc time: 28 min.
+pore=009010011016017: Energy/atom = -7.886. Calc time: 61 min.
+pore=009010014015016: Energy/atom = -7.879. Calc time: 48 min.
+pore=009011014015016: Energy/atom = -7.879. Calc time: 29 min.
+pore=009014015016017: Energy/atom = -7.886. Calc time: 56 min.
+pore=010011014015016: Energy/atom = -7.879. Calc time: 35 min.
+pore=010011015016017: Energy/atom = -7.975. Calc time: 57 min.
+pore=011014015016017: Energy/atom = -7.975. Calc time: 44 min.
+pore=008009010011014015: Energy/atom = -7.627. Calc time: 36 min.
+pore=008009010011014016: Energy/atom = -7.642. Calc time: 40 min.
+pore=008009010011015016: Energy/atom = -7.618. Calc time: 42 min.
+pore=008009010011016017: Energy/atom = -7.702. Calc time: 30 min.
+pore=008009010014015016: Energy/atom = -7.642. Calc time: 38 min.
+pore=008009011014015016: Energy/atom = -7.618. Calc time: 37 min.
+pore=008009014015016017: Energy/atom = -7.702. Calc time: 25 min.
+pore=009010011014015016: Energy/atom = -7.848. Calc time: 20 min.
+pore=009010011014016017: Energy/atom = -7.618. Calc time: 33 min.
+pore=009010011015016017: Energy/atom = -7.642. Calc time: 35 min.
+pore=009010014015016017: Energy/atom = -7.618. Calc time: 42 min.
+pore=009011014015016017: Energy/atom = -7.642. Calc time: 39 min.
+pore=010011014015016017: Energy/atom = -7.627. Calc time: 30 min.
+pore=008009010011014015016: Energy/atom = -7.598. Calc time: 25 min.
+pore=008009010011014016017: Energy/atom = -7.496. Calc time: 31 min.
+pore=008009010011015016017: Energy/atom = -7.496. Calc time: 33 min.
+pore=008009010014015016017: Energy/atom = -7.496. Calc time: 29 min.
+pore=008009011014015016017: Energy/atom = -7.496. Calc time: 26 min.
+pore=009010011014015016017: Energy/atom = -7.598. Calc time: 22 min.
+pore=008009010011014015016017: Energy/atom = -7.511. Calc time: 17 min.
+:END:
+
+*** INPROGRESS mat=graphene/layers=1/size=4/pore=3,4,5
+
+#+BEGIN_SRC python :results drawer
+from ase import Atoms, Atom
+import numpy as np
+import matplotlib.pyplot as plt
+from vasp import Vasp
+
+import devon_toolbox as dtb
+import twodee as td
+
+unitcell = td.create_base("graphene", layers=1)
+size = 4
+atoms = td.create_base("graphene", layers=1, size=size)
+
+edges = td.edges(atoms, unitcell)
+indices = [a.index for a in atoms if a.index not in edges]
+
+pore_sizes = [3, 4, 5]
+cans = []
+for pore_size in pore_sizes:
+    cans.append(td.candidates(atoms, edge=edges, size=pore_size))
+
+energies = []
+for c in cans:
+    for pore in c:
+        a = atoms.copy()
+        td.make_pore(a, pore)
+        pname = td.pore_string(pore)
+        name = 'vasp/type=point/mat=graphene/layers=1/size={0}/pore={1}/{2}'.format(size, len(pore), pname)
+        calc = Vasp(name,
+                    xc='PBE',
+                    encut=520,
+                    kpts=[5, 5, 1],
+                    nsw=0,
+                    atoms=a)
+#        calc.calculate()
+        dtb.result('pore={0}'.format(pname), calc)
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+pore=010011012: Energy = -254.317. Calc time: 467 min.
+pore=010011018: Energy = -254.317. Calc time: 211 min.
+pore=011012013: Energy = -254.317. Calc time: 168 min.
+pore=011012018: Energy = -254.317. Calc time: 156 min.
+pore=011018019: Energy = -254.317. Calc time: 306 min.
+pore=012013014: Energy = -254.317. Calc time: 157 min.
+pore=012013020: Energy = -254.317. Calc time: 207 min.
+pore=013014015: Energy = -254.317. Calc time: 216 min.
+pore=013014020: Energy = -254.317. Calc time: 176 min.
+pore=013019020: Energy = -254.317. Calc time: 342 min.
+pore=013020021: Energy = -254.317. Calc time: 266 min.
+pore=014015022: Energy = -254.317. Calc time: 165 min.
+pore=015021022: Energy = -254.317. Calc time: 139 min.
+pore=015022023: Energy = -254.317. Calc time: 171 min.
+pore=018019020: Energy = -254.317. Calc time: 146 min.
+pore=018019026: Energy = -254.317. Calc time: 189 min.
+pore=019020021: Energy = -254.317. Calc time: 211 min.
+pore=019020026: Energy = -254.317. Calc time: 521 min.
+pore=019026027: Energy = -254.317. Calc time: 567 min.
+pore=020021022: Energy = -254.317. Calc time: 569 min.
+pore=020021028: Energy = -254.317. Calc time: 508 min.
+pore=021022023: Energy = -254.317. Calc time: 556 min.
+pore=021022028: Energy = -254.317. Calc time: 568 min.
+pore=021027028: Energy = -254.317. Calc time: 544 min.
+pore=021028029: Energy = -254.317. Calc time: 559 min.
+pore=022023030: Energy = -254.317. Calc time: 193 min.
+pore=023029030: Energy = -254.317. Calc time: 144 min.
+pore=023030031: Energy = -254.317. Calc time: 156 min.
+pore=026027028: Energy = -254.317. Calc time: 157 min.
+pore=027028029: Energy = -254.317. Calc time: 146 min.
+pore=028029030: Energy = -254.317. Calc time: 224 min.
+pore=029030031: Energy = -254.317. Calc time: 208 min.
+pore=010011012013: Energy = -242.197. Calc time: 185 min.
+pore=010011012018: Energy = -243.190. Calc time: 82 min.
+pore=010011018019: Energy = -242.197. Calc time: 186 min.
+pore=011012013014: Energy = -242.197. Calc time: 194 min.
+pore=011012013018: Energy = -242.922. Calc time: 151 min.
+pore=011012013020: Energy = -242.922. Calc time: 128 min.
+pore=011012018019: Energy = -242.922. Calc time: 142 min.
+pore=011018019020: Energy = -242.922. Calc time: 151 min.
+pore=011018019026: Energy = -242.197. Calc time: 227 min.
+pore=012013014015: Energy = -242.197. Calc time: 630 min.
+pore=012013014020: Energy = -243.190. Calc time: 404 min.
+pore=012013019020: Energy = -242.922. Calc time: 409 min.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=4/pore=4/012013020021 Queued: 1427937.gilgamesh.cheme.cmu.edu
+pore=012013020021: Inprogress.
+pore=013014015020: Energy = -242.922. Calc time: 431 min.
+pore=013014015022: Energy = -242.922. Calc time: 496 min.
+pore=013014019020: Energy = -242.197. Calc time: 341 min.
+pore=013014020021: Energy = -242.922. Calc time: 188 min.
+pore=013018019020: Energy = -242.922. Calc time: 207 min.
+pore=013019020021: Energy = -243.190. Calc time: 64 min.
+pore=013019020026: Energy = -242.197. Calc time: 261 min.
+pore=013020021022: Energy = -242.922. Calc time: 125 min.
+pore=013020021028: Energy = -242.197. Calc time: 260 min.
+pore=014015021022: Energy = -242.922. Calc time: 138 min.
+pore=014015022023: Energy = -242.197. Calc time: 172 min.
+pore=015020021022: Energy = -242.922. Calc time: 121 min.
+pore=015021022023: Energy = -243.190. Calc time: 64 min.
+pore=015021022028: Energy = -242.197. Calc time: 240 min.
+pore=015022023030: Energy = -242.197. Calc time: 302 min.
+pore=018019020021: Energy = -242.197. Calc time: 207 min.
+pore=018019020026: Energy = -243.190. Calc time: 64 min.
+pore=018019026027: Energy = -242.197. Calc time: 227 min.
+pore=019020021022: Energy = -242.197. Calc time: 437 min.
+pore=019020021026: Energy = -242.922. Calc time: 273 min.
+pore=019020021028: Energy = -242.922. Calc time: 298 min.
+pore=019020026027: Energy = -242.922. Calc time: 288 min.
+pore=019026027028: Energy = -242.922. Calc time: 236 min.
+pore=020021022023: Energy = -242.197. Calc time: 351 min.
+pore=020021022028: Energy = -243.190. Calc time: 184 min.
+pore=020021027028: Energy = -242.922. Calc time: 317 min.
+pore=020021028029: Energy = -242.197. Calc time: 413 min.
+pore=021022023028: Energy = -242.922. Calc time: 330 min.
+pore=021022023030: Energy = -242.922. Calc time: 292 min.
+pore=021022027028: Energy = -242.197. Calc time: 406 min.
+pore=021022028029: Energy = -242.922. Calc time: 353 min.
+pore=021026027028: Energy = -242.922. Calc time: 322 min.
+pore=021027028029: Energy = -243.190. Calc time: 206 min.
+pore=021028029030: Energy = -242.922. Calc time: 328 min.
+pore=022023029030: Energy = -242.922. Calc time: 253 min.
+pore=022023030031: Energy = -242.197. Calc time: 417 min.
+pore=023028029030: Energy = -242.922. Calc time: 322 min.
+pore=023029030031: Energy = -243.190. Calc time: 186 min.
+pore=026027028029: Energy = -242.197. Calc time: 394 min.
+pore=027028029030: Energy = -242.197. Calc time: 441 min.
+pore=028029030031: Energy = -242.197. Calc time: 446 min.
+pore=010011012013014: Energy = -229.762. Calc time: 356 min.
+pore=010011012013018: Energy = -231.691. Calc time: 430 min.
+pore=010011012013020: Energy = -230.817. Calc time: 444 min.
+pore=010011012018019: Energy = -231.691. Calc time: 417 min.
+pore=010011018019020: Energy = -230.817. Calc time: 400 min.
+pore=010011018019026: Energy = -229.762. Calc time: 366 min.
+pore=011012013014015: Energy = -229.762. Calc time: 318 min.
+pore=011012013014018: Energy = -230.817. Calc time: 453 min.
+pore=011012013014020: Energy = -231.691. Calc time: 445 min.
+pore=011012013018019: Energy = -230.111. Calc time: 294 min.
+pore=011012013018020: Energy = -230.111. Calc time: 386 min.
+pore=011012013019020: Energy = -230.111. Calc time: 316 min.
+pore=011012013020021: Energy = -230.817. Calc time: 414 min.
+pore=011012018019020: Energy = -230.111. Calc time: 287 min.
+pore=011012018019026: Energy = -230.817. Calc time: 357 min.
+pore=011013018019020: Energy = -230.111. Calc time: 369 min.
+pore=011018019020021: Energy = -230.817. Calc time: 374 min.
+pore=011018019020026: Energy = -231.691. Calc time: 433 min.
+pore=011018019026027: Energy = -229.762. Calc time: 340 min.
+pore=012013014015020: Energy = -231.691. Calc time: 386 min.
+pore=012013014015022: Energy = -230.817. Calc time: 405 min.
+pore=012013014019020: Energy = -231.691. Calc time: 467 min.
+pore=012013014020021: Energy = -231.691. Calc time: 410 min.
+pore=012013018019020: Energy = -230.111. Calc time: 313 min.
+pore=012013019020021: Energy = -231.691. Calc time: 411 min.
+pore=012013019020026: Energy = -230.817. Calc time: 431 min.
+pore=012013020021022: Energy = -230.817. Calc time: 369 min.
+pore=012013020021028: Energy = -229.762. Calc time: 354 min.
+pore=013014015019020: Energy = -230.817. Calc time: 454 min.
+pore=013014015020021: Energy = -230.111. Calc time: 288 min.
+pore=013014015020022: Energy = -230.111. Calc time: 382 min.
+pore=013014015021022: Energy = -230.111. Calc time: 391 min.
+pore=013014015022023: Energy = -230.817. Calc time: 331 min.
+pore=013014018019020: Energy = -230.817. Calc time: 447 min.
+pore=013014019020021: Energy = -231.691. Calc time: 560 min.
+pore=013014019020026: Energy = -229.762. Calc time: 514 min.
+pore=013014020021022: Energy = -230.111. Calc time: 649 min.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=4/pore=5/013014020021028 submitted: 1427938.gilgamesh.cheme.cmu.edu
+pore=013014020021028: Inprogress.
+pore=013015020021022: Energy = -230.111. Calc time: 647 min.
+pore=013018019020021: Energy = -231.691. Calc time: 336 min.
+pore=013018019020026: Energy = -231.691. Calc time: 385 min.
+pore=013019020021022: Energy = -231.691. Calc time: 357 min.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=4/pore=5/013019020021026 submitted: 1427939.gilgamesh.cheme.cmu.edu
+pore=013019020021026: Inprogress.
+pore=013019020021028: Energy = -231.691. Calc time: 379 min.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=4/pore=5/013019020026027 submitted: 1427940.gilgamesh.cheme.cmu.edu
+pore=013019020026027: Inprogress.
+pore=013020021022023: Energy = -230.817. Calc time: 405 min.
+pore=013020021022028: Energy = -231.691. Calc time: 327 min.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=4/pore=5/013020021027028 submitted: 1427941.gilgamesh.cheme.cmu.edu
+pore=013020021027028: Inprogress.
+pore=013020021028029: Energy = -229.762. Calc time: 383 min.
+pore=014015020021022: Energy = -230.111. Calc time: 611 min.
+pore=014015021022023: Energy = -231.691. Calc time: 366 min.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=4/pore=5/014015021022028 submitted: 1427942.gilgamesh.cheme.cmu.edu
+pore=014015021022028: Inprogress.
+pore=014015022023030: Energy = -229.762. Calc time: 591 min.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=4/pore=5/015019020021022 submitted: 1427943.gilgamesh.cheme.cmu.edu
+pore=015019020021022: Inprogress.
+pore=015020021022023: Energy = -231.691. Calc time: 451 min.
+pore=015020021022028: Energy = -231.691. Calc time: 461 min.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=4/pore=5/015021022023028 submitted: 1427944.gilgamesh.cheme.cmu.edu
+pore=015021022023028: Inprogress.
+pore=015021022023030: Energy = -231.691. Calc time: 390 min.
+pore=015021022027028: Energy = -229.762. Calc time: 278 min.
+pore=015021022028029: Energy = -230.817. Calc time: 380 min.
+pore=015022023029030: Energy = -230.817. Calc time: 411 min.
+pore=015022023030031: Energy = -229.762. Calc time: 299 min.
+pore=018019020021022: Energy = -229.762. Calc time: 285 min.
+pore=018019020021026: Energy = -231.691. Calc time: 315 min.
+pore=018019020021028: Energy = -230.817. Calc time: 410 min.
+pore=018019020026027: Energy = -231.691. Calc time: 288 min.
+pore=018019026027028: Energy = -230.817. Calc time: 347 min.
+pore=019020021022023: Energy = -229.762. Calc time: 271 min.
+pore=019020021022026: Energy = -230.817. Calc time: 224 min.
+pore=019020021022028: Energy = -231.691. Calc time: 355 min.
+pore=019020021026027: Energy = -230.111. Calc time: 400 min.
+pore=019020021026028: Energy = -230.111. Calc time: 422 min.
+pore=019020021027028: Energy = -230.111. Calc time: 268 min.
+pore=019020021028029: Energy = -230.817. Calc time: 447 min.
+pore=019020026027028: Energy = -230.111. Calc time: 296 min.
+pore=019021026027028: Energy = -230.111. Calc time: 415 min.
+pore=019026027028029: Energy = -230.817. Calc time: 470 min.
+pore=020021022023028: Energy = -231.691. Calc time: 340 min.
+pore=020021022023030: Energy = -230.817. Calc time: 219 min.
+pore=020021022027028: Energy = -231.691. Calc time: 433 min.
+pore=020021022028029: Energy = -231.691. Calc time: 384 min.
+pore=020021026027028: Energy = -230.111. Calc time: 327 min.
+pore=020021027028029: Energy = -231.691. Calc time: 366 min.
+pore=020021028029030: Energy = -230.817. Calc time: 317 min.
+pore=021022023027028: Energy = -230.817. Calc time: 352 min.
+pore=021022023028029: Energy = -230.111. Calc time: 297 min.
+pore=021022023028030: Energy = -230.111. Calc time: 303 min.
+pore=021022023029030: Energy = -230.111. Calc time: 265 min.
+pore=021022023030031: Energy = -230.817. Calc time: 452 min.
+pore=021022026027028: Energy = -230.817. Calc time: 617 min.
+pore=021022027028029: Energy = -231.691. Calc time: 332 min.
+pore=021022028029030: Energy = -230.111. Calc time: 266 min.
+pore=021023028029030: Energy = -230.111. Calc time: 250 min.
+pore=021026027028029: Energy = -231.691. Calc time: 395 min.
+pore=021027028029030: Energy = -231.691. Calc time: 352 min.
+pore=021028029030031: Energy = -230.817. Calc time: 364 min.
+pore=022023028029030: Energy = -230.111. Calc time: 305 min.
+pore=022023029030031: Energy = -231.691. Calc time: 409 min.
+pore=023027028029030: Energy = -230.817. Calc time: 304 min.
+pore=023028029030031: Energy = -231.691. Calc time: 360 min.
+pore=026027028029030: Energy = -229.762. Calc time: 262 min.
+pore=027028029030031: Energy = -229.762. Calc time: 268 min.
+:END:
+
+*** INPROGRESS mat=graphene/layers=1/size=5/pore=0,3#,4,5
+
+#+BEGIN_SRC python :results drawer
+from ase import Atoms, Atom
+import numpy as np
+import matplotlib.pyplot as plt
+from vasp import Vasp
+
+import devon_toolbox as dtb
+import twodee as td
+
+unitcell = td.create_base("graphene", layers=1)
+size = 5
+atoms = td.create_base("graphene", layers=1, size=size)
+
+edges = td.edges(atoms, unitcell)
+indices = [a.index for a in atoms if a.index not in edges]
+
+pore_sizes = [0, 3]#, 4, 5]
+cans = []
+for pore_size in pore_sizes:
+    cans.append(td.candidates(atoms, edge=edges, size=pore_size))
+
+energies = []
+for c in cans:
+    for pore in c:
+        a = atoms.copy()
+        td.make_pore(a, pore)
+        pname = td.pore_string(pore)
+        name = 'vasp/type=point/mat=graphene/layers=1/size={0}/pore={1}/{2}'.format(size, len(pore), pname)
+        calc = Vasp(name,
+                    xc='PBE',
+                    encut=520,
+                    kpts=[3, 3, 1],
+                    nsw=0,
+                    atoms=a)
+        calc.calculate()
+#        dtb.result('pore={0}'.format(pname), calc)
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/012013014 submitted: 1427703.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/012013022 submitted: 1427704.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/013014015 submitted: 1427705.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/013014022 submitted: 1427706.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/013022023 submitted: 1427707.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/014015016 submitted: 1427708.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/014015024 submitted: 1427709.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/015016017 submitted: 1427710.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/015016024 submitted: 1427711.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/015023024 submitted: 1427712.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/015024025 submitted: 1427713.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/016017018 submitted: 1427714.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/016017026 submitted: 1427715.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/017018019 submitted: 1427716.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/017018026 submitted: 1427717.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/017025026 submitted: 1427718.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/017026027 submitted: 1427719.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/018019028 submitted: 1427720.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/019027028 submitted: 1427721.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/019028029 submitted: 1427722.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/022023024 submitted: 1427723.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/022023032 submitted: 1427724.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/023024025 submitted: 1427725.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/023024032 submitted: 1427726.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/023032033 submitted: 1427727.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/024025026 submitted: 1427728.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/024025034 submitted: 1427729.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/025026027 submitted: 1427730.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/025026034 submitted: 1427731.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/025033034 submitted: 1427732.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/025034035 submitted: 1427733.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/026027028 submitted: 1427734.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/026027036 submitted: 1427735.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/027028029 submitted: 1427736.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/027028036 submitted: 1427737.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/027035036 submitted: 1427738.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/027036037 submitted: 1427739.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/028029038 submitted: 1427740.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/029037038 submitted: 1427741.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/029038039 submitted: 1427742.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/032033034 submitted: 1427743.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/032033042 submitted: 1427744.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/033034035 submitted: 1427745.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/033034042 submitted: 1427746.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/033042043 submitted: 1427747.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/034035036 submitted: 1427748.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/034035044 submitted: 1427749.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/035036037 submitted: 1427750.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/035036044 submitted: 1427751.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/035043044 submitted: 1427752.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/035044045 submitted: 1427753.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/036037038 submitted: 1427754.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/036037046 submitted: 1427755.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/037038039 submitted: 1427756.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/037038046 submitted: 1427757.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/037045046 submitted: 1427758.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/037046047 submitted: 1427759.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/038039048 submitted: 1427760.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/039047048 submitted: 1427761.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/039048049 submitted: 1427762.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/042043044 submitted: 1427763.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/043044045 submitted: 1427764.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/044045046 submitted: 1427765.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/045046047 submitted: 1427766.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/046047048 submitted: 1427767.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/047048049 submitted: 1427768.gilgamesh.cheme.cmu.edu
+:END:
+
+** Relaxations
+*** DONE mat=graphene/layers=1/size=3/pore=?: 10 relaxed structures of varying pore sizes 
+    CLOSED: [2016-07-19 Tue 16:15]
+
+#+BEGIN_SRC python :results drawer
+from ase import Atoms, Atom
+import numpy as np
+import matplotlib.pyplot as plt
+from vasp import Vasp
+
+import devon_toolbox as dtb
+import twodee as td
+
+unitcell = td.create_base("graphene", layers=1)
+size = 3
+atoms = td.create_base("graphene", layers=1, size=size)
+
+edges = td.edges(atoms, unitcell)
+indices = [a.index for a in atoms if a.index not in edges]
+
+pore_sizes = range(len(indices)+1)
+cans = []
+for pore_size in pore_sizes:
+    cans.append(td.candidates(atoms, edge=edges, size=pore_size))
+
+
+# Select 2 pores from candidates for each pore size
+energies = []
+for c in cans:
+    if len(c) <= 1:
+        continue
+    select = [0, len(c)/2]
+    for s in select:
+        pore = c[s]
+        a = atoms.copy()
+        td.make_pore(a, pore)
+        pname = td.pore_string(pore)
+        name = 'vasp/type=relax/mat=graphene/layers=1/size={0}/pore={1}/{2}'.format(size, len(pore), pname)
+        calc = Vasp(name,
+                    xc='PBE',
+                    encut=520,
+                    kpts=[5, 5, 1],
+                    ismear=0,          # Gaussian smearing
+                    sigma=0.2,         # "Metallic" system smearing
+                    isif=2,            # relax positions only
+                    ibrion=2,          # conjugate gradient optimizer
+                    nsw=50,            # max number of steps to relax
+                    atoms=a)
+        dtb.result('pore={0}'.format(pname), calc)
+#        energy = atoms.get_potential_energy()
+#        energies.append(energy)
+
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+pore=008: Energy = -148.9134. Calc time: 63 min.
+pore=014: Energy = -148.9134. Calc time: 102 min.
+pore=008009: Energy = -138.7491. Calc time: 243 min.
+pore=011016: Energy = -138.7491. Calc time: 232 min.
+pore=008009010: Energy = -126.2441. Calc time: 228 min.
+pore=010011016: Energy = -126.2441. Calc time: 242 min.
+pore=008009010011: Energy = -114.7128. Calc time: 351 min.
+pore=009014015016: Energy = -115.3673. Calc time: 280 min.
+pore=008009010011014: Energy = -104.4789. Calc time: 377 min.
+pore=009010011016017: Energy = -104.6957. Calc time: 709 min.
+pore=008009010011014015: Energy = -93.6848. Calc time: 216 min.
+pore=008009014015016017: Energy = -96.6321. Calc time: 406 min.
+pore=008009010011014015016: Energy = -86.3767. Calc time: 391 min.
+pore=008009010014015016017: Energy = -88.3831. Calc time: 648 min.
+:END:
+
+* Neural network
+
+** DONE Graphene equation of state (amp-tutorial)
+   CLOSED: [2016-07-19 Tue 16:18]
+
+Build a neural network around the equation of state for graphene in the style of Jake's [[https://github.com/jboes/amp-tutorial][amp-tutorial]].
+
+
+Build the database.
+#+BEGIN_SRC python :results drawer
+from ase import Atoms, Atom
+import numpy as np
+import matplotlib.pyplot as plt
+from vasp import Vasp
+
+import devon_toolbox as dtb
+
+A = np.linspace(2, 3, 50)
+format_name = 'vasp/type=eos/mat=graphene/layers=1/size=1/pore=0/lc={0:0.3f}'
+calcs = [Vasp(format_name.format(a)) for a in A]
+
+[calc.write_db('./database/eos.db', parser='=',
+               overwrite=False, keys={'dbkey': 0},
+               data={'ctime': calc.get_elapsed_time(),
+                     'lattice': a})
+ for (calc, a) in zip(calcs, A)]
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+:END:
+
+Plot EOS using the database.
+#+BEGIN_SRC python :results drawer
+from ase.db import connect
+import matplotlib.pyplot as plt
+import numpy as np
+
+import devon_toolbox as dtb
+
+lc, nrg = [], []
+with connect('database/eos.db') as db:
+    for d in db.select('dbkey=0'):
+        natoms = [d.natoms]
+        lc += [d.data.lattice]
+        nrg += [d.energy]
+lc = np.array(lc)
+nrg = np.array(nrg)
+nrg_atom = nrg / natoms
+
+plt.plot(lc, nrg_atom)
+plt.xlabel('Lattice constant ($\AA$)')
+plt.ylabel('Energy (eV/atom)')
+plt.title('Graphene Equation of State')
+file_path = './tmp/img/vasp/eos/mat=graphene_layers=1_pore=0_eos.png'
+dtb.print_image(file_path, plt)
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+[[./img/./tmp/img/vasp/eos/mat=graphene_layers=1_pore=0_eos.png]]
+:END:
+
+Designate training data, leaving 10% of calculations for testing later.
+#+BEGIN_SRC python :results drawer
+from ase.db import connect
+import random
+import numpy as np
+
+db = connect('database/eos.db')
+
+n_ids = []
+for d in db.select('dbkey=0'):
+    n_ids += [d.id]
+
+n = len(n_ids)
+n_train = int(round(n * 0.9))
+
+random.seed(256)
+train_samples = random.sample(n_ids, n_train)
+valid_samples = set(n_ids) - set(train_samples)
+
+db.update(list(train_samples), train_set=True)
+db.update(list(valid_samples), train_set=False)
+
+print("Done")
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+Done
+:END:
+
+
+Generate an initial guess for the parameters to build the neural networks.
+#+BEGIN_SRC python :exports none
+from amp import Amp
+from amp.descriptor import Behler
+from amp.regression import NeuralNetwork
+from ase.db import connect
+from amp import SimulatedAnnealing
+import os
+
+db = connect('database/eos.db')
+
+images = []
+for d in db.select('train_set=True'):
+    atoms = db.get_atoms(d.id)
+    del atoms.constraints
+    images += [atoms]
+
+for n in [4, 5]:
+    wd = 'networks/db=eos0/{0}-{0}/'.format(n)
+
+    if not os.path.exists(wd):
+        os.makedirs(wd)
+
+    calc = Amp(label=wd,
+               dblabel='networks/',
+               descriptor=Behler(cutoff=6.5),
+               regression=NeuralNetwork(hiddenlayers=(2, n)))
+
+    calc.train(images=images,
+               data_format='db',
+               cores=1,
+               energy_goal=10,
+               force_goal=None,
+               global_search=SimulatedAnnealing(temperature=70,
+                                                steps=50),
+               extend_variables=False) # Do not use this feature
+
+    os.unlink(os.path.join(wd, 'train-log.txt'))  # TODO devon: was just 'log.txt'
+    os.unlink(os.path.join(wd, 'trained-parameters.json'))
+#+END_SRC
+
+#+RESULTS:
+
+
+Build the networks using the previous initial guess.
+#+BEGIN_SRC python :results drawer
+from amp import Amp
+from ase.db import connect
+import os
+
+db = connect('database/eos.db')
+
+images = []
+for d in db.select('train_set=True'):
+    atoms = db.get_atoms(d.id)
+    del atoms.constraints
+    images += [atoms]
+
+for n in [4, 5]:
+    wd = 'networks/db=eos0/{0}-{0}/'.format(n)
+
+    calc = Amp(load=os.path.join(wd, 'initial-parameters.json'),
+               label=wd,
+               dblabel='networks/')
+
+    calc.train(images=images,
+               data_format='db',
+               cores=1,
+               energy_goal=1e-3,  # The default energy training goal
+               force_goal=None,  # There are no forces in the training data
+               global_search=None,  # Already have a good starting point
+               extend_variables=False) # Do not use this feature
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+:END:
+
+
+Check for convergence.
+#+BEGIN_SRC python :results drawer
+import os
+import json
+
+print('|Hidden layers|Iteration|Time|Cost Function|Energy RMSE|')
+print('|-')
+
+for r, d, f in os.walk('networks/db=eos0/'):
+    if 'train-log.txt' in f:
+        with open(os.path.join(r, 'train-log.txt'), 'r') as fi:
+            v = fi.readlines()[-3].split()
+
+    if 'trained-parameters.json' in f:
+        with open(os.path.join(r, 'trained-parameters.json'), 'r') as fi:
+            p = json.load(fi)
+        n = p['hiddenlayers']
+        print('|{}|{}|{}|{}|{}|'.format(n, v[0], v[1], v[2], v[3]))
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+| Hidden layers  | Iteration | Time                | Cost Function | Energy RMSE |
+|----------------+-----------+---------------------+---------------+-------------|
+| {u'C': [2, 4]} |       163 | 2016-07-18T15:57:52 |     4.354e-05 |   9.836e-04 |
+| {u'C': [2, 5]} |       222 | 2016-07-18T15:58:01 |     4.444e-05 |   9.937e-04 |
+:END:
+
+
+Add the neural network results to the database.
+#+BEGIN_SRC python :results drawer
+from ase.db import connect
+from amp import Amp
+
+db = connect('database/eos.db')
+
+calc4 = Amp('./networks/db=eos0/4-4/')
+calc5 = Amp('./networks/db=eos0/5-5/')
+
+for d in db.select():
+    atoms = db.get_atoms(d.id)
+
+    atoms.set_calculator(calc4)
+    e0 = atoms.get_potential_energy()
+
+    atoms.set_calculator(calc5)
+    e1 = atoms.get_potential_energy()
+
+    db.update(d.id, nn0=e0, nn1=e1)
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+:END:
+
+
+Residual analysis.
+#+BEGIN_SRC python :results drawer
+import numpy as np
+import matplotlib.pyplot as plt
+from ase.db import connect
+from amp import Amp
+import os
+
+import devon_toolbox as dtb
+
+
+db = connect('database/eos.db')
+
+fig, ax = plt.subplots(1, 2, sharey=True, figsize=(8, 4))
+
+for i, n in enumerate([4, 5]):
+
+    E, nnE, var, ind = [], [], [], []
+    for j, d in enumerate(db.select('dbkey=0')):
+	E += [d.energy / d.natoms]
+	nnE += [d['nn{}'.format(i)]/ d.natoms]
+	var += [j]
+	ind += [d.train_set]
+
+    res = np.array(nnE) - np.array(E)
+    mask = np.array(ind)
+    valid = np.ma.masked_array(res, mask)
+    train = np.ma.masked_array(res, ~mask)
+    vRMSE = np.sqrt(np.sum(valid ** 2)/ len(valid))
+    tRMSE = np.sqrt(np.sum(train ** 2)/ len(train))
+
+    ax[i].text(5, -0.0075,
+               'Trained RMSE: {:.2f} meV/atom'.format(tRMSE * 1000),
+               color='b', ha='left')
+    ax[i].text(5, -0.009,
+               'Validation RMSE: {:.2f} meV/atom'.format(vRMSE * 1000),
+               color='r', ha='left')
+
+    ax[i].scatter(var, train, color='b')
+    ax[i].scatter(var, valid, color='r')
+    ax[i].plot([min(var), max(var)], [0, 0], 'k--')
+    ax[i].set_xlim(min(var), max(var))
+
+    ax[i].set_xlabel('Calculation ID')
+    ax[i].set_title('8-{0}-{0}-1 framework'.format(n))
+
+ax[0].set_ylim(-0.01, 0.01)
+ax[0].set_ylabel('Residual error (eV/atom)')
+plt.tight_layout()
+plt.savefig('./tmp/residuals-1.png')
+print("[[" + './tmp/residuals-1.png' + "]]")
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+[[./tmp/residuals-1.png]]
+:END:
+
+
+Recreate the equation of state.
+#+BEGIN_SRC python :results drawer
+import numpy as np
+import matplotlib.pyplot as plt
+from ase.utils.eos import EquationOfState
+from ase.db import connect
+from amp import Amp
+import os
+import json
+import time
+from ase.units import kJ
+
+db = connect('database/eos.db')
+
+for r, d, f in os.walk('./networks/db=eos0/'):
+    if 'trained-parameters.json' in f:
+        calc = Amp(load=r + '/')
+
+        with open(os.path.join(r, 'trained-parameters.json'), 'r') as fi:
+            p = json.load(fi)
+        n = p['hiddenlayers'].values()[0]
+
+        nrg, vol, t, lc = [], [], [], []
+        for d in db.select(['dbkey=0']):
+            atoms = db.get_atoms(d.id)
+            atoms.set_calculator(calc)
+
+            time1 = time.time()
+            energy = atoms.get_potential_energy()
+            time2 = time.time()
+
+            nrg += [energy]
+            lc += [d.data.lattice]
+            vol += [d.volume]
+            t += [(time2 - time1) * 1000]
+
+        vol = np.array(vol)
+        nrg = np.array(nrg)
+        t = np.array(t)
+        lc = np.array(lc)
+
+        # Fit the data to SJEOS
+        eos = EquationOfState(vol, nrg)
+        v0, e0, B = eos.fit()
+
+        x = np.linspace(vol.min(), vol.max(), 250)
+
+        fig, ax = plt.subplots(figsize=(6, 4))
+        ax.scatter(vol, nrg, color='b')
+        ax.plot(x, eos.fit0(x**-(1.0 / 3)), 'k-')
+
+        ax.set_xlim(vol.min(), vol.max())
+        ax.set_xlabel('Lattic constant [$\AA$]')
+        ax.set_ylabel('Potential energy (eV)')
+
+        ax.text(vol.max() - 20, nrg.max(),
+                 'V$_{0}$={1:1.1f}'.format('{min}', v0),
+                 va='center', ha='left')
+        ax.text(vol.max() - 20, nrg.max() - 1,
+                 'E$_{0}$={1:1.3f}'.format('{min}', e0),
+                 va='center', ha='left')
+        ax.text(vol.max() - 20, nrg.max() - 2,
+                 'B={0:1.0f}'.format(B  / kJ * 1.0e24),
+                 va='center', ha='left')
+
+        plt.tight_layout()
+        plt.savefig('./tmp/eos-NN{}.png'.format(n[1]))
+        print('[[' + './tmp/eos-NN{}.png'.format(n[1]) + ']]')
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+[[./tmp/eos-NN4.png]]
+[[./tmp/eos-NN5.png]]
+:END:
+
+
+My equation of state comparison
+#+BEGIN_SRC python :results drawer
+from amp import Amp
+from ase.db import connect
+import matplotlib.pyplot as plt
+import numpy as np
+import os
+import json
+
+import devon_toolbox as dtb
+
+
+# DFT
+natoms, lc_dft, nrg_dft = [], [], []
+with connect('database/eos.db') as db:
+    for d in db.select('dbkey=0'):
+        natoms += [d.natoms]
+        lc_dft += [d.data.lattice]
+        nrg_dft += [d.energy]
+lc_dft = np.array(lc_dft)
+nrg_dft = np.array(nrg_dft)
+nrg_dft_atom = nrg_dft / natoms
+
+
+# NN
+db = connect('database/eos.db')
+for r, d, f in os.walk('./networks/db=eos0/'):
+    if 'trained-parameters.json' in f:
+        calc = Amp(load=r + '/')
+
+        with open(os.path.join(r, 'trained-parameters.json'), 'r') as fi:
+            p = json.load(fi)
+        n = p['hiddenlayers'].values()[0]
+
+        natoms, lc_nn, nrg_nn = [], [], []
+        for d in db.select(['dbkey=0']):
+            atoms = db.get_atoms(d.id)
+            atoms.set_calculator(calc)
+
+            energy = atoms.get_potential_energy()
+
+            natoms += [d.natoms]
+            lc_nn += [d.data.lattice]
+            nrg_nn += [energy]
+
+        lc_nn = np.array(lc_nn)
+        nrg_nn = np.array(nrg_nn)
+        nrg_nn_atom = nrg_nn / natoms
+
+
+# Plot
+plt.plot(lc_dft, nrg_dft_atom, "k--", label="DFT")
+plt.plot(lc_nn, nrg_nn_atom, "bo", label="NN")
+plt.xlabel('Lattice constant ($\AA$)')
+plt.ylabel('Energy (eV/atom)')
+plt.title('Graphene Equation of State')
+plt.legend()
+plt.xlim([min(lc_dft), max(lc_dft)])
+file_path = './tmp/img/vasp/eos/mat=graphene_layers=1_pore=0_eos.png'
+dtb.print_image(file_path, plt)
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+[[./img/./tmp/img/vasp/eos/mat=graphene_layers=1_pore=0_eos.png]]
+:END:
+
+Extrapolation
+#+BEGIN_SRC python :results silent :exports none
+from amp import Amp
+import numpy as np
+from ase.lattice.cubic import FaceCenteredCubic
+from ase import Atoms, Atom
+import matplotlib.pyplot as plt
+import collections
+
+D = {}
+for calc in ['./networks/db=eos0/4-4/',
+             './networks/db=eos0/5-5/']:
+
+    D[calc[-2]] = collections.OrderedDict()
+    for x in np.linspace(0.5, 4.0, 1000.):
+
+        a1 = x * np.array([3.0**0.5/2., -1./2., 0.])
+        a2 = x * np.array([3.0**0.5/2., 1./2., 0.])
+        a3 = np.array([0., 0., 16.])
+
+        atoms = Atoms([Atom('C', 1./2. * a3),
+                        Atom('C', 1./3. * a1 + 1./3. * a2 + 1./2. * a3)],
+                        cell=[a1, a2, a3])
+
+        atoms.set_calculator(Amp(calc))
+
+        D[calc[-2]][x] = atoms.get_potential_energy()
+
+res = abs(np.array(D['5'].values()) - np.array(D['4'].values()))
+
+f, ax = plt.subplots(2, 1, sharex=True)
+ax[0].plot(D['4'].keys(), D['4'].values(), 'b', lw=2, label='4-4')
+ax[0].plot(D['5'].keys(), D['5'].values(), 'r', lw=2, label='5-5')
+ax[0].plot([0.85, 0.85], [2, -6], 'k--')
+ax[0].plot([2.1, 2.1], [2, -6], 'k--')
+ax[0].set_ylabel('Potential energy (eV)')
+ax[0].set_xlim(0.6, 2.5)
+ax[0].legend(loc='best')
+
+ax[1].plot([0.85, 0.85], [0, 0.5], 'k--')
+ax[1].plot([2.07, 2.1], [0, 0.5], 'k--')
+ax[1].plot(D['4'].keys(), res, 'k', lw=2)
+ax[1].set_ylabel('NN energy difference (eV)')
+ax[1].set_ylim(0, 0.5)
+ax[1].set_xlabel('Strain/stretch factor (%)')
+plt.tight_layout(w_pad=0.0)
+plt.savefig('./tmp/app-eos.png')
+#+END_SRC
+
+[[./tmp/app-eos.png]]
 
 * Results
 ** DONE Final project

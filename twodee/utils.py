@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set_style("white")
 
+
 def bp(info=None):
     """A breakpoint to view something and stop the rest of the script."""
     if isinstance(info, Atoms):
@@ -83,7 +84,8 @@ def set_vacuum(atoms, vacuum):
     for atom in atoms:
         atom.position[2] = center_new - (center_old - atom.position[2])
 
-def result(name, calc, fu=None):
+
+def result(name, calc, fu=None, per_atom=False):
     """Print a brief calculation report."""
     atoms = calc.get_atoms()
     energy = atoms.get_potential_energy()
@@ -92,9 +94,13 @@ def result(name, calc, fu=None):
         stat = "Inprogress."
     else:
         time = calc.get_elapsed_time()
-        stat = "Energy = {:0.4f}. Calc time: {:.0f} min.".format(energy, time/60.)
+        if per_atom:
+            stat = "Energy/atom = {:0.3f}. Calc time: {:.0f} min.".format(energy / len(atoms), time/60.)
+        else:
+            stat = "Energy = {:0.3f}. Calc time: {:.0f} min.".format(energy, time/60.)
 
     print(name + ": " + stat)
+
 
 def status_converged(energy, time):
     print("Final structure calculation: Energy/f.u. = {:0.3f}. Calculation time: {:.0f} min.".format(energy, time/60.))
@@ -131,12 +137,11 @@ def write_image(path, data, options=None):
     directory = file_path[:file_path.rfind('/')]
     if not os.path.exists(directory):
         os.makedirs(directory)
-    
+
     if isinstance(data, ModuleType):
         if data.__name__ == "matplotlib.pyplot":
             data.savefig(file_path)
     elif isinstance(data, Atoms):
-        #atoms.rotate('x', np.pi/-5) # TODO: do a .copy() instead of this
         file_path += '.png'
         ase_write(file_path, data)
 
