@@ -67,7 +67,9 @@ desktop.ini
 # Project specific
 ltxpng
 texput.log
-dft/
 img/
+jasp/
 *.png
 presentations/reveal.js
+tmp/
+vasp/
