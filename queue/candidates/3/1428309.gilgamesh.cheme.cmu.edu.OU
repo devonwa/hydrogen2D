@@ -1,0 +1,13 @@
+| Graphene size | Pore size | # of candidates | Algo. time | Retrieval |
+| (unitcell repititions) | (# carbons) | | (seconds) | |
+|-----
+| 3 | 0 | 1 | 0.03 | From file |
+| 3 | 1 | 8 | 0.03 | From file |
+| 3 | 2 | 8 | 0.05 | From file |
+| 3 | 3 | 10 | 0.07 | From file |
+| 3 | 4 | 12 | 0.07 | From file |
+| 3 | 5 | 14 | 0.06 | From file |
+| 3 | 6 | 13 | 0.04 | From file |
+| 3 | 7 | 6 | 0.03 | From file |
+| 3 | 8 | 1 | 0.03 | From file |
+Total number of candidates: 73. Total time: 0.42 sec

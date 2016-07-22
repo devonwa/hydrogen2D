@@ -1770,17 +1770,84 @@ candidates(mat='graphene', layers=1, size=4, pores=None,
  Total number of candidates: 6588. Total time: 378.64 sec
  :END:
 
+** 2016-07-22: Run python script from queue
+
+Script 1 (super basic) to run on queue:
+#+BEGIN_SRC python :tangle ./queue/script-20160722-1.py
+#!/usr/bin/env python
+
+a = 4 + 2
+print(a)
+#+END_SRC
+
+Script 2 to run:
+#+BEGIN_SRC python :tangle ./queue/script-20160722-2.py
+#!/usr/bin/env python
+import twodee as td
+
+#atoms = td.create_base('graphene', layers=1, size=3)
+cans = td.candidates(mat='graphene', layers=1, size=3, pores=None, silent=False)
+#+END_SRC
+
+
+
+Queue caller:
+#+BEGIN_SRC python
+import os
+import subprocess
+import time
+
+import twodee as td
+
+
+def queue_submit(file_path):
+    cwd = os.getcwd()
+    wd = os.path.dirname(os.path.realpath(file_path))
+    file_name = os.path.basename(file_path)
+    os.chmod(file_path, 0777)
+#    os.chdir(wd)
+
+    cmd = '''#!/bin/bash
+#PBS -N {0}
+#PBS -o {0}
+#PBS -e {0}
+#PBS -l nodes=1:ppn=1
+#PBS -l walltime=24:00:00
+#PBS -l mem=2GB
+#PBS -joe
+cd $PBS_O_WORKDIR
+{1}
+#end'''.format(wd, file_path)
+
+    submit_path = os.path.join(wd, 'submit.sh')
+    with open(submit_path, 'w') as f:
+        f.write(cmd)
+
+    subprocess.call(['qsub', submit_path])
+    time.sleep(5)
+    os.remove(submit_path)
+#    os.chdir(cwd)
+
+
+queue_submit('./queue/script-20160722-2.py')
+#+END_SRC
+
+#+RESULTS:
+: 1428308.gilgamesh.cheme.cmu.edu
+
+
+
+
 
 * twodee
 
 Module to help me write code in this project. This header serves as a testing ground for the module.
 
 ** ase_utils
-*** candidates (json)
+*** candidates
 
 #+BEGIN_SRC python :results drawer
 import twodee as td
-import os
 
 cans = td.candidates(mat='graphene', layers=1, size=4, pores=None,
                      json_path='data/candidates.json', silent=False,
@@ -2190,6 +2257,24 @@ td.bp([tester])
 #+RESULTS:
 : [0, 1, 2]
 : 
+
+*** queue_submit
+
+#+BEGIN_SRC python :tangle ./queue/candidates/7/cans=7.py
+#!/usr/bin/env python
+import twodee as td
+
+cans = td.candidates(mat='graphene', layers=1, size=7, pores=None, silent=False)
+#+END_SRC
+
+#+BEGIN_SRC python
+import twodee as td
+
+td.queue_submit("./queue/candidates/7/cans=7.py")
+#+END_SRC
+
+#+RESULTS:
+: 1428315.gilgamesh.cheme.cmu.edu
 
 * Vasp
 

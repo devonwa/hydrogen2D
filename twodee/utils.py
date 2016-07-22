@@ -1,7 +1,9 @@
 import os
-import sys
 import re
 import shutil
+import subprocess
+import sys
+import time
 from types import ModuleType
 
 from ase import Atoms
@@ -112,6 +114,31 @@ def paint_atoms(atoms, indices, sym=None, layers=None):
     else:
         for i in indices:
             atoms[i].symbol = symbols[0]
+
+
+def queue_submit(file_path, wall_time='168:00:00'):
+    wd = os.path.dirname(os.path.realpath(file_path))
+    os.chmod(file_path, 0777)
+
+    cmd = '''#!/bin/bash
+#PBS -N {0}
+#PBS -o {0}
+#PBS -e {0}
+#PBS -l nodes=1:ppn=1
+#PBS -l walltime={2}
+#PBS -l mem=2GB
+#PBS -joe
+cd $PBS_O_WORKDIR
+{1}
+#end'''.format(wd, file_path, wall_time)
+
+    submit_path = os.path.join(wd, 'submit.sh')
+    with open(submit_path, 'w') as f:
+        f.write(cmd)
+
+    subprocess.call(['qsub', submit_path])
+    time.sleep(5)
+    os.remove(submit_path)
 
 
 def set_vacuum(atoms, vacuum):
