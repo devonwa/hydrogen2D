@@ -1782,26 +1782,36 @@ Module to help me write code in this project. This header serves as a testing gr
 import twodee as td
 import os
 
-cans = td.candidates(mat='graphene', layers=1, size=3, pores=None,
-                     json_path='data/calcs.json', silent=False,
+cans = td.candidates(mat='graphene', layers=1, size=4, pores=None,
+                     json_path='data/candidates.json', silent=False,
                      write=True, overwrite_file=False)
 #+END_SRC
 
 #+RESULTS:
 :RESULTS:
-|          Graphene size |   Pore size | # of candidates | Algo. time | Retrieval  |
-| (unitcell repititions) | (# carbons) |                 |  (seconds) |            |
-|------------------------+-------------+-----------------+------------+------------|
-|                      3 |           0 |               1 |       0.03 | Calculated |
-|                      3 |           1 |               8 |       0.03 | Calculated |
-|                      3 |           2 |               8 |       0.05 | Calculated |
-|                      3 |           3 |              10 |       0.07 | Calculated |
-|                      3 |           4 |              12 |       0.07 | Calculated |
-|                      3 |           5 |              14 |       0.06 | Calculated |
-|                      3 |           6 |              13 |       0.04 | Calculated |
-|                      3 |           7 |               6 |       0.03 | Calculated |
-|                      3 |           8 |               1 |       0.03 | Calculated |
-Total number of candidates: 73. Total time: 0.41 sec
+|          Graphene size |   Pore size | # of candidates | Algo. time | Retrieval |
+| (unitcell repititions) | (# carbons) |                 |  (seconds) |           |
+|------------------------+-------------+-----------------+------------+-----------|
+|                      4 |           0 |               1 |       0.05 | From file |
+|                      4 |           1 |              18 |       0.09 | From file |
+|                      4 |           2 |              21 |       0.38 | From file |
+|                      4 |           3 |              32 |       1.75 | From file |
+|                      4 |           4 |              54 |       5.95 | From file |
+|                      4 |           5 |             102 |      15.78 | From file |
+|                      4 |           6 |             183 |      32.88 | From file |
+|                      4 |           7 |             310 |      52.57 | From file |
+|                      4 |           8 |             502 |      67.40 | From file |
+|                      4 |           9 |             730 |      68.57 | From file |
+|                      4 |          10 |             954 |      58.29 | From file |
+|                      4 |          11 |            1102 |      39.15 | From file |
+|                      4 |          12 |            1061 |      21.29 | From file |
+|                      4 |          13 |             808 |       9.89 | From file |
+|                      4 |          14 |             460 |       3.35 | From file |
+|                      4 |          15 |             186 |       0.90 | From file |
+|                      4 |          16 |              53 |       0.22 | From file |
+|                      4 |          17 |              10 |       0.07 | From file |
+|                      4 |          18 |               1 |       0.05 | From file |
+Total number of candidates: 6588. Total time: 378.64 sec
 :END:
 
 *** candidates_combos
@@ -3448,78 +3458,290 @@ for c in cans:
                     kpts=[3, 3, 1],
                     nsw=0,
                     atoms=a)
-        calc.calculate()
-#        td.result('pore={0}'.format(pname), calc)
+#        calc.calculate()
+        td.result('pore={0}'.format(pname), calc)
 #+END_SRC
 
 #+RESULTS:
 :RESULTS:
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/012013014 submitted: 1427703.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/012013022 submitted: 1427704.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/013014015 submitted: 1427705.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/013014022 submitted: 1427706.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/013022023 submitted: 1427707.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/014015016 submitted: 1427708.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/014015024 submitted: 1427709.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/015016017 submitted: 1427710.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/015016024 submitted: 1427711.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/015023024 submitted: 1427712.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/015024025 submitted: 1427713.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/016017018 submitted: 1427714.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/016017026 submitted: 1427715.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/017018019 submitted: 1427716.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/017018026 submitted: 1427717.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/017025026 submitted: 1427718.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/017026027 submitted: 1427719.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/018019028 submitted: 1427720.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/019027028 submitted: 1427721.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/019028029 submitted: 1427722.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/022023024 submitted: 1427723.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/022023032 submitted: 1427724.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/023024025 submitted: 1427725.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/023024032 submitted: 1427726.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/023032033 submitted: 1427727.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/024025026 submitted: 1427728.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/024025034 submitted: 1427729.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/025026027 submitted: 1427730.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/025026034 submitted: 1427731.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/025033034 submitted: 1427732.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/025034035 submitted: 1427733.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/026027028 submitted: 1427734.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/026027036 submitted: 1427735.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/027028029 submitted: 1427736.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/027028036 submitted: 1427737.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/027035036 submitted: 1427738.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/027036037 submitted: 1427739.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/028029038 submitted: 1427740.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/029037038 submitted: 1427741.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/029038039 submitted: 1427742.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/032033034 submitted: 1427743.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/032033042 submitted: 1427744.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/033034035 submitted: 1427745.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/033034042 submitted: 1427746.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/033042043 submitted: 1427747.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/034035036 submitted: 1427748.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/034035044 submitted: 1427749.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/035036037 submitted: 1427750.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/035036044 submitted: 1427751.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/035043044 submitted: 1427752.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/035044045 submitted: 1427753.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/036037038 submitted: 1427754.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/036037046 submitted: 1427755.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/037038039 submitted: 1427756.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/037038046 submitted: 1427757.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/037045046 submitted: 1427758.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/037046047 submitted: 1427759.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/038039048 submitted: 1427760.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/039047048 submitted: 1427761.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/039048049 submitted: 1427762.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/042043044 submitted: 1427763.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/043044045 submitted: 1427764.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/044045046 submitted: 1427765.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/045046047 submitted: 1427766.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/046047048 submitted: 1427767.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=3/047048049 submitted: 1427768.gilgamesh.cheme.cmu.edu
+pore=000: Energy = -461.102. Calc time: 545 min.
+pore=012013014: Energy = -420.314. Calc time: 638 min.
+pore=012013022: Energy = -420.314. Calc time: 650 min.
+pore=013014015: Energy = -420.314. Calc time: 736 min.
+pore=013014022: Energy = -420.314. Calc time: 645 min.
+pore=013022023: Energy = -420.314. Calc time: 680 min.
+pore=014015016: Energy = -420.314. Calc time: 620 min.
+pore=014015024: Energy = -420.314. Calc time: 611 min.
+pore=015016017: Energy = -420.314. Calc time: 726 min.
+pore=015016024: Energy = -420.314. Calc time: 691 min.
+pore=015023024: Energy = -420.314. Calc time: 734 min.
+pore=015024025: Energy = -420.314. Calc time: 589 min.
+pore=016017018: Energy = -420.314. Calc time: 647 min.
+pore=016017026: Energy = -420.314. Calc time: 656 min.
+pore=017018019: Energy = -420.314. Calc time: 633 min.
+pore=017018026: Energy = -420.314. Calc time: 685 min.
+pore=017025026: Energy = -420.314. Calc time: 590 min.
+pore=017026027: Energy = -420.314. Calc time: 701 min.
+pore=018019028: Energy = -420.314. Calc time: 613 min.
+pore=019027028: Energy = -420.314. Calc time: 613 min.
+pore=019028029: Energy = -420.314. Calc time: 655 min.
+pore=022023024: Energy = -420.314. Calc time: 704 min.
+pore=022023032: Energy = -420.314. Calc time: 696 min.
+pore=023024025: Energy = -420.314. Calc time: 617 min.
+pore=023024032: Energy = -420.314. Calc time: 653 min.
+pore=023032033: Energy = -420.314. Calc time: 535 min.
+pore=024025026: Energy = -420.314. Calc time: 567 min.
+pore=024025034: Energy = -420.314. Calc time: 518 min.
+pore=025026027: Energy = -420.314. Calc time: 577 min.
+pore=025026034: Energy = -420.314. Calc time: 730 min.
+pore=025033034: Energy = -420.314. Calc time: 708 min.
+pore=025034035: Energy = -420.314. Calc time: 655 min.
+pore=026027028: Energy = -420.314. Calc time: 671 min.
+pore=026027036: Energy = -420.314. Calc time: 614 min.
+pore=027028029: Energy = -420.314. Calc time: 733 min.
+pore=027028036: Energy = -420.314. Calc time: 626 min.
+pore=027035036: Energy = -420.314. Calc time: 612 min.
+pore=027036037: Energy = -420.314. Calc time: 526 min.
+pore=028029038: Energy = -420.314. Calc time: 682 min.
+pore=029037038: Energy = -420.314. Calc time: 644 min.
+pore=029038039: Energy = -420.314. Calc time: 586 min.
+pore=032033034: Energy = -420.314. Calc time: 610 min.
+pore=032033042: Energy = -420.314. Calc time: 338 min.
+pore=033034035: Energy = -420.314. Calc time: 498 min.
+pore=033034042: Energy = -420.314. Calc time: 423 min.
+pore=033042043: Energy = -420.314. Calc time: 450 min.
+pore=034035036: Energy = -420.314. Calc time: 549 min.
+pore=034035044: Energy = -420.314. Calc time: 384 min.
+pore=035036037: Energy = -420.314. Calc time: 471 min.
+pore=035036044: Energy = -420.314. Calc time: 478 min.
+pore=035043044: Energy = -420.314. Calc time: 437 min.
+pore=035044045: Energy = -420.314. Calc time: 510 min.
+pore=036037038: Energy = -420.314. Calc time: 685 min.
+pore=036037046: Energy = -420.314. Calc time: 408 min.
+pore=037038039: Energy = -420.314. Calc time: 598 min.
+pore=037038046: Energy = -420.314. Calc time: 506 min.
+pore=037045046: Energy = -420.314. Calc time: 350 min.
+pore=037046047: Energy = -420.314. Calc time: 373 min.
+pore=038039048: Energy = -420.314. Calc time: 351 min.
+pore=039047048: Energy = -420.314. Calc time: 357 min.
+pore=039048049: Energy = -420.314. Calc time: 450 min.
+pore=042043044: Energy = -420.314. Calc time: 602 min.
+pore=043044045: Energy = -420.314. Calc time: 442 min.
+pore=044045046: Energy = -420.314. Calc time: 692 min.
+pore=045046047: Energy = -420.314. Calc time: 629 min.
+pore=046047048: Energy = -420.314. Calc time: 471 min.
+pore=047048049: Energy = -420.314. Calc time: 523 min.
+pore=012013014015: Energy = -408.182. Calc time: 439 min.
+pore=012013014022: Energy = -409.277. Calc time: 195 min.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/012013022023 Queued: 1428041.gilgamesh.cheme.cmu.edu
+pore=012013022023: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/013014015016 Queued: 1428042.gilgamesh.cheme.cmu.edu
+pore=013014015016: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/013014015022 Queued: 1428043.gilgamesh.cheme.cmu.edu
+pore=013014015022: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/013014015024 Queued: 1428044.gilgamesh.cheme.cmu.edu
+pore=013014015024: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/013014022023 Queued: 1428045.gilgamesh.cheme.cmu.edu
+pore=013014022023: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/013022023024 Queued: 1428046.gilgamesh.cheme.cmu.edu
+pore=013022023024: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/013022023032 Queued: 1428047.gilgamesh.cheme.cmu.edu
+pore=013022023032: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/014015016017 Queued: 1428048.gilgamesh.cheme.cmu.edu
+pore=014015016017: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/014015016024 Queued: 1428049.gilgamesh.cheme.cmu.edu
+pore=014015016024: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/014015023024 Queued: 1428050.gilgamesh.cheme.cmu.edu
+pore=014015023024: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/014015024025 Queued: 1428051.gilgamesh.cheme.cmu.edu
+pore=014015024025: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/015016017018 Queued: 1428052.gilgamesh.cheme.cmu.edu
+pore=015016017018: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/015016017024 Queued: 1428053.gilgamesh.cheme.cmu.edu
+pore=015016017024: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/015016017026 Queued: 1428054.gilgamesh.cheme.cmu.edu
+pore=015016017026: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/015016023024 Queued: 1428055.gilgamesh.cheme.cmu.edu
+pore=015016023024: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/015016024025 Queued: 1428056.gilgamesh.cheme.cmu.edu
+pore=015016024025: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/015022023024 Queued: 1428057.gilgamesh.cheme.cmu.edu
+pore=015022023024: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/015023024025 Queued: 1428058.gilgamesh.cheme.cmu.edu
+pore=015023024025: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/015023024032 Queued: 1428059.gilgamesh.cheme.cmu.edu
+pore=015023024032: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/015024025026 Queued: 1428060.gilgamesh.cheme.cmu.edu
+pore=015024025026: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/015024025034 Queued: 1428061.gilgamesh.cheme.cmu.edu
+pore=015024025034: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/016017018019 Queued: 1428062.gilgamesh.cheme.cmu.edu
+pore=016017018019: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/016017018026 Queued: 1428063.gilgamesh.cheme.cmu.edu
+pore=016017018026: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/016017025026 Queued: 1428064.gilgamesh.cheme.cmu.edu
+pore=016017025026: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/016017026027 Queued: 1428065.gilgamesh.cheme.cmu.edu
+pore=016017026027: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/017018019026 Queued: 1428066.gilgamesh.cheme.cmu.edu
+pore=017018019026: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/017018019028 Queued: 1428067.gilgamesh.cheme.cmu.edu
+pore=017018019028: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/017018025026 Queued: 1428068.gilgamesh.cheme.cmu.edu
+pore=017018025026: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/017018026027 Queued: 1428069.gilgamesh.cheme.cmu.edu
+pore=017018026027: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/017024025026 Queued: 1428070.gilgamesh.cheme.cmu.edu
+pore=017024025026: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/017025026027 Queued: 1428071.gilgamesh.cheme.cmu.edu
+pore=017025026027: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/017025026034 Queued: 1428072.gilgamesh.cheme.cmu.edu
+pore=017025026034: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/017026027028 Queued: 1428073.gilgamesh.cheme.cmu.edu
+pore=017026027028: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/017026027036 Queued: 1428074.gilgamesh.cheme.cmu.edu
+pore=017026027036: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/018019027028 Queued: 1428075.gilgamesh.cheme.cmu.edu
+pore=018019027028: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/018019028029 Queued: 1428076.gilgamesh.cheme.cmu.edu
+pore=018019028029: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/019026027028 Queued: 1428077.gilgamesh.cheme.cmu.edu
+pore=019026027028: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/019027028029 Queued: 1428078.gilgamesh.cheme.cmu.edu
+pore=019027028029: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/019027028036 Queued: 1428079.gilgamesh.cheme.cmu.edu
+pore=019027028036: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/019028029038 Queued: 1428080.gilgamesh.cheme.cmu.edu
+pore=019028029038: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/022023024025 Queued: 1428081.gilgamesh.cheme.cmu.edu
+pore=022023024025: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/022023024032 Queued: 1428082.gilgamesh.cheme.cmu.edu
+pore=022023024032: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/022023032033 Queued: 1428083.gilgamesh.cheme.cmu.edu
+pore=022023032033: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/023024025026 Queued: 1428084.gilgamesh.cheme.cmu.edu
+pore=023024025026: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/023024025032 Queued: 1428085.gilgamesh.cheme.cmu.edu
+pore=023024025032: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/023024025034 Queued: 1428086.gilgamesh.cheme.cmu.edu
+pore=023024025034: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/023024032033 Queued: 1428087.gilgamesh.cheme.cmu.edu
+pore=023024032033: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/023032033034 Queued: 1428088.gilgamesh.cheme.cmu.edu
+pore=023032033034: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/023032033042 Queued: 1428089.gilgamesh.cheme.cmu.edu
+pore=023032033042: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/024025026027 Queued: 1428090.gilgamesh.cheme.cmu.edu
+pore=024025026027: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/024025026034 Queued: 1428091.gilgamesh.cheme.cmu.edu
+pore=024025026034: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/024025033034 Queued: 1428092.gilgamesh.cheme.cmu.edu
+pore=024025033034: Inprogress.
+pore=024025034035: Energy = -408.182. Calc time: 426 min.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/025026027028 Queued: 1428094.gilgamesh.cheme.cmu.edu
+pore=025026027028: Inprogress.
+pore=025026027034: Energy = -408.868. Calc time: 383 min.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/025026027036 Queued: 1428096.gilgamesh.cheme.cmu.edu
+pore=025026027036: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/025026033034 Queued: 1428097.gilgamesh.cheme.cmu.edu
+pore=025026033034: Inprogress.
+pore=025026034035: Energy = -408.868. Calc time: 291 min.
+pore=025032033034: Energy = -408.868. Calc time: 319 min.
+pore=025033034035: Energy = -409.277. Calc time: 215 min.
+pore=025033034042: Energy = -408.182. Calc time: 385 min.
+pore=025034035036: Energy = -408.868. Calc time: 294 min.
+pore=025034035044: Energy = -408.182. Calc time: 378 min.
+pore=026027028029: Energy = -408.182. Calc time: 353 min.
+pore=026027028036: Energy = -409.277. Calc time: 205 min.
+pore=026027035036: Energy = -408.868. Calc time: 272 min.
+pore=026027036037: Energy = -408.182. Calc time: 347 min.
+pore=027028029036: Energy = -408.868. Calc time: 332 min.
+pore=027028029038: Energy = -408.868. Calc time: 455 min.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/027028035036 Queued: 1428110.gilgamesh.cheme.cmu.edu
+pore=027028035036: Inprogress.
+pore=027028036037: Energy = -408.868. Calc time: 472 min.
+pore=027034035036: Energy = -408.868. Calc time: 495 min.
+pore=027035036037: Energy = -409.277. Calc time: 374 min.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/027035036044 Queued: 1428114.gilgamesh.cheme.cmu.edu
+pore=027035036044: Inprogress.
+pore=027036037038: Energy = -408.868. Calc time: 310 min.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/027036037046 Queued: 1428116.gilgamesh.cheme.cmu.edu
+pore=027036037046: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/028029037038 Queued: 1428117.gilgamesh.cheme.cmu.edu
+pore=028029037038: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/028029038039 Queued: 1428118.gilgamesh.cheme.cmu.edu
+pore=028029038039: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/029036037038 Queued: 1428119.gilgamesh.cheme.cmu.edu
+pore=029036037038: Inprogress.
+pore=029037038039: Energy = -409.277. Calc time: 422 min.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/029037038046 Queued: 1428121.gilgamesh.cheme.cmu.edu
+pore=029037038046: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/029038039048 Queued: 1428122.gilgamesh.cheme.cmu.edu
+pore=029038039048: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/032033034035 Queued: 1428123.gilgamesh.cheme.cmu.edu
+pore=032033034035: Inprogress.
+pore=032033034042: Energy = -409.277. Calc time: 399 min.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/032033042043 Queued: 1428125.gilgamesh.cheme.cmu.edu
+pore=032033042043: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/033034035036 Queued: 1428126.gilgamesh.cheme.cmu.edu
+pore=033034035036: Inprogress.
+pore=033034035042: Energy = -408.868. Calc time: 411 min.
+pore=033034035044: Energy = -408.868. Calc time: 357 min.
+pore=033034042043: Energy = -408.868. Calc time: 361 min.
+pore=033042043044: Energy = -408.868. Calc time: 363 min.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/034035036037 Queued: 1428131.gilgamesh.cheme.cmu.edu
+pore=034035036037: Inprogress.
+pore=034035036044: Energy = -409.277. Calc time: 439 min.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/034035043044 Queued: 1428133.gilgamesh.cheme.cmu.edu
+pore=034035043044: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/034035044045 Queued: 1428134.gilgamesh.cheme.cmu.edu
+pore=034035044045: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/035036037038 Queued: 1428135.gilgamesh.cheme.cmu.edu
+pore=035036037038: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/035036037044 Queued: 1428136.gilgamesh.cheme.cmu.edu
+pore=035036037044: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/035036037046 Queued: 1428137.gilgamesh.cheme.cmu.edu
+pore=035036037046: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/035036043044 Queued: 1428138.gilgamesh.cheme.cmu.edu
+pore=035036043044: Inprogress.
+pore=035036044045: Energy = -408.868. Calc time: 523 min.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/035042043044 Queued: 1428140.gilgamesh.cheme.cmu.edu
+pore=035042043044: Inprogress.
+pore=035043044045: Energy = -409.277. Calc time: 427 min.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/035044045046 Queued: 1428142.gilgamesh.cheme.cmu.edu
+pore=035044045046: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/036037038039 Queued: 1428143.gilgamesh.cheme.cmu.edu
+pore=036037038039: Inprogress.
+pore=036037038046: Energy = -409.277. Calc time: 405 min.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/036037045046 Queued: 1428145.gilgamesh.cheme.cmu.edu
+pore=036037045046: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/036037046047 Queued: 1428146.gilgamesh.cheme.cmu.edu
+pore=036037046047: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/037038039046 Queued: 1428147.gilgamesh.cheme.cmu.edu
+pore=037038039046: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/037038039048 Queued: 1428148.gilgamesh.cheme.cmu.edu
+pore=037038039048: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/037038045046 Queued: 1428149.gilgamesh.cheme.cmu.edu
+pore=037038045046: Inprogress.
+pore=037038046047: Energy = -408.868. Calc time: 456 min.
+pore=037044045046: Energy = -408.868. Calc time: 458 min.
+pore=037045046047: Energy = -409.277. Calc time: 401 min.
+pore=037046047048: Energy = -408.868. Calc time: 450 min.
+pore=038039047048: Energy = -408.868. Calc time: 456 min.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/038039048049 Queued: 1428155.gilgamesh.cheme.cmu.edu
+pore=038039048049: Inprogress.
+pore=039046047048: Energy = -408.868. Calc time: 411 min.
+pore=039047048049: Energy = -409.277. Calc time: 321 min.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/042043044045 Queued: 1428158.gilgamesh.cheme.cmu.edu
+pore=042043044045: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/043044045046 Queued: 1428159.gilgamesh.cheme.cmu.edu
+pore=043044045046: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/044045046047 Queued: 1428160.gilgamesh.cheme.cmu.edu
+pore=044045046047: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/045046047048 Queued: 1428161.gilgamesh.cheme.cmu.edu
+pore=045046047048: Inprogress.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/046047048049 Queued: 1428162.gilgamesh.cheme.cmu.edu
+pore=046047048049: Inprogress.
 :END:
 
 ** Relaxations
