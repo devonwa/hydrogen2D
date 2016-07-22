@@ -1,13 +1,105 @@
+import json
+import os
+import os.path
+import time
+
 from ase import Atoms
+from ase.db import connect
 from ase.neighborlist import NeighborList
 import numpy as np
 from vasp import Vasp
+from vasp.vasprc import VASPRC
+
+import utils
 
 
 graphene_cutoff = 0.75  # Angstrom. Should make this more permanent.
 
 
-def candidates(atoms, edge=None, size=None):
+def candidates(mat='graphene', layers=1, size=1, pores=None,
+               json_path='data/candidates.json', silent=True,
+               write=True, overwrite_file=False):
+    """Return candidate pore indices combinations for all pores.
+
+    Note: returns a list of tuples when not from a data file, but a list of lists when read from a data file.
+    """
+    if os.path.isfile(str(json_path)) and overwrite_file:
+        os.remove(json_path)
+
+    if os.path.isfile(str(json_path)):
+        with open(json_path) as data_file:
+            data = json.load(data_file)
+    else:
+        data = {'calculated': []}
+    calculated = data['calculated']
+
+    unitcell = create_base(mat, layers=layers)
+    atoms = create_base(mat, layers=layers, size=size)
+
+    edge = edges(atoms, unitcell)
+    indices = [a.index for a in atoms if a.index not in edge]
+    if pores is None:
+        pores = range(len(indices)+1)
+
+    def is_calculated(calculated, size, pore):
+        for c in calculated:
+            if c['size'] == size and c['pore'] == pore:
+                return [c['candidates'], c['time']]
+        return [None, None]
+
+    times = []
+    cans = []
+    retrievals = []
+    for pore in pores:
+        if os.path.isfile(str(json_path)):
+            (c, t) = is_calculated(calculated, size, pore)
+        else:
+            c = None
+
+        if c:
+            cans.append(c)
+            times.append(t)
+            retrievals.append("From file")
+            continue
+        else:
+            start = time.time()
+            can = candidates_combos(atoms, edge=edge, pore_size=pore)
+            end = time.time()
+
+            cans.append(can)
+            times.append(end - start)
+            retrievals.append("Calculated")
+            calc = {'mat': mat,
+                    'layers': layers,
+                    'size': size,
+                    'pore': pore,
+                    'candidates': can,
+                    'time': times[-1]}
+            calculated.append(calc)
+
+    if json_path is not None and write:
+        json.dumps({'calculated': [calculated]})
+        with open(json_path, 'w') as data_file:
+            json.dump(data, data_file)
+
+    if not silent:
+        print("| Graphene size | Pore size | # of candidates | Algo. time | Retrieval |")
+        print("| (unitcell repititions) | (# carbons) | | (seconds) | |")
+        print("|-----")
+        for (p, c, t, r) in zip(pores, cans, times, retrievals):
+            print("| {} | {} | {} | {:0.2f} | {} |".format(size, p, len(c), t, r)) 
+
+        tot_num = 0
+        tot_time = 0
+        for (c, t) in zip(cans, times):
+            tot_num += len(c)
+            tot_time += t
+        print("Total number of candidates: {}. Total time: {:0.2f} sec".format(tot_num, tot_time))
+    
+    return cans
+
+
+def candidates_combos(atoms, edge=None, pore_size=None):
     """Return candidate pore indices combinations."""
     from itertools import combinations
 
@@ -19,15 +111,14 @@ def candidates(atoms, edge=None, size=None):
                           self_interaction=False)
     nblist.update(atoms)
 
-
     def constraint_check(pores):
         for pore in pores:
             remains = [a.index for a in atoms if a.index not in pore]
             if is_connected(nblist, remains) and is_connected(nblist, pore):
                 cans.append(pore)
 
-    if size is not None:
-        pores = combinations(indices, size)
+    if pore_size is not None:
+        pores = combinations(indices, pore_size)
         constraint_check(pores)
     else:
         for i in range(1, len(indices)):
@@ -132,6 +223,74 @@ def closest_atom_to_height(atoms, height):
             min_dist = dist
 
     return closest
+
+
+def db_update(db_path, dft_path, delete=False, silent=False):
+    """Update the database to include calculations nested in dft_path."""
+    VASPRC['mode'] = None
+    db = connect(db_path)
+    old_size = sum(1 for _ in db.select())
+
+    db_paths = []
+    for d in db.select():
+        db_paths.append(d.data.path)
+
+    for path in utils.calc_paths(dft_path):
+        if os.path.abspath(path) in db_paths:
+            continue
+        calc = Vasp(path)
+
+        if not calc.in_queue() and calc.potential_energy is None:
+            for output_file in utils.calc_output_files(path):
+                dead_file = os.path.join(path, output_file)
+                if delete:
+                    os.remove(dead_file)
+                if not silent:
+                    print("Dead output file: {}. Deleted: {}".format(dead_file, delete))
+        else:
+            calc.write_db(db_path, parser='=',
+                        overwrite=False,
+                        data={'ctime': calc.get_elapsed_time()})
+            if not silent:
+                print("Added calc to DB: {}".format(path))
+
+    new_size = sum(1 for _ in db.select())
+    added = new_size - old_size
+    if not silent:
+        print("{} total entries. {} new entries added.".format(new_size, added))
+
+
+def db_duplicates(db_path, delete=False, reverse=False, silent=False):
+    """Return duplicate IDs based on calculation paths."""
+    db = connect(db_path)
+    old_size = sum(1 for _ in db.select())
+
+    db_paths = {}
+    for d in db.select():
+        db_paths[d.id] = d.data.path
+
+    keep = {}
+    items = reversed(db_paths.items()) if reverse else db_paths.items()
+    for key, value in items:
+        if value not in keep.values():
+            keep[key] = value
+
+    dup_keys = []
+    for key in db_paths.keys():
+        if key not in keep:
+            if not silent:
+                print("Duplicate: id={}: value={}".format(key, db_paths[key]))
+            dup_keys.append(key)
+
+    if delete: 
+        db.delete(dup_keys)
+
+    new_size = sum(1 for _ in db.select())
+    deleted =  old_size - new_size
+    if not silent:
+        print("{} total entries. {} duplicate entries. {} deleted.".format(new_size, len(dup_keys), deleted))
+
+    return dup_keys
 
 
 def edges(atoms, unitcell):

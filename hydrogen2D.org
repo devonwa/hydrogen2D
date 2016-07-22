@@ -1236,6 +1236,119 @@ print(convert_subdirectories(path))
 #+RESULTS:
 : None
 
+** 2016-07-08: candidates with islands
+
+#+BEGIN_SRC python :results drawer
+from sets import Set
+
+import twodee as td
+
+
+graphene_cutoff = 1.5 # Angstrom. Should put this somewhere more permanent.
+
+def candidates(atoms, layers, exclude=None, depth=None):
+    pos_center = td.center_layer(atoms, layers[0])
+    center_atom = td.closest_atom(atoms, pos_center)
+    can = [center_atom]
+    cans = [can]
+
+    indices = [a.index for a in atoms if a.index not in exclude] #TODO devon: There's a cleaner way to do this. Need something for layers here?
+
+    candidates_loop(atoms, indices, can, cans, center_atom, depth)
+
+    return cans
+
+
+def candidates_loop(atoms, indices, can, cans, index, depth, step=1):
+    layer = [i for i in indices] #TODO devon: Clean up get_neighbors.
+    neighbors = td.get_neighbors(atoms, index, layer, graphene_cutoff)
+
+    if len(neighbors) == 1:
+        n = neighbors[0]
+        if depth is None or step + 1 < depth:
+            candidates_loop(atoms, indices, can, cans, n, depth, step+1)
+    
+    neighbors = [n for n in neighbors if len(neighbors) > 1 and  n not in can]
+    for n in neighbors:
+        c = [i for i in can]
+        c.append(n)
+        c.sort()
+        if c not in cans:
+            cans.append(c)
+            if depth is None or step + 1 < depth:
+                candidates_loop(atoms, indices, c, cans, n, depth, step+1)
+            
+
+unitcell = td.create_base("graphene", layers=1)
+size = 3
+atoms = td.create_base("graphene", layers=1, size=size)
+#td.bp(atoms)
+layers = td.layers(atoms)
+edges = td.edges(atoms, unitcell)#
+cans = candidates(atoms, layers, exclude=edges)
+
+td.bp([cans])
+images = []
+td.paint_atoms(atoms, edges)
+for i, c in enumerate(cans):
+    a = atoms.copy()
+    td.paint_atoms(a, c, sym="O")
+    td.write_image('movies/candidates-islands/size={1}/{0:0>4}'.format(i, size), a)
+
+td.bp()
+td.bp(cans)
+ #+END_SRC
+
+ #+RESULTS:
+ :RESULTS:
+ [[9], [8, 9], [9, 10], [9, 10, 11], [9, 10, 11, 16], [9, 10, 11, 15, 16], [9, 10, 11, 14, 15, 16], [9, 10, 11, 16, 17], [9, 14], [9, 14, 15], [9, 14, 15, 16], [9, 11, 14, 15, 16], [9, 14, 15, 16, 17]]
+
+ :END:
+
+
+ #+BEGIN_SRC python
+A = [1, 2, 3, 4, 5]
+for a in A:    
+    if a == 2 or a == 6 and len(A) < 10:
+        A.append(6)
+print A
+ #+END_SRC
+
+ #+RESULTS:
+ : [1, 2, 3, 4, 5, 6, 6, 6, 6, 6]
+
+*** from twodee
+
+#+BEGIN_SRC python
+def candidates(atoms, edge=None, size=None):
+    """Return candidate pore indices combinations."""
+    from itertools import combinations
+
+    cans = []
+    indices = [a.index for a in atoms if a.index not in edge]
+
+    nblist = NeighborList([graphene_cutoff for i in range(len(atoms))],
+                          bothways=True,
+                          self_interaction=False)
+    nblist.update(atoms)
+
+    def constraint_check(pores):
+        for pore in pores:
+            remains = [a.index for a in atoms if a.index not in pore]
+            if is_connected(nblist, remains) and is_connected(nblist, pore):
+                cans.append(pore)
+
+    if size is not None:
+        pores = combinations(indices, size)
+        constraint_check(pores)
+    else:
+        for i in range(1, len(indices)):
+            pores = combinations(indices, i)
+            constraint_check(pores)
+
+    return cans
+#+END_SRC
+
 ** 2016-07-13: Kill duplicate jobs
 
 *Warning*: This is unsafe since there is no specification of the user. If someone else submits a job in the middle of your batch, you could end up deleting their job.
@@ -1334,47 +1447,50 @@ My calculations are stored in the vasp/ directory of this project. Let's make a 
 #+BEGIN_SRC python
 from ase.db import connect
 import os
-import re
 from vasp import Vasp
 from vasp.vasprc import VASPRC
 VASPRC['mode'] = None
 
-
 import twodee as td
 
 
-db = connect('database/script-20160719.db')
-old_size = sum(1 for _ in db.select())
+def db_update(db_path, dft_path, delete=False, silent=False):
+    db = connect(db_path)
+    old_size = sum(1 for _ in db.select())
 
-db_paths = []
-for d in db.select():
-    db_paths.append(d.data.path)
+    db_paths = []
+    for d in db.select():
+        db_paths.append(d.data.path)
 
-for pwd in os.walk('vasp'):
-    path = os.path.abspath(pwd[0])
-    files = pwd[2]
-    if path in db_paths:
-        continue
-    regex = '[0-9]*.gilgamesh.cheme.cmu.edu.OU'
-    output_file = [f for f in files if re.search(regex, f)]
-    if output_file:
+    for path in td.calc_paths(dft_path):
+        if os.path.abspath(path) in db_paths:
+            continue
         calc = Vasp(path)
+
         if not calc.in_queue() and calc.potential_energy is None:
-            dead_file = os.path.join(pwd[0], output_file[0])
-            os.remove(dead_file)
-            print("Deleted dead file: {}".format(dead_file))
+            for output_file in td.calc_output_files(path):
+                dead_file = os.path.join(path, output_file)
+                if delete:
+                    os.remove(dead_file)
+                if not silent:
+                    print("Dead output file: {}. Deleted: {}".format(dead_file, delete))
         else:
-            calc.write_db('./database/script-20160719.db', parser='=',
+            calc.write_db(db_path, parser='=',
                         overwrite=False,
                         data={'ctime': calc.get_elapsed_time()})
-            print("Added file to DB: {}".format(os.path.join(pwd[0], output_file[0])))
+            if not silent:
+                print("Added calc to DB: {}".format(path))
 
-new_size = sum(1 for _ in db.select())
-added = new_size - old_size
-print("{} total entries. {} new entries added.".format(new_size, added))
+    new_size = sum(1 for _ in db.select())
+    added = new_size - old_size
+    if not silent:
+        print("{} total entries. {} new entries added.".format(new_size, added))
+
+db_update('database/script-20160719-4.db', 'vasp/type=base')
 #+END_SRC
 
 #+RESULTS:
+: 2 total entries. 0 new entries added.
 
 ** 2016-07-21: Make twodee and td a module named twodee
 
@@ -1400,12 +1516,295 @@ td.bp("Test")
 : 
 : Test
 
+** 2016-07-21: Check for duplicate entries in ase-db
+
+Eliminate any duplicate entries in an ase-db.
+
+Some light dictionary learning:
+#+BEGIN_SRC python :results drawer
+dic = {'Name1': 'Zara', 'Age': 7, 'Name2': 'Zara'}
+
+keep = {}
+for key, value in dic.items():
+    if value not in keep.values():
+        keep[key] = value
+
+for key in dic.keys():
+    if key not in keep:
+        del dic[key]
+
+for key in dic.keys():
+    print(key)
+for key in dic.values():
+    print(key)
+
+print(dic)
+print(keep)
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+Age
+Name2
+7
+Zara
+{'Age': 7, 'Name2': 'Zara'}
+{'Age': 7, 'Name2': 'Zara'}
+:END:
+
+The main show:
+#+BEGIN_SRC python
+from ase.db import connect
+
+import twodee as td
+
+
+def db_duplicates(db_path, delete=False, reverse=False, silent=False):
+    """Return duplicate IDs based on calculation paths."""
+    db = connect(db_path)
+    old_size = sum(1 for _ in db.select())
+
+    db_paths = {}
+    for d in db.select():
+        db_paths[d.id] = d.data.path
+
+    keep = {}
+    items = reversed(db_paths.items()) if reverse else db_paths.items()
+    for key, value in items:
+        if value not in keep.values():
+            keep[key] = value
+
+    dup_keys = []
+    for key in db_paths.keys():
+        if key not in keep:
+            if not silent:
+                print("Duplicate: id={}: value={}".format(key, db_paths[key]))
+            dup_keys.append(key)
+
+    if delete: 
+        db.delete(dup_keys)
+
+    new_size = sum(1 for _ in db.select())
+    deleted =  old_size - new_size
+    if not silent:
+        print("{} total entries. {} new entries deleted.".format(new_size, deleted))
+
+    return dup_keys
+
+db_duplicates('database/script-20160719.db', delete=False, reverse=False, silent=False)
+#+END_SRC
+
+#+RESULTS:
+: 519 total entries. 0 new entries deleted.
+: []
+
+** 2016-07-21: Find a broken Vasp file in a directory
+
+Find broken calculations in a nested directory.
+
+#+BEGIN_SRC python :results drawer
+import os
+import re
+import shutil
+import sys
+from vasp import Vasp
+from vasp.vasprc import VASPRC
+VASPRC['mode'] = None
+
+import twodee as td
+
+def broken_calcs(dft_path, delete=False, silent=False):
+    """Return a list of broken calculation paths."""
+
+    # Don't print to stdout for awhile. Vasp() prints error traces.
+    stdout = sys.stdout
+    f = open(os.devnull, 'w')
+    sys.stdout = f
+
+    broken_dirs = []
+    for path in td.calc_paths(dft_path):
+        try:
+            calc = Vasp(path)
+        except:
+            broken_dirs.append(pwd[0])
+
+    sys.stdout = stdout
+    if not silent:
+        if broken_dirs:
+            print("Broken directories:")
+            for b in broken_dirs:
+                print("    {}".format(b))
+        else:
+            print("No broken directories found.")
+
+    # Recursively delete the broken directories
+    if delete:
+        for b in broken_dirs:
+            shutil.rmtree(b)
+    
+    return broken_dirs
+
+td.bp(broken_calcs('vasp/type=point/mat=graphene/layers=1/size=4/pore=4', silent=False))
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+No broken directories found.
+[]
+:END:
+
+** 2016-07-22: candidates with json
+
+#+BEGIN_SRC python :results drawer
+import json
+import os.path
+from pprint import pprint
+import time
+
+import twodee as td
+
+def candidates(mat='graphene', layers=1, size=1, pores=None,
+               json_path='data/candidates.json', silent=False, overwrite=False):
+    """Return candidate pore indices combinations for all pores."""
+    if os.path.isfile(str(json_path)) and not overwrite:
+        with open(json_path) as data_file:
+            data = json.load(data_file)
+    else:
+        overwrite = True
+        data = {'calculated': []}
+    calculated = data['calculated']
+
+    unitcell = td.create_base(mat, layers=layers)
+    atoms = td.create_base(mat, layers=layers, size=size)
+
+    edges = td.edges(atoms, unitcell)
+    indices = [a.index for a in atoms if a.index not in edges]
+    if pores is None:
+        pores = range(len(indices)+1)
+
+    def is_calculated(calculated, size, pore):
+        for c in calculated:
+            if c['size'] == size and c['pore'] == pore:
+                return [c['candidates'], c['time']]
+        return [None, None]
+
+    times = []
+    cans = []
+    retrievals = []
+    for pore in pores:
+        if not overwrite:
+            (c, t) = is_calculated(calculated, size, pore)
+        else:
+            c = None
+
+        if c:
+            cans.append(c)
+            times.append(t)
+            retrievals.append("From file")
+            continue
+        else:
+            start = time.time()
+            can = td.candidates2(atoms, edge=edges, pore_size=pore)
+            end = time.time()
+
+            cans.append(can)
+            times.append(end - start)
+            retrievals.append("Calculated")
+            calc = {'mat': mat,
+                    'layers': layers,
+                    'size': size,
+                    'pore': pore,
+                    'candidates': can,
+                    'time': times[-1]}
+            calculated.append(calc)
+
+    if json_path is not None:
+        json.dumps({'calculated': [calculated]})
+        with open(json_path, 'w') as data_file:
+            json.dump(data, data_file)
+
+    if not silent:
+        print("| Graphene size | Pore size | # of candidates | Algo. time | Retrieval |")
+        print("| (unitcell repititions) | (# carbons) | | (seconds) | |")
+        print("|-----")
+        for (p, c, t, r) in zip(pores, cans, times, retrievals):
+            print("| {} | {} | {} | {:0.2f} | {} |".format(size, p, len(c), t, r)) 
+
+        tot_num = 0
+        tot_time = 0
+        for (c, t) in zip(cans, times):
+            tot_num += len(c)
+            tot_time += t
+        print("Total number of candidates: {}. Total time: {:0.2f} sec".format(tot_num, tot_time))
+    
+    return cans
+
+candidates(mat='graphene', layers=1, size=4, pores=None,
+           silent=False, overwrite=False)
+#+END_SRC
+
+ #+RESULTS:
+ :RESULTS:
+ |          Graphene size |   Pore size | # of candidates | Algo. time | Retrieval |
+ | (unitcell repititions) | (# carbons) |                 |  (seconds) |           |
+ |------------------------+-------------+-----------------+------------+-----------|
+ |                      4 |           0 |               1 |       0.05 | From file |
+ |                      4 |           1 |              18 |       0.09 | From file |
+ |                      4 |           2 |              21 |       0.38 | From file |
+ |                      4 |           3 |              32 |       1.75 | From file |
+ |                      4 |           4 |              54 |       5.95 | From file |
+ |                      4 |           5 |             102 |      15.78 | From file |
+ |                      4 |           6 |             183 |      32.88 | From file |
+ |                      4 |           7 |             310 |      52.57 | From file |
+ |                      4 |           8 |             502 |      67.40 | From file |
+ |                      4 |           9 |             730 |      68.57 | From file |
+ |                      4 |          10 |             954 |      58.29 | From file |
+ |                      4 |          11 |            1102 |      39.15 | From file |
+ |                      4 |          12 |            1061 |      21.29 | From file |
+ |                      4 |          13 |             808 |       9.89 | From file |
+ |                      4 |          14 |             460 |       3.35 | From file |
+ |                      4 |          15 |             186 |       0.90 | From file |
+ |                      4 |          16 |              53 |       0.22 | From file |
+ |                      4 |          17 |              10 |       0.07 | From file |
+ |                      4 |          18 |               1 |       0.05 | From file |
+ Total number of candidates: 6588. Total time: 378.64 sec
+ :END:
+
+
 * twodee
 
 Module to help me write code in this project. This header serves as a testing ground for the module.
 
 ** ase_utils
-*** candidates
+*** candidates (json)
+
+#+BEGIN_SRC python :results drawer
+import twodee as td
+import os
+
+cans = td.candidates(mat='graphene', layers=1, size=3, pores=None,
+                     json_path='data/calcs.json', silent=False,
+                     write=True, overwrite_file=False)
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+|          Graphene size |   Pore size | # of candidates | Algo. time | Retrieval  |
+| (unitcell repititions) | (# carbons) |                 |  (seconds) |            |
+|------------------------+-------------+-----------------+------------+------------|
+|                      3 |           0 |               1 |       0.03 | Calculated |
+|                      3 |           1 |               8 |       0.03 | Calculated |
+|                      3 |           2 |               8 |       0.05 | Calculated |
+|                      3 |           3 |              10 |       0.07 | Calculated |
+|                      3 |           4 |              12 |       0.07 | Calculated |
+|                      3 |           5 |              14 |       0.06 | Calculated |
+|                      3 |           6 |              13 |       0.04 | Calculated |
+|                      3 |           7 |               6 |       0.03 | Calculated |
+|                      3 |           8 |               1 |       0.03 | Calculated |
+Total number of candidates: 73. Total time: 0.41 sec
+:END:
+
+*** candidates_combos
 
  #+BEGIN_SRC python :results drawer
 import twodee as td
@@ -2651,7 +3050,7 @@ td.print_image(file_path, plt)
 *** DONE mat=graphene/layers=1/size=2/pore=*
     CLOSED: [2016-07-20 Wed 16:21]
 
-#+BEGIN_SRC python :results drawer
+#+BEGIN_SRC python :results example
 from ase import Atoms, Atom
 import numpy as np
 import matplotlib.pyplot as plt
@@ -2659,17 +3058,10 @@ from vasp import Vasp
 
 import twodee as td
 
-unitcell = td.create_base("graphene", layers=1)
+
 size = 2
 atoms = td.create_base("graphene", layers=1, size=size)
-
-edges = td.edges(atoms, unitcell)
-indices = [a.index for a in atoms if a.index not in edges]
-
-pore_sizes = range(len(indices)+1)
-cans = []
-for pore_size in pore_sizes:
-    cans.append(td.candidates(atoms, edge=edges, size=pore_size))
+cans = td.candidates(mat='graphene', layers=1, size=size)
 
 energies = []
 for c in cans:
@@ -2689,12 +3081,10 @@ for c in cans:
 #+END_SRC
 
 #+RESULTS:
-:RESULTS:
-pore=000: Energy/atom = -9.223. Calc time: 5 min.
-pore=006: Energy/atom = -8.176. Calc time: 5 min.
-pore=007: Energy/atom = -8.176. Calc time: 4 min.
-pore=006007: Energy/atom = -7.738. Calc time: 8 min.
-:END:
+: pore=000: Energy/atom = -9.223. Calc time: 5 min.
+: pore=006: Energy/atom = -8.176. Calc time: 5 min.
+: pore=007: Energy/atom = -8.176. Calc time: 4 min.
+: pore=006007: Energy/atom = -7.738. Calc time: 8 min.
 
 *** DONE mat=graphene/layers=1/size=3/pore=*
     CLOSED: [2016-07-18 Mon 16:23]
@@ -2707,17 +3097,9 @@ from vasp import Vasp
 
 import twodee as td
 
-unitcell = td.create_base("graphene", layers=1)
 size = 3
 atoms = td.create_base("graphene", layers=1, size=size)
-
-edges = td.edges(atoms, unitcell)
-indices = [a.index for a in atoms if a.index not in edges]
-
-pore_sizes = range(len(indices)+1)
-cans = []
-for pore_size in pore_sizes:
-    cans.append(td.candidates(atoms, edge=edges, size=pore_size))
+cans = td.candidates(mat='graphene', layers=1, size=size)
 
 energies = []
 for c in cans:
@@ -2823,17 +3205,10 @@ from vasp import Vasp
 
 import twodee as td
 
-unitcell = td.create_base("graphene", layers=1)
 size = 4
-atoms = td.create_base("graphene", layers=1, size=size)
-
-edges = td.edges(atoms, unitcell)
-indices = [a.index for a in atoms if a.index not in edges]
-
 pore_sizes = [3, 4, 5]
-cans = []
-for pore_size in pore_sizes:
-    cans.append(td.candidates(atoms, edge=edges, size=pore_size))
+atoms = td.create_base("graphene", layers=1, size=size)
+cans = td.candidates(mat='graphene', layers=1, size=size, pores=pore_sizes)
 
 energies = []
 for c in cans:
@@ -2854,205 +3229,197 @@ for c in cans:
 
 #+RESULTS:
 :RESULTS:
-pore=010011012: Energy = -254.317. Calc time: 467 min.
-pore=010011018: Energy = -254.317. Calc time: 211 min.
-pore=011012013: Energy = -254.317. Calc time: 168 min.
-pore=011012018: Energy = -254.317. Calc time: 156 min.
-pore=011018019: Energy = -254.317. Calc time: 306 min.
-pore=012013014: Energy = -254.317. Calc time: 157 min.
-pore=012013020: Energy = -254.317. Calc time: 207 min.
-pore=013014015: Energy = -254.317. Calc time: 216 min.
-pore=013014020: Energy = -254.317. Calc time: 176 min.
-pore=013019020: Energy = -254.317. Calc time: 342 min.
-pore=013020021: Energy = -254.317. Calc time: 266 min.
-pore=014015022: Energy = -254.317. Calc time: 165 min.
-pore=015021022: Energy = -254.317. Calc time: 139 min.
-pore=015022023: Energy = -254.317. Calc time: 171 min.
-pore=018019020: Energy = -254.317. Calc time: 146 min.
-pore=018019026: Energy = -254.317. Calc time: 189 min.
-pore=019020021: Energy = -254.317. Calc time: 211 min.
-pore=019020026: Energy = -254.317. Calc time: 521 min.
-pore=019026027: Energy = -254.317. Calc time: 567 min.
-pore=020021022: Energy = -254.317. Calc time: 569 min.
-pore=020021028: Energy = -254.317. Calc time: 508 min.
-pore=021022023: Energy = -254.317. Calc time: 556 min.
-pore=021022028: Energy = -254.317. Calc time: 568 min.
-pore=021027028: Energy = -254.317. Calc time: 544 min.
-pore=021028029: Energy = -254.317. Calc time: 559 min.
-pore=022023030: Energy = -254.317. Calc time: 193 min.
-pore=023029030: Energy = -254.317. Calc time: 144 min.
-pore=023030031: Energy = -254.317. Calc time: 156 min.
-pore=026027028: Energy = -254.317. Calc time: 157 min.
-pore=027028029: Energy = -254.317. Calc time: 146 min.
-pore=028029030: Energy = -254.317. Calc time: 224 min.
-pore=029030031: Energy = -254.317. Calc time: 208 min.
-pore=010011012013: Energy = -242.197. Calc time: 185 min.
-pore=010011012018: Energy = -243.190. Calc time: 82 min.
-pore=010011018019: Energy = -242.197. Calc time: 186 min.
-pore=011012013014: Energy = -242.197. Calc time: 194 min.
-pore=011012013018: Energy = -242.922. Calc time: 151 min.
-pore=011012013020: Energy = -242.922. Calc time: 128 min.
-pore=011012018019: Energy = -242.922. Calc time: 142 min.
-pore=011018019020: Energy = -242.922. Calc time: 151 min.
-pore=011018019026: Energy = -242.197. Calc time: 227 min.
-pore=012013014015: Energy = -242.197. Calc time: 630 min.
-pore=012013014020: Energy = -243.190. Calc time: 404 min.
-pore=012013019020: Energy = -242.922. Calc time: 409 min.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=4/pore=4/012013020021 Queued: 1427937.gilgamesh.cheme.cmu.edu
-pore=012013020021: Inprogress.
-pore=013014015020: Energy = -242.922. Calc time: 431 min.
-pore=013014015022: Energy = -242.922. Calc time: 496 min.
-pore=013014019020: Energy = -242.197. Calc time: 341 min.
-pore=013014020021: Energy = -242.922. Calc time: 188 min.
-pore=013018019020: Energy = -242.922. Calc time: 207 min.
-pore=013019020021: Energy = -243.190. Calc time: 64 min.
-pore=013019020026: Energy = -242.197. Calc time: 261 min.
-pore=013020021022: Energy = -242.922. Calc time: 125 min.
-pore=013020021028: Energy = -242.197. Calc time: 260 min.
-pore=014015021022: Energy = -242.922. Calc time: 138 min.
-pore=014015022023: Energy = -242.197. Calc time: 172 min.
-pore=015020021022: Energy = -242.922. Calc time: 121 min.
-pore=015021022023: Energy = -243.190. Calc time: 64 min.
-pore=015021022028: Energy = -242.197. Calc time: 240 min.
-pore=015022023030: Energy = -242.197. Calc time: 302 min.
-pore=018019020021: Energy = -242.197. Calc time: 207 min.
-pore=018019020026: Energy = -243.190. Calc time: 64 min.
-pore=018019026027: Energy = -242.197. Calc time: 227 min.
-pore=019020021022: Energy = -242.197. Calc time: 437 min.
-pore=019020021026: Energy = -242.922. Calc time: 273 min.
-pore=019020021028: Energy = -242.922. Calc time: 298 min.
-pore=019020026027: Energy = -242.922. Calc time: 288 min.
-pore=019026027028: Energy = -242.922. Calc time: 236 min.
-pore=020021022023: Energy = -242.197. Calc time: 351 min.
-pore=020021022028: Energy = -243.190. Calc time: 184 min.
-pore=020021027028: Energy = -242.922. Calc time: 317 min.
-pore=020021028029: Energy = -242.197. Calc time: 413 min.
-pore=021022023028: Energy = -242.922. Calc time: 330 min.
-pore=021022023030: Energy = -242.922. Calc time: 292 min.
-pore=021022027028: Energy = -242.197. Calc time: 406 min.
-pore=021022028029: Energy = -242.922. Calc time: 353 min.
-pore=021026027028: Energy = -242.922. Calc time: 322 min.
-pore=021027028029: Energy = -243.190. Calc time: 206 min.
-pore=021028029030: Energy = -242.922. Calc time: 328 min.
-pore=022023029030: Energy = -242.922. Calc time: 253 min.
-pore=022023030031: Energy = -242.197. Calc time: 417 min.
-pore=023028029030: Energy = -242.922. Calc time: 322 min.
-pore=023029030031: Energy = -243.190. Calc time: 186 min.
-pore=026027028029: Energy = -242.197. Calc time: 394 min.
-pore=027028029030: Energy = -242.197. Calc time: 441 min.
-pore=028029030031: Energy = -242.197. Calc time: 446 min.
-pore=010011012013014: Energy = -229.762. Calc time: 356 min.
-pore=010011012013018: Energy = -231.691. Calc time: 430 min.
-pore=010011012013020: Energy = -230.817. Calc time: 444 min.
-pore=010011012018019: Energy = -231.691. Calc time: 417 min.
-pore=010011018019020: Energy = -230.817. Calc time: 400 min.
-pore=010011018019026: Energy = -229.762. Calc time: 366 min.
-pore=011012013014015: Energy = -229.762. Calc time: 318 min.
-pore=011012013014018: Energy = -230.817. Calc time: 453 min.
-pore=011012013014020: Energy = -231.691. Calc time: 445 min.
-pore=011012013018019: Energy = -230.111. Calc time: 294 min.
-pore=011012013018020: Energy = -230.111. Calc time: 386 min.
-pore=011012013019020: Energy = -230.111. Calc time: 316 min.
-pore=011012013020021: Energy = -230.817. Calc time: 414 min.
-pore=011012018019020: Energy = -230.111. Calc time: 287 min.
-pore=011012018019026: Energy = -230.817. Calc time: 357 min.
-pore=011013018019020: Energy = -230.111. Calc time: 369 min.
-pore=011018019020021: Energy = -230.817. Calc time: 374 min.
-pore=011018019020026: Energy = -231.691. Calc time: 433 min.
-pore=011018019026027: Energy = -229.762. Calc time: 340 min.
-pore=012013014015020: Energy = -231.691. Calc time: 386 min.
-pore=012013014015022: Energy = -230.817. Calc time: 405 min.
-pore=012013014019020: Energy = -231.691. Calc time: 467 min.
-pore=012013014020021: Energy = -231.691. Calc time: 410 min.
-pore=012013018019020: Energy = -230.111. Calc time: 313 min.
-pore=012013019020021: Energy = -231.691. Calc time: 411 min.
-pore=012013019020026: Energy = -230.817. Calc time: 431 min.
-pore=012013020021022: Energy = -230.817. Calc time: 369 min.
-pore=012013020021028: Energy = -229.762. Calc time: 354 min.
-pore=013014015019020: Energy = -230.817. Calc time: 454 min.
-pore=013014015020021: Energy = -230.111. Calc time: 288 min.
-pore=013014015020022: Energy = -230.111. Calc time: 382 min.
-pore=013014015021022: Energy = -230.111. Calc time: 391 min.
-pore=013014015022023: Energy = -230.817. Calc time: 331 min.
-pore=013014018019020: Energy = -230.817. Calc time: 447 min.
-pore=013014019020021: Energy = -231.691. Calc time: 560 min.
-pore=013014019020026: Energy = -229.762. Calc time: 514 min.
-pore=013014020021022: Energy = -230.111. Calc time: 649 min.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=4/pore=5/013014020021028 submitted: 1427938.gilgamesh.cheme.cmu.edu
-pore=013014020021028: Inprogress.
-pore=013015020021022: Energy = -230.111. Calc time: 647 min.
-pore=013018019020021: Energy = -231.691. Calc time: 336 min.
-pore=013018019020026: Energy = -231.691. Calc time: 385 min.
-pore=013019020021022: Energy = -231.691. Calc time: 357 min.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=4/pore=5/013019020021026 submitted: 1427939.gilgamesh.cheme.cmu.edu
-pore=013019020021026: Inprogress.
-pore=013019020021028: Energy = -231.691. Calc time: 379 min.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=4/pore=5/013019020026027 submitted: 1427940.gilgamesh.cheme.cmu.edu
-pore=013019020026027: Inprogress.
-pore=013020021022023: Energy = -230.817. Calc time: 405 min.
-pore=013020021022028: Energy = -231.691. Calc time: 327 min.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=4/pore=5/013020021027028 submitted: 1427941.gilgamesh.cheme.cmu.edu
-pore=013020021027028: Inprogress.
-pore=013020021028029: Energy = -229.762. Calc time: 383 min.
-pore=014015020021022: Energy = -230.111. Calc time: 611 min.
-pore=014015021022023: Energy = -231.691. Calc time: 366 min.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=4/pore=5/014015021022028 submitted: 1427942.gilgamesh.cheme.cmu.edu
-pore=014015021022028: Inprogress.
-pore=014015022023030: Energy = -229.762. Calc time: 591 min.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=4/pore=5/015019020021022 submitted: 1427943.gilgamesh.cheme.cmu.edu
-pore=015019020021022: Inprogress.
-pore=015020021022023: Energy = -231.691. Calc time: 451 min.
-pore=015020021022028: Energy = -231.691. Calc time: 461 min.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=4/pore=5/015021022023028 submitted: 1427944.gilgamesh.cheme.cmu.edu
-pore=015021022023028: Inprogress.
-pore=015021022023030: Energy = -231.691. Calc time: 390 min.
-pore=015021022027028: Energy = -229.762. Calc time: 278 min.
-pore=015021022028029: Energy = -230.817. Calc time: 380 min.
-pore=015022023029030: Energy = -230.817. Calc time: 411 min.
-pore=015022023030031: Energy = -229.762. Calc time: 299 min.
-pore=018019020021022: Energy = -229.762. Calc time: 285 min.
-pore=018019020021026: Energy = -231.691. Calc time: 315 min.
-pore=018019020021028: Energy = -230.817. Calc time: 410 min.
-pore=018019020026027: Energy = -231.691. Calc time: 288 min.
-pore=018019026027028: Energy = -230.817. Calc time: 347 min.
-pore=019020021022023: Energy = -229.762. Calc time: 271 min.
-pore=019020021022026: Energy = -230.817. Calc time: 224 min.
-pore=019020021022028: Energy = -231.691. Calc time: 355 min.
-pore=019020021026027: Energy = -230.111. Calc time: 400 min.
-pore=019020021026028: Energy = -230.111. Calc time: 422 min.
-pore=019020021027028: Energy = -230.111. Calc time: 268 min.
-pore=019020021028029: Energy = -230.817. Calc time: 447 min.
-pore=019020026027028: Energy = -230.111. Calc time: 296 min.
-pore=019021026027028: Energy = -230.111. Calc time: 415 min.
-pore=019026027028029: Energy = -230.817. Calc time: 470 min.
-pore=020021022023028: Energy = -231.691. Calc time: 340 min.
-pore=020021022023030: Energy = -230.817. Calc time: 219 min.
-pore=020021022027028: Energy = -231.691. Calc time: 433 min.
-pore=020021022028029: Energy = -231.691. Calc time: 384 min.
-pore=020021026027028: Energy = -230.111. Calc time: 327 min.
-pore=020021027028029: Energy = -231.691. Calc time: 366 min.
-pore=020021028029030: Energy = -230.817. Calc time: 317 min.
-pore=021022023027028: Energy = -230.817. Calc time: 352 min.
-pore=021022023028029: Energy = -230.111. Calc time: 297 min.
-pore=021022023028030: Energy = -230.111. Calc time: 303 min.
-pore=021022023029030: Energy = -230.111. Calc time: 265 min.
-pore=021022023030031: Energy = -230.817. Calc time: 452 min.
-pore=021022026027028: Energy = -230.817. Calc time: 617 min.
-pore=021022027028029: Energy = -231.691. Calc time: 332 min.
-pore=021022028029030: Energy = -230.111. Calc time: 266 min.
-pore=021023028029030: Energy = -230.111. Calc time: 250 min.
-pore=021026027028029: Energy = -231.691. Calc time: 395 min.
-pore=021027028029030: Energy = -231.691. Calc time: 352 min.
-pore=021028029030031: Energy = -230.817. Calc time: 364 min.
-pore=022023028029030: Energy = -230.111. Calc time: 305 min.
-pore=022023029030031: Energy = -231.691. Calc time: 409 min.
-pore=023027028029030: Energy = -230.817. Calc time: 304 min.
-pore=023028029030031: Energy = -231.691. Calc time: 360 min.
-pore=026027028029030: Energy = -229.762. Calc time: 262 min.
-pore=027028029030031: Energy = -229.762. Calc time: 268 min.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=4/pore=5/015021022023028 submitted: 1428293.gilgamesh.cheme.cmu.edu
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
+No calculation_required.
 :END:
 
-*** INPROGRESS mat=graphene/layers=1/size=5/pore=0,3#,4,5
+*** INPROGRESS mat=graphene/layers=1/size=5/pore=0,3,4#,5
 
 #+BEGIN_SRC python :results drawer
 from ase import Atoms, Atom
@@ -3062,17 +3429,11 @@ from vasp import Vasp
 
 import twodee as td
 
-unitcell = td.create_base("graphene", layers=1)
+
 size = 5
+pore_sizes = [0, 3, 4]#, 5]
 atoms = td.create_base("graphene", layers=1, size=size)
-
-edges = td.edges(atoms, unitcell)
-indices = [a.index for a in atoms if a.index not in edges]
-
-pore_sizes = [0, 3]#, 4, 5]
-cans = []
-for pore_size in pore_sizes:
-    cans.append(td.candidates(atoms, edge=edges, size=pore_size))
+cans = td.candidates(mat='graphene', layers=1, size=size, pores=pore_sizes)
 
 energies = []
 for c in cans:
@@ -5009,7 +5370,7 @@ td.print_image(name, atoms)
  [[./img/jasp/material/g-mono/5x5/pore=10/convergence/ediffg=-0.05.png]]
  :END:
 
- Looking at the structure in view(atoms) shows that the structure has not changed at all from the base structure. All lattice constants are still 2.46, though the energy/f.u. is higher. Not sure if this structure is accurate.
+Looking at the structure in view(atoms) shows that the structure has not changed at all from the base structure. All lattice constants are still 2.46, though the energy/f.u. is higher. Not sure if this structure is accurate.
 
 ******* DONE Convergence: kpts
         CLOSED: [2016-06-09 Thu 22:21]
@@ -7450,3 +7811,4 @@ print('[[' + file_path + ']]')
   #+RESULTS:
   :RESULTS:
   :END:
+  
