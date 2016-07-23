@@ -2650,7 +2650,8 @@ kpts=13 x 13 x 1: Energy = -125.702. Calc time: 213 min.
 
 K-points are converged to 10 meV at a grid of 5x5x1.
 
-*** INPROGRESS mat=graphene/layers=1/size=4/pore=0,3,4,5 - kpts
+*** DONE mat=graphene/layers=1/size=4/pore=0,3,4,5 - kpts
+    CLOSED: [2016-07-22 Fri 13:51]
 
 #+BEGIN_SRC python :results drawer
 from ase import Atoms, Atom
@@ -2697,26 +2698,22 @@ kpts= 1 x  1 x 1: Energy = -295.657. Calc time: 30 min.
 kpts= 3 x  3 x 1: Energy = -295.050. Calc time: 122 min.
 kpts= 5 x  5 x 1: Energy = -295.164. Calc time: 248 min.
 kpts= 7 x  7 x 1: Energy = -295.164. Calc time: 192 min.
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=4/pore=0/kpts=9 Queued: 1427836.gilgamesh.cheme.cmu.edu
-kpts= 9 x  9 x 1: Inprogress.
+kpts= 9 x  9 x 1: Energy = -295.158. Calc time: 284 min.
 kpts= 1 x  1 x 1: Energy = -254.750. Calc time: 42 min.
 kpts= 3 x  3 x 1: Energy = -254.313. Calc time: 218 min.
 kpts= 5 x  5 x 1: Energy = -254.317. Calc time: 209 min.
 kpts= 7 x  7 x 1: Energy = -254.317. Calc time: 492 min.
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=4/pore=3/kpts=9 Queued: 1427837.gilgamesh.cheme.cmu.edu
-kpts= 9 x  9 x 1: Inprogress.
+kpts= 9 x  9 x 1: Energy = -254.317. Calc time: 861 min.
 kpts= 1 x  1 x 1: Energy = -243.580. Calc time: 68 min.
 kpts= 3 x  3 x 1: Energy = -243.175. Calc time: 78 min.
 kpts= 5 x  5 x 1: Energy = -243.190. Calc time: 262 min.
 kpts= 7 x  7 x 1: Energy = -243.191. Calc time: 301 min.
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=4/pore=4/kpts=9 Queued: 1427838.gilgamesh.cheme.cmu.edu
-kpts= 9 x  9 x 1: Inprogress.
+kpts= 9 x  9 x 1: Energy = -243.190. Calc time: 510 min.
 kpts= 1 x  1 x 1: Energy = -232.257. Calc time: 31 min.
 kpts= 3 x  3 x 1: Energy = -231.688. Calc time: 243 min.
 kpts= 5 x  5 x 1: Energy = -231.691. Calc time: 372 min.
 kpts= 7 x  7 x 1: Energy = -231.693. Calc time: 458 min.
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=4/pore=5/kpts=9 Queued: 1427839.gilgamesh.cheme.cmu.edu
-kpts= 9 x  9 x 1: Inprogress.
+kpts= 9 x  9 x 1: Energy = -231.692. Calc time: 1163 min.
 :END:
 
 K-points are converged to 10 meV at a grid of 5x5x1.
@@ -3290,7 +3287,8 @@ pore=009010011014015016017: Energy/atom = -7.598. Calc time: 22 min.
 pore=008009010011014015016017: Energy/atom = -7.511. Calc time: 17 min.
 :END:
 
-*** INPROGRESS mat=graphene/layers=1/size=4/pore=3,4,5
+*** DONE mat=graphene/layers=1/size=4/pore=3,4,5
+    CLOSED: [2016-07-22 Fri 13:49]
 
 #+BEGIN_SRC python :results drawer
 from ase import Atoms, Atom
@@ -3324,194 +3322,194 @@ for c in cans:
 
 #+RESULTS:
 :RESULTS:
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=4/pore=5/015021022023028 submitted: 1428293.gilgamesh.cheme.cmu.edu
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
-No calculation_required.
+pore=010011012: Energy = -254.317. Calc time: 467 min.
+pore=010011018: Energy = -254.317. Calc time: 211 min.
+pore=011012013: Energy = -254.317. Calc time: 168 min.
+pore=011012018: Energy = -254.317. Calc time: 156 min.
+pore=011018019: Energy = -254.317. Calc time: 306 min.
+pore=012013014: Energy = -254.317. Calc time: 157 min.
+pore=012013020: Energy = -254.317. Calc time: 207 min.
+pore=013014015: Energy = -254.317. Calc time: 216 min.
+pore=013014020: Energy = -254.317. Calc time: 176 min.
+pore=013019020: Energy = -254.317. Calc time: 342 min.
+pore=013020021: Energy = -254.317. Calc time: 266 min.
+pore=014015022: Energy = -254.317. Calc time: 165 min.
+pore=015021022: Energy = -254.317. Calc time: 139 min.
+pore=015022023: Energy = -254.317. Calc time: 171 min.
+pore=018019020: Energy = -254.317. Calc time: 146 min.
+pore=018019026: Energy = -254.317. Calc time: 189 min.
+pore=019020021: Energy = -254.317. Calc time: 211 min.
+pore=019020026: Energy = -254.317. Calc time: 521 min.
+pore=019026027: Energy = -254.317. Calc time: 567 min.
+pore=020021022: Energy = -254.317. Calc time: 569 min.
+pore=020021028: Energy = -254.317. Calc time: 508 min.
+pore=021022023: Energy = -254.317. Calc time: 556 min.
+pore=021022028: Energy = -254.317. Calc time: 568 min.
+pore=021027028: Energy = -254.317. Calc time: 544 min.
+pore=021028029: Energy = -254.317. Calc time: 559 min.
+pore=022023030: Energy = -254.317. Calc time: 193 min.
+pore=023029030: Energy = -254.317. Calc time: 144 min.
+pore=023030031: Energy = -254.317. Calc time: 156 min.
+pore=026027028: Energy = -254.317. Calc time: 157 min.
+pore=027028029: Energy = -254.317. Calc time: 146 min.
+pore=028029030: Energy = -254.317. Calc time: 224 min.
+pore=029030031: Energy = -254.317. Calc time: 208 min.
+pore=010011012013: Energy = -242.197. Calc time: 185 min.
+pore=010011012018: Energy = -243.190. Calc time: 82 min.
+pore=010011018019: Energy = -242.197. Calc time: 186 min.
+pore=011012013014: Energy = -242.197. Calc time: 194 min.
+pore=011012013018: Energy = -242.922. Calc time: 151 min.
+pore=011012013020: Energy = -242.922. Calc time: 128 min.
+pore=011012018019: Energy = -242.922. Calc time: 142 min.
+pore=011018019020: Energy = -242.922. Calc time: 151 min.
+pore=011018019026: Energy = -242.197. Calc time: 227 min.
+pore=012013014015: Energy = -242.197. Calc time: 630 min.
+pore=012013014020: Energy = -243.190. Calc time: 404 min.
+pore=012013019020: Energy = -242.922. Calc time: 409 min.
+pore=012013020021: Energy = -242.197. Calc time: 259 min.
+pore=013014015020: Energy = -242.922. Calc time: 431 min.
+pore=013014015022: Energy = -242.922. Calc time: 496 min.
+pore=013014019020: Energy = -242.197. Calc time: 341 min.
+pore=013014020021: Energy = -242.922. Calc time: 188 min.
+pore=013018019020: Energy = -242.922. Calc time: 207 min.
+pore=013019020021: Energy = -243.190. Calc time: 64 min.
+pore=013019020026: Energy = -242.197. Calc time: 261 min.
+pore=013020021022: Energy = -242.922. Calc time: 125 min.
+pore=013020021028: Energy = -242.197. Calc time: 260 min.
+pore=014015021022: Energy = -242.922. Calc time: 138 min.
+pore=014015022023: Energy = -242.197. Calc time: 172 min.
+pore=015020021022: Energy = -242.922. Calc time: 121 min.
+pore=015021022023: Energy = -243.190. Calc time: 64 min.
+pore=015021022028: Energy = -242.197. Calc time: 240 min.
+pore=015022023030: Energy = -242.197. Calc time: 302 min.
+pore=018019020021: Energy = -242.197. Calc time: 207 min.
+pore=018019020026: Energy = -243.190. Calc time: 64 min.
+pore=018019026027: Energy = -242.197. Calc time: 227 min.
+pore=019020021022: Energy = -242.197. Calc time: 437 min.
+pore=019020021026: Energy = -242.922. Calc time: 273 min.
+pore=019020021028: Energy = -242.922. Calc time: 298 min.
+pore=019020026027: Energy = -242.922. Calc time: 288 min.
+pore=019026027028: Energy = -242.922. Calc time: 236 min.
+pore=020021022023: Energy = -242.197. Calc time: 351 min.
+pore=020021022028: Energy = -243.190. Calc time: 184 min.
+pore=020021027028: Energy = -242.922. Calc time: 317 min.
+pore=020021028029: Energy = -242.197. Calc time: 413 min.
+pore=021022023028: Energy = -242.922. Calc time: 330 min.
+pore=021022023030: Energy = -242.922. Calc time: 292 min.
+pore=021022027028: Energy = -242.197. Calc time: 406 min.
+pore=021022028029: Energy = -242.922. Calc time: 353 min.
+pore=021026027028: Energy = -242.922. Calc time: 322 min.
+pore=021027028029: Energy = -243.190. Calc time: 206 min.
+pore=021028029030: Energy = -242.922. Calc time: 328 min.
+pore=022023029030: Energy = -242.922. Calc time: 253 min.
+pore=022023030031: Energy = -242.197. Calc time: 417 min.
+pore=023028029030: Energy = -242.922. Calc time: 322 min.
+pore=023029030031: Energy = -243.190. Calc time: 186 min.
+pore=026027028029: Energy = -242.197. Calc time: 394 min.
+pore=027028029030: Energy = -242.197. Calc time: 441 min.
+pore=028029030031: Energy = -242.197. Calc time: 446 min.
+pore=010011012013014: Energy = -229.762. Calc time: 356 min.
+pore=010011012013018: Energy = -231.691. Calc time: 430 min.
+pore=010011012013020: Energy = -230.817. Calc time: 444 min.
+pore=010011012018019: Energy = -231.691. Calc time: 417 min.
+pore=010011018019020: Energy = -230.817. Calc time: 400 min.
+pore=010011018019026: Energy = -229.762. Calc time: 366 min.
+pore=011012013014015: Energy = -229.762. Calc time: 318 min.
+pore=011012013014018: Energy = -230.817. Calc time: 453 min.
+pore=011012013014020: Energy = -231.691. Calc time: 445 min.
+pore=011012013018019: Energy = -230.111. Calc time: 294 min.
+pore=011012013018020: Energy = -230.111. Calc time: 386 min.
+pore=011012013019020: Energy = -230.111. Calc time: 316 min.
+pore=011012013020021: Energy = -230.817. Calc time: 414 min.
+pore=011012018019020: Energy = -230.111. Calc time: 287 min.
+pore=011012018019026: Energy = -230.817. Calc time: 357 min.
+pore=011013018019020: Energy = -230.111. Calc time: 369 min.
+pore=011018019020021: Energy = -230.817. Calc time: 374 min.
+pore=011018019020026: Energy = -231.691. Calc time: 433 min.
+pore=011018019026027: Energy = -229.762. Calc time: 340 min.
+pore=012013014015020: Energy = -231.691. Calc time: 386 min.
+pore=012013014015022: Energy = -230.817. Calc time: 405 min.
+pore=012013014019020: Energy = -231.691. Calc time: 467 min.
+pore=012013014020021: Energy = -231.691. Calc time: 410 min.
+pore=012013018019020: Energy = -230.111. Calc time: 313 min.
+pore=012013019020021: Energy = -231.691. Calc time: 411 min.
+pore=012013019020026: Energy = -230.817. Calc time: 431 min.
+pore=012013020021022: Energy = -230.817. Calc time: 369 min.
+pore=012013020021028: Energy = -229.762. Calc time: 354 min.
+pore=013014015019020: Energy = -230.817. Calc time: 454 min.
+pore=013014015020021: Energy = -230.111. Calc time: 288 min.
+pore=013014015020022: Energy = -230.111. Calc time: 382 min.
+pore=013014015021022: Energy = -230.111. Calc time: 391 min.
+pore=013014015022023: Energy = -230.817. Calc time: 331 min.
+pore=013014018019020: Energy = -230.817. Calc time: 447 min.
+pore=013014019020021: Energy = -231.691. Calc time: 560 min.
+pore=013014019020026: Energy = -229.762. Calc time: 514 min.
+pore=013014020021022: Energy = -230.111. Calc time: 649 min.
+pore=013014020021028: Energy = -230.817. Calc time: 207 min.
+pore=013015020021022: Energy = -230.111. Calc time: 647 min.
+pore=013018019020021: Energy = -231.691. Calc time: 336 min.
+pore=013018019020026: Energy = -231.691. Calc time: 385 min.
+pore=013019020021022: Energy = -231.691. Calc time: 357 min.
+pore=013019020021026: Energy = -231.691. Calc time: 265 min.
+pore=013019020021028: Energy = -231.691. Calc time: 379 min.
+pore=013019020026027: Energy = -230.817. Calc time: 575 min.
+pore=013020021022023: Energy = -230.817. Calc time: 405 min.
+pore=013020021022028: Energy = -231.691. Calc time: 327 min.
+pore=013020021027028: Energy = -230.817. Calc time: 385 min.
+pore=013020021028029: Energy = -229.762. Calc time: 383 min.
+pore=014015020021022: Energy = -230.111. Calc time: 611 min.
+pore=014015021022023: Energy = -231.691. Calc time: 366 min.
+pore=014015021022028: Energy = -230.817. Calc time: 547 min.
+pore=014015022023030: Energy = -229.762. Calc time: 591 min.
+pore=015019020021022: Energy = -230.817. Calc time: 484 min.
+pore=015020021022023: Energy = -231.691. Calc time: 451 min.
+pore=015020021022028: Energy = -231.691. Calc time: 461 min.
+pore=015021022023028: Energy = -231.691. Calc time: 243 min.
+pore=015021022023030: Energy = -231.691. Calc time: 390 min.
+pore=015021022027028: Energy = -229.762. Calc time: 278 min.
+pore=015021022028029: Energy = -230.817. Calc time: 380 min.
+pore=015022023029030: Energy = -230.817. Calc time: 411 min.
+pore=015022023030031: Energy = -229.762. Calc time: 299 min.
+pore=018019020021022: Energy = -229.762. Calc time: 285 min.
+pore=018019020021026: Energy = -231.691. Calc time: 315 min.
+pore=018019020021028: Energy = -230.817. Calc time: 410 min.
+pore=018019020026027: Energy = -231.691. Calc time: 288 min.
+pore=018019026027028: Energy = -230.817. Calc time: 347 min.
+pore=019020021022023: Energy = -229.762. Calc time: 271 min.
+pore=019020021022026: Energy = -230.817. Calc time: 224 min.
+pore=019020021022028: Energy = -231.691. Calc time: 355 min.
+pore=019020021026027: Energy = -230.111. Calc time: 400 min.
+pore=019020021026028: Energy = -230.111. Calc time: 422 min.
+pore=019020021027028: Energy = -230.111. Calc time: 268 min.
+pore=019020021028029: Energy = -230.817. Calc time: 447 min.
+pore=019020026027028: Energy = -230.111. Calc time: 296 min.
+pore=019021026027028: Energy = -230.111. Calc time: 415 min.
+pore=019026027028029: Energy = -230.817. Calc time: 470 min.
+pore=020021022023028: Energy = -231.691. Calc time: 340 min.
+pore=020021022023030: Energy = -230.817. Calc time: 219 min.
+pore=020021022027028: Energy = -231.691. Calc time: 433 min.
+pore=020021022028029: Energy = -231.691. Calc time: 384 min.
+pore=020021026027028: Energy = -230.111. Calc time: 327 min.
+pore=020021027028029: Energy = -231.691. Calc time: 366 min.
+pore=020021028029030: Energy = -230.817. Calc time: 317 min.
+pore=021022023027028: Energy = -230.817. Calc time: 352 min.
+pore=021022023028029: Energy = -230.111. Calc time: 297 min.
+pore=021022023028030: Energy = -230.111. Calc time: 303 min.
+pore=021022023029030: Energy = -230.111. Calc time: 265 min.
+pore=021022023030031: Energy = -230.817. Calc time: 452 min.
+pore=021022026027028: Energy = -230.817. Calc time: 617 min.
+pore=021022027028029: Energy = -231.691. Calc time: 332 min.
+pore=021022028029030: Energy = -230.111. Calc time: 266 min.
+pore=021023028029030: Energy = -230.111. Calc time: 250 min.
+pore=021026027028029: Energy = -231.691. Calc time: 395 min.
+pore=021027028029030: Energy = -231.691. Calc time: 352 min.
+pore=021028029030031: Energy = -230.817. Calc time: 364 min.
+pore=022023028029030: Energy = -230.111. Calc time: 305 min.
+pore=022023029030031: Energy = -231.691. Calc time: 409 min.
+pore=023027028029030: Energy = -230.817. Calc time: 304 min.
+pore=023028029030031: Energy = -231.691. Calc time: 360 min.
+pore=026027028029030: Energy = -229.762. Calc time: 262 min.
+pore=027028029030031: Energy = -229.762. Calc time: 268 min.
 :END:
 
 *** INPROGRESS mat=graphene/layers=1/size=5/pore=0,3,4#,5
