@@ -637,6 +637,11 @@ How to select the best structures for DFT calculations and training a neural net
 ** DONE 2016-07-15 3pm Group meeting
    CLOSED: [2016-07-18 Mon 16:40]
 ** 2016-08-12 3pm Group meeting presentation
+*** Scimax issues
+- [ ] src block coloring
+- [ ] checkbox coloring
+- [ ] auto-completion. especially in lisp
+
 * Research
 ** Literature
 *** Graphene
@@ -834,15 +839,15 @@ Stability
 
 
 
-| Material | Features    | Pore     |
-|          |             | Size (Å) |
-|----------+-------------+----------|
-| Graphene | Pristine    |          |
-| PG       |             | 2.48     |
-| PG-ES1   |             |          |
-| PG-ES2   |             |          |
-| PG-ES3   |             |          |
-| hBN      |             |          |
+| Material | Features | Pore     |
+|          |          | Size (Å) |
+|----------+----------+----------|
+| Graphene | Pristine |          |
+| PG       |          | 2.48     |
+| PG-ES1   |          |          |
+| PG-ES2   |          |          |
+| PG-ES3   |          |          |
+| hBN      |          |          |
 
 **** References
 
@@ -924,23 +929,23 @@ Notes:
 *** Atmospheric separations
 N2, O2, Ar, CO2, Ne, He, CH4 
 
-| Reference                          | Methods  | 2D             | Stack   | Features | Func.  | N2 | O2 | Ar | CO2 | Ne | He | CH4 |
-|                                    |          | Material       |         |          | Groups |    |    |    |     |    |    |     |
-|------------------------------------+----------+----------------+---------+----------+--------+----+----+----+-----+----+----+-----|
-| cite:koenig-2012-selec-molec       | Exp      | Graphene       | Bilayer | Porous   |        | b  |    | b  | a   |    |    | b   |
-| cite:kim-2013-selec-gas            | Exp      | Graphene       | Multi   | Defects  |        | b  | a  |    |     |    |    |     |
-| cite:liu-2015-selec-trend          | MD       | Graphene       | Mono    | Porous   | N/H    | b  |    | b  | a   |    |    | b   |
-| cite:sun-2015-applic-nanop         | MD       | Graphene       | Mono    | Porous   | N/H    | a  |    |    | a   |    |    | b   |
-|------------------------------------+----------+----------------+---------+----------+--------+----+----+----+-----+----+----+-----|
-| cite:blankenburg-2010-porous-graph | DFT, MD  | PG             | Mono    |          |        | c  | b  | d  | b   | a  | a  |     |
-| cite:schrier-2012-carbon-dioxid    | MD       | PG-ES1         | Mono    |          |        | b  | b  |    | a   |    |    |     |
-| cite:brockway-2013-noble-gas       | DFT, MD  | PG-ES1         | Mono    |          |        | b  | b  | b  | b   | a  | a  | c   |
-|------------------------------------+----------+----------------+---------+----------+--------+----+----+----+-----+----+----+-----|
-| cite:li-2013-ultrat-molec          | Exp      | Graphene oxide | 18 nm   |          |        | b  | b  |    | b   |    | a  | b   |
-| cite:kim-2013-selec-gas            | Exp      | Graphene oxide | 3-7 nm  |          |        | b  | b  |    | a   |    | b  | b   |
-|------------------------------------+----------+----------------+---------+----------+--------+----+----+----+-----+----+----+-----|
-| cite:zhu-2015-c-n                  | DFT      | C2N            | Mono    |          |        | b  | b  | b  | b   | b  | a  | b   |
-| cite:li-2015-effic-helium          | DFT, MD  | g-C3N4         | Mono    |          |        | b  |    | b  | b   | b  | a  | b   |
+| Reference                          | Methods | 2D             | Stack   | Features | Func.  | N2 | O2 | Ar | CO2 | Ne | He | CH4 |
+|                                    |         | Material       |         |          | Groups |    |    |    |     |    |    |     |
+|------------------------------------+---------+----------------+---------+----------+--------+----+----+----+-----+----+----+-----|
+| cite:koenig-2012-selec-molec       | Exp     | Graphene       | Bilayer | Porous   |        | b  |    | b  | a   |    |    | b   |
+| cite:kim-2013-selec-gas            | Exp     | Graphene       | Multi   | Defects  |        | b  | a  |    |     |    |    |     |
+| cite:liu-2015-selec-trend          | MD      | Graphene       | Mono    | Porous   | N/H    | b  |    | b  | a   |    |    | b   |
+| cite:sun-2015-applic-nanop         | MD      | Graphene       | Mono    | Porous   | N/H    | a  |    |    | a   |    |    | b   |
+|------------------------------------+---------+----------------+---------+----------+--------+----+----+----+-----+----+----+-----|
+| cite:blankenburg-2010-porous-graph | DFT, MD | PG             | Mono    |          |        | c  | b  | d  | b   | a  | a  |     |
+| cite:schrier-2012-carbon-dioxid    | MD      | PG-ES1         | Mono    |          |        | b  | b  |    | a   |    |    |     |
+| cite:brockway-2013-noble-gas       | DFT, MD | PG-ES1         | Mono    |          |        | b  | b  | b  | b   | a  | a  | c   |
+|------------------------------------+---------+----------------+---------+----------+--------+----+----+----+-----+----+----+-----|
+| cite:li-2013-ultrat-molec          | Exp     | Graphene oxide | 18 nm   |          |        | b  | b  |    | b   |    | a  | b   |
+| cite:kim-2013-selec-gas            | Exp     | Graphene oxide | 3-7 nm  |          |        | b  | b  |    | a   |    | b  | b   |
+|------------------------------------+---------+----------------+---------+----------+--------+----+----+----+-----+----+----+-----|
+| cite:zhu-2015-c-n                  | DFT     | C2N            | Mono    |          |        | b  | b  | b  | b   | b  | a  | b   |
+| cite:li-2015-effic-helium          | DFT, MD | g-C3N4         | Mono    |          |        | b  |    | b  | b   | b  | a  | b   |
 
 *** Water-gas shift
 CO + H2O -> CO2 + H2
@@ -966,15 +971,15 @@ CO + H2O -> CO2 + H2
 *** Nobel gas separation
 He, Ne, Ar, Kr
 
-| Reference                          | Methods  | 2D             | He | Ne | Ar | Kr |
-|                                    |          | Material       |    |    |    |    |
-|------------------------------------+----------+----------------+----+----+----+----|
-| cite:wesołowski-2011-pillar-graph  | MD       | Graphene       | c  |    | b  | a  |
-|------------------------------------+----------+----------------+----+----+----+----|
-| cite:blankenburg-2010-porous-graph | DFT      | PG             | a  | a  | d  |    |
-|------------------------------------+----------+----------------+----+----+----+----|
-| cite:zhu-2015-c-n                  | DFT      | C2N            | a  | b  | b  |    |
-| cite:li-2015-effic-helium          | DFT, MD  | g-C3N4         | a  | b  | b  |    |
+| Reference                          | Methods | 2D       | He | Ne | Ar | Kr |
+|                                    |         | Material |    |    |    |    |
+|------------------------------------+---------+----------+----+----+----+----|
+| cite:wesołowski-2011-pillar-graph  | MD      | Graphene | c  |    | b  | a  |
+|------------------------------------+---------+----------+----+----+----+----|
+| cite:blankenburg-2010-porous-graph | DFT     | PG       | a  | a  | d  |    |
+|------------------------------------+---------+----------+----+----+----+----|
+| cite:zhu-2015-c-n                  | DFT     | C2N      | a  | b  | b  |    |
+| cite:li-2015-effic-helium          | DFT, MD | g-C3N4   | a  | b  | b  |    |
 
 ** TODO H2 transport comparison
 Use the following works to generate a table with comparisons of H2 transport
@@ -983,7 +988,6 @@ Use the following works to generate a table with comparisons of H2 transport
 - cite:blankenburg-2010-porous-graph
 
 * Scripts
-
 ** 2016-03-07: Remote copying
 *Note 2016-05-18* - Copying is better done by maintaining the git repo. 
 
@@ -1790,7 +1794,6 @@ cans = td.candidates(mat='graphene', layers=1, size=3, pores=None, silent=False)
 #+END_SRC
 
 
-
 Queue caller:
 #+BEGIN_SRC python
 import os
@@ -1800,19 +1803,18 @@ import time
 import twodee as td
 
 
-def queue_submit(file_path):
+def qsub(file_path):
     cwd = os.getcwd()
     wd = os.path.dirname(os.path.realpath(file_path))
     file_name = os.path.basename(file_path)
     os.chmod(file_path, 0777)
-#    os.chdir(wd)
 
     cmd = '''#!/bin/bash
 #PBS -N {0}
 #PBS -o {0}
 #PBS -e {0}
 #PBS -l nodes=1:ppn=1
-#PBS -l walltime=24:00:00
+#PBS -l walltime=168:00:00
 #PBS -l mem=2GB
 #PBS -joe
 cd $PBS_O_WORKDIR
@@ -1826,19 +1828,555 @@ cd $PBS_O_WORKDIR
     subprocess.call(['qsub', submit_path])
     time.sleep(5)
     os.remove(submit_path)
-#    os.chdir(cwd)
 
 
-queue_submit('./queue/script-20160722-2.py')
+qsub('./queue/script-20160722-2.py')
 #+END_SRC
 
 #+RESULTS:
 : 1428308.gilgamesh.cheme.cmu.edu
 
+** 2016-07-23: Queue candidate algorithm
+
+#+BEGIN_SRC python
+import twodee as td
+
+sizes = [5, 6, 7]
+for s in sizes:
+    path = "./queue/candidates/{0}/cans={0}.py".format(s)
+    prog= '''#!/usr/bin/env python
+import twodee as td
+
+cans = td.candidates(mat="graphene", layers=1, size={}, pores=None, silent=False)
+'''.format(s)
+
+    with open(path, 'w') as f:
+        f.write(prog)
+    td.qsub(path)
+#+END_SRC
+
+#+RESULTS:
+: 1428756.gilgamesh.cheme.cmu.edu
+: 1428757.gilgamesh.cheme.cmu.edu
+: 1428758.gilgamesh.cheme.cmu.edu
+
+Start time: 10:09pm Sunday
+
+** TODO 2016-07-24: Get source code to queue submit file
+
+#+BEGIN_SRC python
+import re
+import inspect
+
+def test_func():
+    """Testing..."""
+    #!/usr/bin/env python
+    import twodee as td
+
+    #print("hello")
+    return 1
+#    cans = td.candidates(mat='graphene', layers=1, size=3,
+#                         pores=None, silent=False)
+
+#me = test_func()
+#print(__file__)
+print(test_func)
+print(inspect.getsource(test_func))
+#+END_SRC
+
+#+RESULTS:
+
+** 2016-07-24: Create a plot that shows neural network quality
+
+Thinking a 3 plot subplot in a 2x2 grid. The top row will be occupied by the errors of network vs training and test.
+1. Errors against training and test data
+2. 
+
+#+BEGIN_SRC python
+
+#+END_SRC
+
+** 2016-07-27: qsub decorator
+
+Incomplete
+
+#+BEGIN_SRC python :tangle tester.py
+#!/usr/bin/env python
+
+import ast, inspect
+import dis
+#from dill.source import getsource # didn't work with babel. worked with python -i. reads from interactive history.
+import compiler
+from functools import wraps
+import sys
+
+def qsub(path):
+    def qsub_decorator(script):
+        @wraps(script)
+        def wrapper(*args, **kwargs):
+            print("Submit to: " + path)
+            print("#!/usr/bin/env python")
+            print(script(*args, **kwargs))
+            # stuck here. how to turn script into a submittable file?
+            return
+        return wrapper
+    return qsub_decorator
 
 
 
+@qsub("my_path/submit.py")
+def add(x, y):
+    """My docstring."""
+    return x + y
 
+    
+add(2, 3)
+#+END_SRC
+
+#+RESULTS:
+: 91
+: Submit to: my_path/submit.py
+: #!/usr/bin/env python
+: 5
+
+** 2016-07-28: Jinja2 template queue submission
+*** DONE Toy template example
+Add "/foobar" to a printed string.
+
+#+BEGIN_SRC python :results silent :tangle scripts/2016-07-28/template_toy.py
+#!/usr/bin/env python
+print("{{ path }}" + "/foobar")
+#+END_SRC
+
+
+#+BEGIN_SRC python :results output org drawer
+from jinja2 import Environment, FileSystemLoader
+import os
+
+pwd = os.path.dirname(os.path.abspath(__file__))
+env = Environment(loader=FileSystemLoader(pwd))
+template_path = 'scripts/2016-07-28/template_toy.py'
+template = env.get_template(template_path)
+
+exec(template.render(path=pwd))
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+/home-guest/devonw/hydrogen2D/foobar
+:END:
+
+*** DONE Iteration 0: Amp runner template
+
+#+BEGIN_SRC python :results silent :tangle scripts/2016-07-28/template_amp.py
+#!/usr/bin/env python
+from amp import Amp
+from amp.descriptor import Behler
+from amp.regression import NeuralNetwork
+from ase.db import connect
+import os
+
+db_path = "{{ db_path }}"
+nn_dir = "{{ nn_dir }}"
+nn_dir = os.path.join(nn_dir, "")
+select = "{{ select }}"
+cutoff = {{ cutoff }}
+h_layers = {{ h_layers }}
+
+db = connect(db_path)
+
+images = []
+for d in db.select(select):
+    atoms = db.get_atoms(d.id)
+    del atoms.constraints
+    images += [atoms]
+
+desc = Behler(cutoff=cutoff)
+reg = NeuralNetwork(hiddenlayers=h_layers)
+calc = Amp(label=nn_dir,
+           descriptor=desc,
+           regression=reg)
+
+calc.train(images=images,
+           data_format='db',
+           cores=1,
+           energy_goal=1e-3,
+           force_goal=None,
+           global_search=None,
+           extend_variables=False)
+
+print("Training completed")
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+:END:
+
+#+BEGIN_SRC python :results output org drawer
+from jinja2 import Environment, FileSystemLoader
+import os
+import twodee as td
+
+pwd = os.path.dirname(os.path.abspath(__file__))
+env = Environment(loader=FileSystemLoader(pwd))
+template_path = 'scripts/2016-07-28/template_amp.py'
+template = env.get_template(template_path)
+
+db_path = 'scripts/2016-07-28/test_db.db'
+select = 'train_set=True'
+cutoff = 6.5
+h_layers = [2, 3]
+nodes = [2, 3]
+
+for h in h_layers:
+    for n in nodes:
+        db_dir = os.path.dirname(db_path)
+        framework = tuple([n]*h)
+        framework_str = "-".join([str(f) for f in framework])
+        nn_dir = os.path.join(db_dir, framework_str)
+
+        if os.path.exists(os.path.join(nn_dir, 'submit.py')):
+            print('{0} already submitted.'.format(framework_str))
+            continue
+        if not os.path.exists(nn_dir):
+            os.makedirs(nn_dir)
+
+        code = template.render(db_path=db_path, nn_dir=nn_dir,
+                               select=select, cutoff=cutoff,
+                               h_layers=framework)
+
+        submit_file = os.path.join(nn_dir, 'submit.py')
+        with open(submit_file, 'w') as f:
+            f.write(code)
+
+        td.qsub(submit_file, walltime="10:00:00")
+        print('{0} submitted.'.format(framework_str))
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+1432761.gilgamesh.cheme.cmu.edu
+1432762.gilgamesh.cheme.cmu.edu
+1432763.gilgamesh.cheme.cmu.edu
+1432764.gilgamesh.cheme.cmu.edu
+2-2 submitted.
+3-3 submitted.
+2-2-2 submitted.
+3-3-3 submitted.
+:END:
+
+**** Example sybmit.py output
+It's useful to grab the completed template and see if it runs without errors.
+
+#+BEGIN_SRC python :results output org drawer
+#!/usr/bin/env python
+from amp import Amp
+from amp.descriptor import Behler
+from amp.regression import NeuralNetwork
+from ase.db import connect
+import os
+import twodee as td
+
+db_path = "scripts/2016-07-28/test_validation.db"
+nn_dir = "scripts/2016-07-28/8-8"
+nn_dir = os.path.join(nn_dir, "")
+select = "train_set=True"
+cutoff = 6.5
+h_layers = (8, 8)
+
+db = connect(db_path)
+
+images = []
+for d in db.select(select):
+    atoms = db.get_atoms(d.id)
+    del atoms.constraints
+    images += [atoms]
+
+desc = Behler(cutoff=cutoff)
+reg = NeuralNetwork(hiddenlayers=h_layers)
+calc = Amp(label=nn_dir,
+           descriptor=desc,
+           regression=reg)
+
+calc.train(images=images,
+           data_format='db',
+           cores=1,
+           energy_goal=1e-3,
+           force_goal=None,
+           global_search=None,
+           extend_variables=False)
+
+print("Done")
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+:END:
+
+*** DONE Iteration 1: More generic Amp runner template
+
+#+BEGIN_SRC python :results silent :tangle scripts/2016-07-28/template_amp_generic1.py
+#!/usr/bin/env python
+from amp import Amp
+from ase.db import connect
+
+db_path = "{{ db_path }}"
+select = "{{ select }}"
+
+db = connect(db_path)
+
+images = []
+for d in db.select(select):
+    atoms = db.get_atoms(d.id)
+    del atoms.constraints
+    images += [atoms]
+
+from amp.descriptor import {{ desc_type }}
+desc = {{ desc_type }}(**{{ desc_args }})
+
+from amp.regression import {{ reg_type }}
+reg = {{ reg_type }}(**{{ reg_args }})
+
+calc = Amp(descriptor=desc,
+           **{{ amp_args }})
+
+calc.train(images=images,
+           **{{ train_args }})
+
+print("Training completed")
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+:END:
+
+#+BEGIN_SRC python :results output org drawer
+from jinja2 import Environment, FileSystemLoader
+import os
+import twodee as td
+
+pwd = os.path.dirname(os.path.abspath(__file__))
+env = Environment(loader=FileSystemLoader(pwd))
+template_path = 'scripts/2016-07-28/template_amp_generic1.py'
+template = env.get_template(template_path)
+
+db_path = 'scripts/2016-07-28/test_db.db'
+select = 'train_set=True'
+cutoff = 6.5
+h_layers = [2, 3]
+nodes = [2, 3]
+
+for h in h_layers:
+    for n in nodes:
+        db_dir = os.path.dirname(db_path)
+        framework = tuple([n]*h)
+        framework_str = "-".join([str(f) for f in framework])
+        nn_dir = os.path.join(db_dir, "generic1", framework_str, "")
+
+        if os.path.exists(os.path.join(nn_dir, 'submit.py')):
+            print('{0} already submitted.'.format(framework_str))
+            continue
+        if not os.path.exists(nn_dir):
+            os.makedirs(nn_dir)
+
+        desc_type = "Behler"
+        desc_args = {"cutoff": 6.5}
+        reg_type = "NeuralNetwork"
+        reg_args = {"hiddenlayers": framework}
+        amp_args = {"label": nn_dir}
+        train_args = {"data_format": 'db',
+                      "cores": 1,
+                      "energy_goal": 1e-3,
+                      "force_goal": None,
+                      "global_search": None,
+                      "extend_variables": False}
+
+        code = template.render(db_path=db_path, select=select,
+                               desc_type=desc_type, desc_args=desc_args,
+                               reg_type=reg_type, reg_args=reg_args,
+                               amp_args=amp_args, train_args=train_args)
+
+        submit_file = os.path.join(nn_dir, 'submit.py')
+        with open(submit_file, 'w') as f:
+            f.write(code)
+
+        td.qsub(submit_file, walltime="10:00:00")
+        print('{0} submitted.'.format(framework_str))
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+1432765.gilgamesh.cheme.cmu.edu
+1432766.gilgamesh.cheme.cmu.edu
+1432767.gilgamesh.cheme.cmu.edu
+1432768.gilgamesh.cheme.cmu.edu
+2-2 submitted.
+3-3 submitted.
+2-2-2 submitted.
+3-3-3 submitted.
+:END:
+
+*** DONE Iteration 2: Combining template
+
+Header subtemplate
+#+BEGIN_SRC python :results silent :tangle scripts/2016-07-28/templates/header.py
+#!/usr/bin/env python
+#+END_SRC
+
+Footer subtemplate
+#+BEGIN_SRC python :results silent :tangle scripts/2016-07-28/templates/footer.py
+print({{ output }})
+print("End of script reached successfully.")
+#+END_SRC
+
+Database subtemplate
+#+BEGIN_SRC python :results silent :tangle scripts/2016-07-28/templates/ase_db_get.py
+from ase.db import connect
+
+db_path = "{{ db_path }}"
+select = "{{ select }}"
+
+db = connect(db_path)
+
+images = []
+for d in db.select(select):
+    atoms = db.get_atoms(d.id)
+    del atoms.constraints
+    images += [atoms]
+#+END_SRC
+
+Amp subtemplate has dependency on variable name for images
+#+BEGIN_SRC python :results silent :tangle scripts/2016-07-28/templates/amp.py
+from amp import Amp
+from amp.descriptor import {{ desc_type }}
+from amp.regression import {{ reg_type }}
+
+desc = {{ desc_type }}(**{{ desc_args }})
+
+reg = {{ reg_type }}(**{{ reg_args }})
+
+calc = Amp(descriptor=desc,
+           **{{ amp_args }})
+#+END_SRC
+
+Training subtemplate
+#+BEGIN_SRC python :results silent :tangle scripts/2016-07-28/templates/amp_train.py
+train_args = {{ train_args }}
+
+{% if gs_type %}
+# Define global search
+from amp import {{ gs_type }}
+gs = {{ gs_type }}(**{{ gs_args }})
+train_args['global_search'] = gs
+
+{% endif %}
+calc.train(images=images,
+           **train_args)
+#+END_SRC
+
+Remove params subtemplate
+I think theres room for improvement here.
+#+BEGIN_SRC python :results silent :tangle scripts/2016-07-28/templates/amp_remove_params.py
+import os
+wd = "{{ workdir }}"
+os.unlink(os.path.join(wd, 'train-log.txt'))
+os.unlink(os.path.join(wd, 'trained-parameters.json'))
+#+END_SRC
+
+
+Runner
+#+BEGIN_SRC python :results output org drawer
+from jinja2 import Environment, FileSystemLoader
+import os
+import twodee as td
+
+pwd = os.path.dirname(os.path.abspath(__file__))
+env = Environment(loader=FileSystemLoader(pwd))
+template_path = 'scripts/2016-07-28/templates'
+header = env.get_template(os.path.join(template_path, "header.py"))
+footer = env.get_template(os.path.join(template_path, "footer.py"))
+ase_db_get = env.get_template(os.path.join(template_path, "ase_db_get.py"))
+amp = env.get_template(os.path.join(template_path, "amp.py"))
+amp_train = env.get_template(os.path.join(template_path, "amp_train.py"))
+amp_remove_params = env.get_template(os.path.join(template_path, "amp_remove_params.py"))
+
+db_path = 'scripts/2016-07-28/test_db.db'
+select = 'train_set=True'
+cutoff = 6.5
+h_layers = [2, 3]
+nodes = [2, 3]
+
+for h in h_layers:
+    for n in nodes:
+        db_dir = os.path.dirname(db_path)
+        framework = tuple([n]*h)
+        framework_str = "-".join([str(f) for f in framework])
+        nn_dir = os.path.join(db_dir, "generic2", framework_str, "")
+
+        if os.path.exists(os.path.join(nn_dir, 'submit.py')):
+            print('{0} already submitted.'.format(framework_str))
+            continue
+        if not os.path.exists(nn_dir):
+            os.makedirs(nn_dir)
+
+        desc_type = "Behler"
+        desc_args = {"cutoff": 6.5}
+        reg_type = "NeuralNetwork"
+        reg_args = {"hiddenlayers": framework}
+        amp_args = {"label": nn_dir}
+
+        gs_type = "SimulatedAnnealing"
+        gs_args = {"temperature": 70, "steps": 50}
+        train_args1 = {"data_format": 'db',
+                       "cores": 1,
+                       "energy_goal": 10,
+                       "force_goal": None,
+                       "extend_variables": False}
+
+        train_args2 = {"data_format": 'db',
+                       "cores": 1,
+                       "energy_goal": 1e-3,
+                       "force_goal": None,
+                       "extend_variables": False}
+        output = "\"Training completed.\""
+
+        codes = []
+        codes.append(header.render())
+        codes.append(ase_db_get.render(db_path=db_path, select=select))
+        codes.append(amp.render(desc_type=desc_type,
+                                desc_args=desc_args,
+                                reg_type=reg_type,
+                                reg_args=reg_args,
+                                amp_args=amp_args))
+        codes.append(amp_train.render(train_args=train_args1,
+                                      gs_type=gs_type,
+                                      gs_args=gs_args))
+        codes.append(amp_remove_params.render(workdir=nn_dir))
+        codes.append(amp_train.render(train_args=train_args2))
+        codes.append(footer.render(output=output))
+        code = "\n\n".join(codes)
+
+        submit_file = os.path.join(nn_dir, 'submit.py')
+        with open(submit_file, 'w') as f:
+            f.write(code)
+
+        td.qsub(submit_file, walltime="10:00:00")
+        print('{0} submitted.'.format(framework_str))
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+1432779.gilgamesh.cheme.cmu.edu
+1432780.gilgamesh.cheme.cmu.edu
+1432781.gilgamesh.cheme.cmu.edu
+1432782.gilgamesh.cheme.cmu.edu
+2-2 submitted.
+3-3 submitted.
+2-2-2 submitted.
+3-3-3 submitted.
+:END:
+
+*** TODO Iteration 3: Moving functions into twodee
 * twodee
 
 Module to help me write code in this project. This header serves as a testing ground for the module.
@@ -2137,6 +2675,17 @@ td.bp(atoms)
 
  #+RESULTS:
 
+*** db_update
+
+#+BEGIN_SRC python
+import twodee as td
+
+td.db_update('database/master.db', 'vasp')
+#+END_SRC
+
+#+RESULTS:
+: 670 total entries. 0 new entries added.
+
 *** edges
 
  #+BEGIN_SRC python :results drawer
@@ -2258,19 +2807,23 @@ td.bp([tester])
 : [0, 1, 2]
 : 
 
-*** queue_submit
+*** qsub
 
 #+BEGIN_SRC python :tangle ./queue/candidates/7/cans=7.py
-#!/usr/bin/env python
+import twodee as td
+sizes = [5, 6, 7]
+path = "./queue/candidates/".format
+prog= '''#!/usr/bin/env python
 import twodee as td
 
-cans = td.candidates(mat='graphene', layers=1, size=7, pores=None, silent=False)
+cans = td.candidates(mat="graphene", layers=1, size=7, pores=None, silent=False)
+'''
 #+END_SRC
 
 #+BEGIN_SRC python
 import twodee as td
 
-td.queue_submit("./queue/candidates/7/cans=7.py")
+td.qsub("./queue/candidates/7/cans=7.py")
 #+END_SRC
 
 #+RESULTS:
@@ -2747,10 +3300,9 @@ for pore in pores:
                     nsw=0,            # max number of steps to relax
                     atoms=atoms)
 
-#        calc.calculate()
-#        td.result('kpts={0:2.0f} x {0:2.0f} x 1'.format(k), calc)
-        energies.append(calc.potential_energy)
-Vasp.stop_if(None in energies)
+        td.result('kpts={0:2.0f} x {0:2.0f} x 1'.format(k), calc)
+#        energies.append(calc.potential_energy)
+#Vasp.stop_if(None in energies)
 #
 #plt.plot(ks, energies)
 #plt.xlabel("k-points (i x i x 1)")
@@ -2760,55 +3312,34 @@ Vasp.stop_if(None in energies)
 
 #+RESULTS:
 :RESULTS:
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=0/kpts=1 Queued: 1427913.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=0/kpts=1 Queued: 1427913.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=0/kpts=3 Queued: 1427914.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=0/kpts=3 Queued: 1427914.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=0/kpts=5 Queued: 1427915.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=0/kpts=5 Queued: 1427915.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=0/kpts=7 Queued: 1427916.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=0/kpts=7 Queued: 1427916.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=1/kpts=1 Queued: 1427917.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=1/kpts=1 Queued: 1427917.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=1/kpts=3 Queued: 1427918.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=1/kpts=3 Queued: 1427918.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=1/kpts=5 Queued: 1427919.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=1/kpts=5 Queued: 1427919.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=1/kpts=7 Queued: 1427920.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=1/kpts=7 Queued: 1427920.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=2/kpts=1 Queued: 1427921.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=2/kpts=1 Queued: 1427921.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=2/kpts=3 Queued: 1427922.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=2/kpts=3 Queued: 1427922.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=2/kpts=5 Queued: 1427923.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=2/kpts=5 Queued: 1427923.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=2/kpts=7 Queued: 1427924.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=2/kpts=7 Queued: 1427924.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=3/kpts=1 Queued: 1427925.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=3/kpts=1 Queued: 1427925.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=3/kpts=3 Queued: 1427926.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=3/kpts=3 Queued: 1427926.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=3/kpts=5 Queued: 1427927.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=3/kpts=5 Queued: 1427927.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=3/kpts=7 Queued: 1427928.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=3/kpts=7 Queued: 1427928.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=4/kpts=1 Queued: 1427929.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=4/kpts=1 Queued: 1427929.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=4/kpts=3 Queued: 1427930.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=4/kpts=3 Queued: 1427930.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=4/kpts=5 Queued: 1427931.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=4/kpts=5 Queued: 1427931.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=4/kpts=7 Queued: 1427932.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=4/kpts=7 Queued: 1427932.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=5/kpts=1 Queued: 1427933.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=5/kpts=1 Queued: 1427933.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=5/kpts=3 Queued: 1427934.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=5/kpts=3 Queued: 1427934.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=5/kpts=5 Queued: 1427935.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=5/kpts=5 Queued: 1427935.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=5/kpts=7 Queued: 1427936.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=5/kpts=7 Queued: 1427936.gilgamesh.cheme.cmu.edu
+kpts= 1 x  1 x 1: Energy = -460.536. Calc time: 133 min.
+kpts= 3 x  3 x 1: Energy = -461.102. Calc time: 228 min.
+kpts= 5 x  5 x 1: Energy = -461.195. Calc time: 343 min.
+kpts= 7 x  7 x 1: Energy = -461.191. Calc time: 520 min.
+kpts= 1 x  1 x 1: Energy = -443.151. Calc time: 185 min.
+kpts= 3 x  3 x 1: Energy = -443.708. Calc time: 669 min.
+kpts= 5 x  5 x 1: Energy = -443.674. Calc time: 974 min.
+kpts= 7 x  7 x 1: Energy = -443.680. Calc time: 1331 min.
+kpts= 1 x  1 x 1: Energy = -432.595. Calc time: 158 min.
+kpts= 3 x  3 x 1: Energy = -433.043. Calc time: 571 min.
+kpts= 5 x  5 x 1: Energy = -433.036. Calc time: 1256 min.
+kpts= 7 x  7 x 1: Energy = -433.033. Calc time: 2500 min.
+kpts= 1 x  1 x 1: Energy = -419.818. Calc time: 235 min.
+kpts= 3 x  3 x 1: Energy = -420.314. Calc time: 847 min.
+kpts= 5 x  5 x 1: Energy = -420.308. Calc time: 1839 min.
+kpts= 7 x  7 x 1: Energy = -420.308. Calc time: 2596 min.
+kpts= 1 x  1 x 1: Energy = -408.860. Calc time: 177 min.
+kpts= 3 x  3 x 1: Energy = -409.277. Calc time: 554 min.
+kpts= 5 x  5 x 1: Energy = -409.281. Calc time: 694 min.
+kpts= 7 x  7 x 1: Energy = -409.280. Calc time: 1131 min.
+kpts= 1 x  1 x 1: Energy = -397.284. Calc time: 277 min.
+kpts= 3 x  3 x 1: Energy = -397.656. Calc time: 903 min.
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=5/kpts=5 submitted: 1430979.gilgamesh.cheme.cmu.edu
+kpts= 5 x  5 x 1: Inprogress.
+kpts= 7 x  7 x 1: Energy = -397.654. Calc time: 3475 min.
 :END:
+
+A k-point grid of 5x5x1 is the lowest grid converged to 10 meV.
 
 *** DONE mat=graphene/layers=1/size=3/pore=3 - kpts relaxed
     CLOSED: [2016-07-18 Mon 16:27]
@@ -3512,7 +4043,8 @@ pore=026027028029030: Energy = -229.762. Calc time: 262 min.
 pore=027028029030031: Energy = -229.762. Calc time: 268 min.
 :END:
 
-*** INPROGRESS mat=graphene/layers=1/size=5/pore=0,3,4#,5
+*** DONE mat=graphene/layers=1/size=5/pore=0,3,4#,5
+    CLOSED: [2016-07-23 Sat 11:45]
 
 #+BEGIN_SRC python :results drawer
 from ase import Atoms, Atom
@@ -3616,118 +4148,63 @@ pore=046047048: Energy = -420.314. Calc time: 471 min.
 pore=047048049: Energy = -420.314. Calc time: 523 min.
 pore=012013014015: Energy = -408.182. Calc time: 439 min.
 pore=012013014022: Energy = -409.277. Calc time: 195 min.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/012013022023 Queued: 1428041.gilgamesh.cheme.cmu.edu
-pore=012013022023: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/013014015016 Queued: 1428042.gilgamesh.cheme.cmu.edu
-pore=013014015016: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/013014015022 Queued: 1428043.gilgamesh.cheme.cmu.edu
-pore=013014015022: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/013014015024 Queued: 1428044.gilgamesh.cheme.cmu.edu
-pore=013014015024: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/013014022023 Queued: 1428045.gilgamesh.cheme.cmu.edu
-pore=013014022023: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/013022023024 Queued: 1428046.gilgamesh.cheme.cmu.edu
-pore=013022023024: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/013022023032 Queued: 1428047.gilgamesh.cheme.cmu.edu
-pore=013022023032: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/014015016017 Queued: 1428048.gilgamesh.cheme.cmu.edu
-pore=014015016017: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/014015016024 Queued: 1428049.gilgamesh.cheme.cmu.edu
-pore=014015016024: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/014015023024 Queued: 1428050.gilgamesh.cheme.cmu.edu
-pore=014015023024: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/014015024025 Queued: 1428051.gilgamesh.cheme.cmu.edu
-pore=014015024025: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/015016017018 Queued: 1428052.gilgamesh.cheme.cmu.edu
-pore=015016017018: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/015016017024 Queued: 1428053.gilgamesh.cheme.cmu.edu
-pore=015016017024: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/015016017026 Queued: 1428054.gilgamesh.cheme.cmu.edu
-pore=015016017026: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/015016023024 Queued: 1428055.gilgamesh.cheme.cmu.edu
-pore=015016023024: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/015016024025 Queued: 1428056.gilgamesh.cheme.cmu.edu
-pore=015016024025: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/015022023024 Queued: 1428057.gilgamesh.cheme.cmu.edu
-pore=015022023024: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/015023024025 Queued: 1428058.gilgamesh.cheme.cmu.edu
-pore=015023024025: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/015023024032 Queued: 1428059.gilgamesh.cheme.cmu.edu
-pore=015023024032: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/015024025026 Queued: 1428060.gilgamesh.cheme.cmu.edu
-pore=015024025026: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/015024025034 Queued: 1428061.gilgamesh.cheme.cmu.edu
-pore=015024025034: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/016017018019 Queued: 1428062.gilgamesh.cheme.cmu.edu
-pore=016017018019: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/016017018026 Queued: 1428063.gilgamesh.cheme.cmu.edu
-pore=016017018026: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/016017025026 Queued: 1428064.gilgamesh.cheme.cmu.edu
-pore=016017025026: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/016017026027 Queued: 1428065.gilgamesh.cheme.cmu.edu
-pore=016017026027: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/017018019026 Queued: 1428066.gilgamesh.cheme.cmu.edu
-pore=017018019026: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/017018019028 Queued: 1428067.gilgamesh.cheme.cmu.edu
-pore=017018019028: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/017018025026 Queued: 1428068.gilgamesh.cheme.cmu.edu
-pore=017018025026: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/017018026027 Queued: 1428069.gilgamesh.cheme.cmu.edu
-pore=017018026027: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/017024025026 Queued: 1428070.gilgamesh.cheme.cmu.edu
-pore=017024025026: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/017025026027 Queued: 1428071.gilgamesh.cheme.cmu.edu
-pore=017025026027: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/017025026034 Queued: 1428072.gilgamesh.cheme.cmu.edu
-pore=017025026034: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/017026027028 Queued: 1428073.gilgamesh.cheme.cmu.edu
-pore=017026027028: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/017026027036 Queued: 1428074.gilgamesh.cheme.cmu.edu
-pore=017026027036: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/018019027028 Queued: 1428075.gilgamesh.cheme.cmu.edu
-pore=018019027028: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/018019028029 Queued: 1428076.gilgamesh.cheme.cmu.edu
-pore=018019028029: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/019026027028 Queued: 1428077.gilgamesh.cheme.cmu.edu
-pore=019026027028: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/019027028029 Queued: 1428078.gilgamesh.cheme.cmu.edu
-pore=019027028029: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/019027028036 Queued: 1428079.gilgamesh.cheme.cmu.edu
-pore=019027028036: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/019028029038 Queued: 1428080.gilgamesh.cheme.cmu.edu
-pore=019028029038: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/022023024025 Queued: 1428081.gilgamesh.cheme.cmu.edu
-pore=022023024025: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/022023024032 Queued: 1428082.gilgamesh.cheme.cmu.edu
-pore=022023024032: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/022023032033 Queued: 1428083.gilgamesh.cheme.cmu.edu
-pore=022023032033: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/023024025026 Queued: 1428084.gilgamesh.cheme.cmu.edu
-pore=023024025026: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/023024025032 Queued: 1428085.gilgamesh.cheme.cmu.edu
-pore=023024025032: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/023024025034 Queued: 1428086.gilgamesh.cheme.cmu.edu
-pore=023024025034: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/023024032033 Queued: 1428087.gilgamesh.cheme.cmu.edu
-pore=023024032033: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/023032033034 Queued: 1428088.gilgamesh.cheme.cmu.edu
-pore=023032033034: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/023032033042 Queued: 1428089.gilgamesh.cheme.cmu.edu
-pore=023032033042: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/024025026027 Queued: 1428090.gilgamesh.cheme.cmu.edu
-pore=024025026027: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/024025026034 Queued: 1428091.gilgamesh.cheme.cmu.edu
-pore=024025026034: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/024025033034 Queued: 1428092.gilgamesh.cheme.cmu.edu
-pore=024025033034: Inprogress.
+pore=012013022023: Energy = -408.182. Calc time: 827 min.
+pore=013014015016: Energy = -408.182. Calc time: 856 min.
+pore=013014015022: Energy = -408.868. Calc time: 1039 min.
+pore=013014015024: Energy = -408.868. Calc time: 997 min.
+pore=013014022023: Energy = -408.868. Calc time: 640 min.
+pore=013022023024: Energy = -408.868. Calc time: 660 min.
+pore=013022023032: Energy = -408.182. Calc time: 1086 min.
+pore=014015016017: Energy = -408.182. Calc time: 1198 min.
+pore=014015016024: Energy = -409.277. Calc time: 586 min.
+pore=014015023024: Energy = -408.868. Calc time: 1032 min.
+pore=014015024025: Energy = -408.182. Calc time: 1057 min.
+pore=015016017018: Energy = -408.182. Calc time: 1089 min.
+pore=015016017024: Energy = -408.868. Calc time: 908 min.
+pore=015016017026: Energy = -408.868. Calc time: 1025 min.
+pore=015016023024: Energy = -408.182. Calc time: 961 min.
+pore=015016024025: Energy = -408.868. Calc time: 897 min.
+pore=015022023024: Energy = -408.868. Calc time: 859 min.
+pore=015023024025: Energy = -409.277. Calc time: 697 min.
+pore=015023024032: Energy = -408.182. Calc time: 1097 min.
+pore=015024025026: Energy = -408.868. Calc time: 889 min.
+pore=015024025034: Energy = -408.182. Calc time: 1060 min.
+pore=016017018019: Energy = -408.182. Calc time: 1034 min.
+pore=016017018026: Energy = -409.277. Calc time: 778 min.
+pore=016017025026: Energy = -408.868. Calc time: 790 min.
+pore=016017026027: Energy = -408.182. Calc time: 1086 min.
+pore=017018019026: Energy = -408.868. Calc time: 1061 min.
+pore=017018019028: Energy = -408.868. Calc time: 911 min.
+pore=017018025026: Energy = -408.182. Calc time: 1123 min.
+pore=017018026027: Energy = -408.868. Calc time: 930 min.
+pore=017024025026: Energy = -408.868. Calc time: 1086 min.
+pore=017025026027: Energy = -409.277. Calc time: 627 min.
+pore=017025026034: Energy = -408.182. Calc time: 1204 min.
+pore=017026027028: Energy = -408.868. Calc time: 960 min.
+pore=017026027036: Energy = -408.182. Calc time: 1014 min.
+pore=018019027028: Energy = -408.868. Calc time: 909 min.
+pore=018019028029: Energy = -408.182. Calc time: 1302 min.
+pore=019026027028: Energy = -408.868. Calc time: 828 min.
+pore=019027028029: Energy = -409.277. Calc time: 649 min.
+pore=019027028036: Energy = -408.182. Calc time: 1065 min.
+pore=019028029038: Energy = -408.182. Calc time: 1129 min.
+pore=022023024025: Energy = -408.182. Calc time: 1038 min.
+pore=022023024032: Energy = -409.277. Calc time: 769 min.
+pore=022023032033: Energy = -408.182. Calc time: 1088 min.
+pore=023024025026: Energy = -408.182. Calc time: 1001 min.
+pore=023024025032: Energy = -408.868. Calc time: 912 min.
+pore=023024025034: Energy = -408.868. Calc time: 957 min.
+pore=023024032033: Energy = -408.868. Calc time: 831 min.
+pore=023032033034: Energy = -408.868. Calc time: 964 min.
+pore=023032033042: Energy = -408.182. Calc time: 1029 min.
+pore=024025026027: Energy = -408.182. Calc time: 1058 min.
+pore=024025026034: Energy = -409.277. Calc time: 638 min.
+pore=024025033034: Energy = -408.868. Calc time: 1002 min.
 pore=024025034035: Energy = -408.182. Calc time: 426 min.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/025026027028 Queued: 1428094.gilgamesh.cheme.cmu.edu
-pore=025026027028: Inprogress.
+pore=025026027028: Energy = -408.182. Calc time: 706 min.
 pore=025026027034: Energy = -408.868. Calc time: 383 min.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/025026027036 Queued: 1428096.gilgamesh.cheme.cmu.edu
-pore=025026027036: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/025026033034 Queued: 1428097.gilgamesh.cheme.cmu.edu
-pore=025026033034: Inprogress.
+pore=025026027036: Energy = -408.868. Calc time: 1118 min.
+pore=025026033034: Energy = -408.182. Calc time: 1177 min.
 pore=025026034035: Energy = -408.868. Calc time: 291 min.
 pore=025032033034: Energy = -408.868. Calc time: 319 min.
 pore=025033034035: Energy = -409.277. Calc time: 215 min.
@@ -3740,91 +4217,59 @@ pore=026027035036: Energy = -408.868. Calc time: 272 min.
 pore=026027036037: Energy = -408.182. Calc time: 347 min.
 pore=027028029036: Energy = -408.868. Calc time: 332 min.
 pore=027028029038: Energy = -408.868. Calc time: 455 min.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/027028035036 Queued: 1428110.gilgamesh.cheme.cmu.edu
-pore=027028035036: Inprogress.
+pore=027028035036: Energy = -408.182. Calc time: 593 min.
 pore=027028036037: Energy = -408.868. Calc time: 472 min.
 pore=027034035036: Energy = -408.868. Calc time: 495 min.
 pore=027035036037: Energy = -409.277. Calc time: 374 min.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/027035036044 Queued: 1428114.gilgamesh.cheme.cmu.edu
-pore=027035036044: Inprogress.
+pore=027035036044: Energy = -408.182. Calc time: 749 min.
 pore=027036037038: Energy = -408.868. Calc time: 310 min.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/027036037046 Queued: 1428116.gilgamesh.cheme.cmu.edu
-pore=027036037046: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/028029037038 Queued: 1428117.gilgamesh.cheme.cmu.edu
-pore=028029037038: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/028029038039 Queued: 1428118.gilgamesh.cheme.cmu.edu
-pore=028029038039: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/029036037038 Queued: 1428119.gilgamesh.cheme.cmu.edu
-pore=029036037038: Inprogress.
+pore=027036037046: Energy = -408.182. Calc time: 759 min.
+pore=028029037038: Energy = -408.868. Calc time: 553 min.
+pore=028029038039: Energy = -408.182. Calc time: 937 min.
+pore=029036037038: Energy = -408.868. Calc time: 873 min.
 pore=029037038039: Energy = -409.277. Calc time: 422 min.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/029037038046 Queued: 1428121.gilgamesh.cheme.cmu.edu
-pore=029037038046: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/029038039048 Queued: 1428122.gilgamesh.cheme.cmu.edu
-pore=029038039048: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/032033034035 Queued: 1428123.gilgamesh.cheme.cmu.edu
-pore=032033034035: Inprogress.
+pore=029037038046: Energy = -408.182. Calc time: 786 min.
+pore=029038039048: Energy = -408.182. Calc time: 916 min.
+pore=032033034035: Energy = -408.182. Calc time: 752 min.
 pore=032033034042: Energy = -409.277. Calc time: 399 min.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/032033042043 Queued: 1428125.gilgamesh.cheme.cmu.edu
-pore=032033042043: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/033034035036 Queued: 1428126.gilgamesh.cheme.cmu.edu
-pore=033034035036: Inprogress.
+pore=032033042043: Energy = -408.182. Calc time: 689 min.
+pore=033034035036: Energy = -408.182. Calc time: 930 min.
 pore=033034035042: Energy = -408.868. Calc time: 411 min.
 pore=033034035044: Energy = -408.868. Calc time: 357 min.
 pore=033034042043: Energy = -408.868. Calc time: 361 min.
 pore=033042043044: Energy = -408.868. Calc time: 363 min.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/034035036037 Queued: 1428131.gilgamesh.cheme.cmu.edu
-pore=034035036037: Inprogress.
+pore=034035036037: Energy = -408.182. Calc time: 616 min.
 pore=034035036044: Energy = -409.277. Calc time: 439 min.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/034035043044 Queued: 1428133.gilgamesh.cheme.cmu.edu
-pore=034035043044: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/034035044045 Queued: 1428134.gilgamesh.cheme.cmu.edu
-pore=034035044045: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/035036037038 Queued: 1428135.gilgamesh.cheme.cmu.edu
-pore=035036037038: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/035036037044 Queued: 1428136.gilgamesh.cheme.cmu.edu
-pore=035036037044: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/035036037046 Queued: 1428137.gilgamesh.cheme.cmu.edu
-pore=035036037046: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/035036043044 Queued: 1428138.gilgamesh.cheme.cmu.edu
-pore=035036043044: Inprogress.
+pore=034035043044: Energy = -408.868. Calc time: 634 min.
+pore=034035044045: Energy = -408.182. Calc time: 600 min.
+pore=035036037038: Energy = -408.182. Calc time: 706 min.
+pore=035036037044: Energy = -408.868. Calc time: 604 min.
+pore=035036037046: Energy = -408.868. Calc time: 532 min.
+pore=035036043044: Energy = -408.182. Calc time: 708 min.
 pore=035036044045: Energy = -408.868. Calc time: 523 min.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/035042043044 Queued: 1428140.gilgamesh.cheme.cmu.edu
-pore=035042043044: Inprogress.
+pore=035042043044: Energy = -408.868. Calc time: 537 min.
 pore=035043044045: Energy = -409.277. Calc time: 427 min.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/035044045046 Queued: 1428142.gilgamesh.cheme.cmu.edu
-pore=035044045046: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/036037038039 Queued: 1428143.gilgamesh.cheme.cmu.edu
-pore=036037038039: Inprogress.
+pore=035044045046: Energy = -408.868. Calc time: 549 min.
+pore=036037038039: Energy = -408.182. Calc time: 640 min.
 pore=036037038046: Energy = -409.277. Calc time: 405 min.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/036037045046 Queued: 1428145.gilgamesh.cheme.cmu.edu
-pore=036037045046: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/036037046047 Queued: 1428146.gilgamesh.cheme.cmu.edu
-pore=036037046047: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/037038039046 Queued: 1428147.gilgamesh.cheme.cmu.edu
-pore=037038039046: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/037038039048 Queued: 1428148.gilgamesh.cheme.cmu.edu
-pore=037038039048: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/037038045046 Queued: 1428149.gilgamesh.cheme.cmu.edu
-pore=037038045046: Inprogress.
+pore=036037045046: Energy = -408.868. Calc time: 556 min.
+pore=036037046047: Energy = -408.182. Calc time: 677 min.
+pore=037038039046: Energy = -408.868. Calc time: 546 min.
+pore=037038039048: Energy = -408.868. Calc time: 533 min.
+pore=037038045046: Energy = -408.182. Calc time: 683 min.
 pore=037038046047: Energy = -408.868. Calc time: 456 min.
 pore=037044045046: Energy = -408.868. Calc time: 458 min.
 pore=037045046047: Energy = -409.277. Calc time: 401 min.
 pore=037046047048: Energy = -408.868. Calc time: 450 min.
 pore=038039047048: Energy = -408.868. Calc time: 456 min.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/038039048049 Queued: 1428155.gilgamesh.cheme.cmu.edu
-pore=038039048049: Inprogress.
+pore=038039048049: Energy = -408.182. Calc time: 960 min.
 pore=039046047048: Energy = -408.868. Calc time: 411 min.
 pore=039047048049: Energy = -409.277. Calc time: 321 min.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/042043044045 Queued: 1428158.gilgamesh.cheme.cmu.edu
-pore=042043044045: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/043044045046 Queued: 1428159.gilgamesh.cheme.cmu.edu
-pore=043044045046: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/044045046047 Queued: 1428160.gilgamesh.cheme.cmu.edu
-pore=044045046047: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/045046047048 Queued: 1428161.gilgamesh.cheme.cmu.edu
-pore=045046047048: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/046047048049 Queued: 1428162.gilgamesh.cheme.cmu.edu
-pore=046047048049: Inprogress.
+pore=042043044045: Energy = -408.182. Calc time: 562 min.
+pore=043044045046: Energy = -408.182. Calc time: 566 min.
+pore=044045046047: Energy = -408.182. Calc time: 683 min.
+pore=045046047048: Energy = -408.182. Calc time: 540 min.
+pore=046047048049: Energy = -408.182. Calc time: 586 min.
 :END:
 
 ** Relaxations
@@ -3898,15 +4343,78 @@ pore=008009010011014015016: Energy = -86.3767. Calc time: 391 min.
 pore=008009010014015016017: Energy = -88.3831. Calc time: 648 min.
 :END:
 
+** Results
+*** Pore energy comparison
+
+#+BEGIN_SRC python :results drawer
+from ase import Atoms, Atom
+from ase.db import connect
+import numpy as np
+import matplotlib.pyplot as plt
+from vasp import Vasp
+
+import twodee as td
+
+sizes = [3, 4, 5]
+db = connect('database/master.db')
+
+for size in sizes:
+    energies = {}
+    pore_sizes = set()
+    for d in db.select(['type=point', 'mat=graphene', 'layers=1',
+                        'size={}'.format(size)]):
+
+        energy = d.energy / d.natoms
+        pore_size = d['pore']
+        pore_sizes.add(pore_size)
+        if pore_size not in energies:
+            energies[pore_size] = [energy]
+        else:
+            energies[pore_size] += [energy]
+
+
+    for ps in sorted(pore_sizes):
+        num_calcs = len(energies[ps])
+        if size == 3:
+            plt.plot([ps]*num_calcs, energies[ps], 'bo', label="Size=3x3")
+#            plt.boxplot(energies[ps], ps)
+        elif size == 4:
+            plt.plot([ps]*num_calcs, energies[ps], 'go', label="Size=4x4")
+#            plt.boxplot(energies[ps], ps)
+        elif size == 5:
+            plt.plot([ps]*num_calcs, energies[ps], 'ro', label="Size=5x5")
+
+file_path = 'results/pore-size-comparison.png'
+#plt.legend(['Size = 3x3', 'Size = 4x4'])
+from collections import OrderedDict
+handles, labels = plt.gca().get_legend_handles_labels()
+by_label = OrderedDict(zip(labels, handles))
+plt.legend(by_label.values(), by_label.keys())
+#plt.legend()
+plt.xlabel('Pore size (atoms)')
+plt.ylabel('Energy (eV/atom)')
+#plt.savefig(file_path)
+#print('[[' + file_path + ']]')
+fig_name = "fig:pore-size-comparison"
+caption = "An energy comparison of different pore structure for a 3x3 graphene superstructure. The calculations have not been relaxed after the pore was created. label:" + fig_name
+td.print_image(file_path, plt, caption=caption, fig_name=fig_name)
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+#+CAPTION: An energy comparison of different pore structure for a 3x3 graphene superstructure. The calculations have not been relaxed after the pore was created. label:fig:pore-size-comparison
+#+NAME: fig:fig:pore-size-comparison
+[[./img/results/pore-size-comparison.png]]
+:END:
+
 * Neural network
 
 ** DONE Graphene equation of state (amp-tutorial)
    CLOSED: [2016-07-19 Tue 16:18]
-
 Build a neural network around the equation of state for graphene in the style of Jake's [[https://github.com/jboes/amp-tutorial][amp-tutorial]].
 
+*** Build the database.
 
-Build the database.
 #+BEGIN_SRC python :results drawer
 from ase import Atoms, Atom
 import numpy as np
@@ -3930,7 +4438,8 @@ calcs = [Vasp(format_name.format(a)) for a in A]
 :RESULTS:
 :END:
 
-Plot EOS using the database.
+*** Plot EOS using the database.
+
 #+BEGIN_SRC python :results drawer
 from ase.db import connect
 import matplotlib.pyplot as plt
@@ -3961,7 +4470,9 @@ td.print_image(file_path, plt)
 [[./img/./tmp/img/vasp/eos/mat=graphene_layers=1_pore=0_eos.png]]
 :END:
 
-Designate training data, leaving 10% of calculations for testing later.
+*** Designate training data
+
+Leave 10% of calculations for testing later.
 #+BEGIN_SRC python :results drawer
 from ase.db import connect
 import random
@@ -3991,6 +4502,7 @@ print("Done")
 Done
 :END:
 
+*** Build the network
 
 Generate an initial guess for the parameters to build the neural networks.
 #+BEGIN_SRC python :exports none
@@ -4035,7 +4547,6 @@ for n in [4, 5]:
 
 #+RESULTS:
 
-
 Build the networks using the previous initial guess.
 #+BEGIN_SRC python :results drawer
 from amp import Amp
@@ -4070,7 +4581,8 @@ for n in [4, 5]:
 :RESULTS:
 :END:
 
-
+*** Convergence
+    
 Check for convergence.
 #+BEGIN_SRC python :results drawer
 import os
@@ -4099,6 +4611,7 @@ for r, d, f in os.walk('networks/db=eos0/'):
 | {u'C': [2, 5]} |       222 | 2016-07-18T15:58:01 |     4.444e-05 |   9.937e-04 |
 :END:
 
+*** Add to db
 
 Add the neural network results to the database.
 #+BEGIN_SRC python :results drawer
@@ -4126,8 +4639,8 @@ for d in db.select():
 :RESULTS:
 :END:
 
+*** Residual analysis
 
-Residual analysis.
 #+BEGIN_SRC python :results drawer
 import numpy as np
 import matplotlib.pyplot as plt
@@ -4185,8 +4698,8 @@ print("[[" + './tmp/residuals-1.png' + "]]")
 [[./tmp/residuals-1.png]]
 :END:
 
+*** Recreate equation of state
 
-Recreate the equation of state.
 #+BEGIN_SRC python :results drawer
 import numpy as np
 import matplotlib.pyplot as plt
@@ -4261,7 +4774,6 @@ for r, d, f in os.walk('./networks/db=eos0/'):
 [[./tmp/eos-NN4.png]]
 [[./tmp/eos-NN5.png]]
 :END:
-
 
 My equation of state comparison
 #+BEGIN_SRC python :results drawer
@@ -4381,6 +4893,692 @@ plt.savefig('./tmp/app-eos.png')
 
 [[./tmp/app-eos.png]]
 
+** TODO Test neural network as a function of hidden layers and nodes
+
+*** Copy the master database into working directory
+
+#+BEGIN_SRC python
+import os.path
+import shutil
+
+import twodee as td
+
+wd = 'networks/test_validation'
+dbname = os.path.basename(wd) + '.db'
+new_db = os.path.join(wd, dbname)
+
+if not os.path.exists(wd):
+    os.makedirs(wd)
+if os.path.exists(new_db):
+    print("Database already exists.")
+else:
+    shutil.copyfile('database/master.db', new_db)
+#+END_SRC
+
+#+RESULTS:
+
+*** Separate data into train / test
+
+This test will be performed with size=2,3,4 point calculations.
+
+#+BEGIN_SRC python
+from ase.db import connect
+import numpy as np
+import os
+import random
+
+import twodee as td
+
+wd = 'networks/test_validation'
+dbname = os.path.basename(wd) + '.db'
+db = connect(os.path.join(wd, dbname))
+
+n_ids = []
+for d in db.select(['type=point', '2<=size<=4']):
+    n_ids += [d.id]
+
+n = len(n_ids)
+n_train = int(round(n * 0.9))
+
+random.seed(256)
+train_samples = random.sample(n_ids, n_train)
+valid_samples = set(n_ids) - set(train_samples)
+
+db.update(list(train_samples), train_set=True)
+db.update(list(valid_samples), train_set=False)
+
+print("Done")
+#+END_SRC
+
+#+RESULTS:
+: Done
+
+*** Build the network
+
+Generate an initial guess for the parameters to build the neural networks.
+
+#+BEGIN_SRC python
+#!/usr/bin/env python
+from amp import Amp
+from amp.descriptor import Behler
+from amp.regression import NeuralNetwork
+from ase.db import connect
+import os
+
+wd = 'networks/test_validation'
+dbname = os.path.basename(wd) + '.db'
+db = connect(os.path.join(wd, dbname))
+
+images = []
+for d in db.select('train_set=True'):
+    atoms = db.get_atoms(d.id)
+    del atoms.constraints
+    images += [atoms]
+
+pwd = os.path.join(wd, 'h={0}/n={1}/')
+
+if not os.path.exists(pwd):
+    os.makedirs(pwd)
+
+calc = Amp(label=pwd,
+dblabel=wd,
+descriptor=Behler(cutoff=6.5),
+regression=NeuralNetwork(hiddenlayers=(tuple([{2}]*{1}))))
+
+calc.train(images=images,
+data_format='db',
+cores=1,
+energy_goal=1e-3,  # The default energy training goal
+force_goal=None,  # There are no forces in the training data
+global_search=None,  # Already have a good starting point
+extend_variables=False) # Do not use this feature
+#+END_SRC
+
+There needs to be a better way to make these submission files.
+#+BEGIN_SRC python
+import os
+
+import twodee as td
+
+
+wd = 'networks/test_validation'
+h_layers = [2, 3, 4, 5]
+nodes = [2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+for h in h_layers:
+    for n in nodes:
+
+        code = """#!/usr/bin/env python
+from amp import Amp
+from amp.descriptor import Behler
+from amp.regression import NeuralNetwork
+from ase.db import connect
+import os
+
+wd = 'networks/test_validation'
+dbname = os.path.basename(wd) + '.db'
+db = connect(os.path.join(wd, dbname))
+
+images = []
+for d in db.select('train_set=True'):
+    atoms = db.get_atoms(d.id)
+    del atoms.constraints
+    images += [atoms]
+
+pwd = os.path.join(wd, 'h={0}/n={1}/')
+
+if not os.path.exists(pwd):
+    os.makedirs(pwd)
+
+calc = Amp(label=pwd,
+dblabel=wd,
+descriptor=Behler(cutoff=6.5),
+regression=NeuralNetwork(hiddenlayers=(tuple([{1}]*{0}))))
+
+calc.train(images=images,
+data_format='db',
+cores=1,
+energy_goal=1e-3,  # The default energy training goal
+force_goal=None,  # There are no forces in the training data
+global_search=None,  # Already have a good starting point
+extend_variables=False) # Do not use this feature
+""".format(h, n)
+
+        pwd = os.path.join(wd, 'h={0}/n={1}/'.format(h,n))
+        if os.path.exists(os.path.join(pwd, 'submit.py')):
+            print('h={0}/n={1} already submitted.'.format(h,n))
+            continue
+        if not os.path.exists(pwd):
+            os.makedirs(pwd)
+
+        submit_file = os.path.join(pwd, 'submit.py')
+        with open(submit_file, 'w') as f:
+            f.write(code)
+
+        td.qsub(submit_file)
+        print('h={0}/n={1} submitted.'.format(h,n))
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+h=2/n=2 already submitted.
+h=2/n=3 already submitted.
+h=2/n=4 already submitted.
+h=2/n=5 already submitted.
+h=2/n=6 already submitted.
+h=2/n=7 already submitted.
+h=2/n=8 already submitted.
+h=2/n=9 already submitted.
+h=2/n=10 already submitted.
+h=3/n=2 already submitted.
+h=3/n=3 already submitted.
+h=3/n=4 already submitted.
+h=3/n=5 already submitted.
+h=3/n=6 already submitted.
+h=3/n=7 already submitted.
+h=3/n=8 already submitted.
+h=3/n=9 already submitted.
+h=3/n=10 already submitted.
+h=4/n=2 already submitted.
+h=4/n=3 already submitted.
+h=4/n=4 already submitted.
+h=4/n=5 already submitted.
+h=4/n=6 already submitted.
+h=4/n=7 already submitted.
+h=4/n=8 already submitted.
+h=4/n=9 already submitted.
+h=4/n=10 already submitted.
+h=5/n=2 already submitted.
+h=5/n=3 already submitted.
+h=5/n=4 already submitted.
+h=5/n=5 already submitted.
+h=5/n=6 already submitted.
+h=5/n=7 already submitted.
+h=5/n=8 already submitted.
+h=5/n=9 already submitted.
+h=5/n=10 already submitted.
+#+end_example
+
+*** Convergence
+Check the results for convergence.
+#+BEGIN_SRC python :results drawer
+import json
+import os
+
+import twodee as td
+
+print('|Hidden layers|Iteration|Time|Cost Function|Energy RMSE|')
+print('|-')
+
+wd = 'networks/test_validation'
+h_layers = [2, 3, 4, 5]
+nodes = [2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+for h in h_layers:
+    for n in nodes:
+        pwd = os.path.join(wd, 'h={0}/n={1}/'.format(h,n))
+        output_files = td.calc_output_files(pwd)
+
+        if not output_files:
+            print('h={0}/n={1}: In progress.'.format(h,n))
+            continue
+
+        output = os.path.join(pwd, output_files[0])
+        with open(output, 'r') as f:
+            if len(f.read()) > 0:
+                print('h={0}/n={1} Did not converge.'.format(h,n))
+            else:
+                print('h={0}/n={1} Converged.'.format(h,n))
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+| Hidden layers | Iteration | Time | Cost Function | Energy RMSE |
+|---------------+-----------+------+---------------+-------------|
+h=2/n=2 Did not converge.
+| {u'C': [3, 3]} | 909 | 2016-07-25T13:37:23 | 2.369e-04 | 9.957e-04 |
+h=2/n={u'C': [3, 3]} Converged.
+|{u'C': [4, 4]}|428|2016-07-25T13:35:22|2.375e-04|9.968e-04|
+h=2/n={u'C': [4, 4]} Converged.
+| {u'C': [5, 5]} | 267 | 2016-07-25T13:34:54 | 2.126e-04 | 9.431e-04 |
+h=2/n={u'C': [5, 5]} Converged.
+| {u'C': [6, 6]} | 358 | 2016-07-25T13:35:34 | 2.316e-04 | 9.844e-04 |
+h=2/n={u'C': [6, 6]} Converged.
+| {u'C': [7, 7]} | 233 | 2016-07-25T13:34:32 | 2.331e-04 | 9.875e-04 |
+h=2/n={u'C': [7, 7]} Converged.
+| {u'C': [8, 8]} | 266 | 2016-07-25T13:34:49 | 2.369e-04 | 9.955e-04 |
+h=2/n={u'C': [8, 8]} Converged.
+| {u'C': [9, 9]} | 262 | 2016-07-25T13:35:43 | 2.340e-04 | 9.895e-04 |
+h=2/n={u'C': [9, 9]} Converged.
+|{u'C': [10, 10]}|301|2016-07-25T13:35:55|2.245e-04|9.692e-04|
+h=2/n={u'C': [10, 10]} Converged.
+h=3/n=2 Did not converge.
+| {u'C': [3, 3, 3]} | 1151 | 2016-07-25T13:39:54 | 2.378e-04 | 9.975e-04 |
+h=3/n={u'C': [3, 3, 3]} Converged.
+h=3/n=4 Did not converge.
+| {u'C': [5, 5, 5]} | 254 | 2016-07-25T13:35:32 | 2.275e-04 | 9.756e-04 |
+h=3/n={u'C': [5, 5, 5]} Converged.
+h=3/n=6 Did not converge.
+h=3/n=7 Did not converge.
+| {u'C': [8, 8, 8]} | 302 | 2016-07-25T13:36:33 | 2.300e-04 | 9.809e-04 |
+h=3/n={u'C': [8, 8, 8]} Converged.
+| {u'C': [9, 9, 9]} | 286 | 2016-07-25T13:36:42 | 2.317e-04 | 9.847e-04 |
+h=3/n={u'C': [9, 9, 9]} Converged.
+| {u'C': [10, 10, 10]} | 198 | 2016-07-25T13:36:12 | 2.280e-04 | 9.768e-04 |
+h=3/n={u'C': [10, 10, 10]} Converged.
+h=4/n=2 Did not converge.
+| {u'C': [3, 3, 3, 3]} | 387 | 2016-07-25T13:36:56 | 1.972e-04 | 9.083e-04 |
+h=4/n={u'C': [3, 3, 3, 3]} Converged.
+h=4/n=4 Did not converge.
+| {u'C': [5, 5, 5, 5]} | 797 | 2016-07-25T13:38:36 | 2.322e-04 | 9.856e-04 |
+h=4/n={u'C': [5, 5, 5, 5]} Converged.
+h=4/n=6 Did not converge.
+h=4/n=7 Did not converge.
+| {u'C': [8, 8, 8, 8]} | 210 | 2016-07-25T13:36:57 | 1.932e-04 | 8.990e-04 |
+h=4/n={u'C': [8, 8, 8, 8]} Converged.
+| {u'C': [9, 9, 9, 9]} | 1315 | 2016-07-25T13:45:32 | 1.973e-04 | 9.087e-04 |
+h=4/n={u'C': [9, 9, 9, 9]} Converged.
+| {u'C': [10, 10, 10, 10]} | 2542 | 2016-07-25T13:55:58 | 2.243e-04 | 9.689e-04 |
+h=4/n={u'C': [10, 10, 10, 10]} Converged.
+h=5/n=2 Did not converge.
+| {u'C': [3, 3, 3, 3, 3]} | 238 | 2016-07-25T13:37:04 | 2.212e-04 | 9.620e-04 |
+h=5/n={u'C': [3, 3, 3, 3, 3]} Converged.
+| {u'C': [4, 4, 4, 4, 4]} | 424 | 2016-07-25T13:45:54 | 2.387e-04 | 9.993e-04 |
+h=5/n={u'C': [4, 4, 4, 4, 4]} Converged.
+h=5/n=5 Did not converge.
+h=5/n=6 Did not converge.
+| {u'C': [7, 7, 7, 7, 7]} | 290 | 2016-07-25T13:38:29 | 2.213e-04 | 9.622e-04 |
+h=5/n={u'C': [7, 7, 7, 7, 7]} Converged.
+| {u'C': [8, 8, 8, 8, 8]} | 330 | 2016-07-25T13:38:47 | 2.314e-04 | 9.840e-04 |
+h=5/n={u'C': [8, 8, 8, 8, 8]} Converged.
+| {u'C': [9, 9, 9, 9, 9]} | 384 | 2016-07-25T13:39:34 | 2.094e-04 | 9.359e-04 |
+h=5/n={u'C': [9, 9, 9, 9, 9]} Converged.
+| {u'C': [10, 10, 10, 10, 10]} | 239 | 2016-07-25T13:39:02 | 2.370e-04 | 9.958e-04 |
+h=5/n={u'C': [10, 10, 10, 10, 10]} Converged.
+:END:
+
+#+BEGIN_SRC python
+import itertools
+import os
+
+import twodee as td
+
+wd = 'networks/test_validation'
+h_layers = [2, 3, 4, 5]
+nodes = [2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+
+unconverged = set()
+for h in h_layers:
+    for n in nodes:
+        pwd = os.path.join(wd, 'h={0}/n={1}/'.format(h,n))
+        output_files = td.calc_output_files(pwd)
+        output = os.path.join(pwd, output_files[0])
+
+        with open(output, 'r') as f:
+            if len(f.read()) != 0:
+                unconverged.add((h, n))
+
+converged = set(itertools.product(h_layers, nodes)) - unconverged
+
+print("Unconverged:")
+print(sorted(unconverged))
+print("Converged:")
+print(sorted(converged))
+#+END_SRC
+
+#+RESULTS:
+: Unconverged:
+: [(2, 2), (3, 2), (3, 4), (3, 6), (3, 7), (4, 2), (4, 4), (4, 6), (4, 7), (5, 2), (5, 5), (5, 6)]
+: Converged:
+: [(2, 3), (2, 4), (2, 5), (2, 6), (2, 7), (2, 8), (2, 9), (2, 10), (3, 3), (3, 5), (3, 8), (3, 9), (3, 10), (4, 3), (4, 5), (4, 8), (4, 9), (4, 10), (5, 3), (5, 4), (5, 7), (5, 8), (5, 9), (5, 10)]
+
+Print convergence table.
+#+BEGIN_SRC python :results drawer
+import json
+import os
+
+import twodee as td
+
+
+wd = 'networks/test_validation'
+h_layers = [2, 3, 4, 5]
+nodes = [2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+print('|Hidden layers|Nodes|Iterations|Time|Cost Function|Energy RMSE|')
+for h in h_layers:
+    print('|-')
+    for n in nodes:
+        pwd = os.path.join(wd, 'h={0}/n={1}/'.format(h,n))
+        output_files = td.calc_output_files(pwd)
+
+        if not output_files:
+            continue
+
+        output = os.path.join(pwd, output_files[0])
+        with open(output, 'r') as f:
+            if len(f.read()) == 0:
+                with open(os.path.join(pwd, 'train-log.txt'), 'r') as f:
+                    v = f.readlines()[-3].split()
+                    with open(os.path.join(pwd, 'trained-parameters.json'), 'r') as f:
+                        p = json.load(f)
+                    print('|{}|{}|{}|{}|{}|{}|'.format(h, n, v[0], v[1], v[2], v[3]))
+            else:
+                print('|{}|{}||||Not converged|'.format(h, n))
+
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+| Hidden layers | Nodes | Iterations | Time                | Cost Function |   Energy RMSE |
+|---------------+-------+------------+---------------------+---------------+---------------|
+|             2 |     2 |            |                     |               | Not converged |
+|             2 |     3 |        909 | 2016-07-25T13:37:23 |     2.369e-04 |     9.957e-04 |
+|             2 |     4 |        428 | 2016-07-25T13:35:22 |     2.375e-04 |     9.968e-04 |
+|             2 |     5 |        267 | 2016-07-25T13:34:54 |     2.126e-04 |     9.431e-04 |
+|             2 |     6 |        358 | 2016-07-25T13:35:34 |     2.316e-04 |     9.844e-04 |
+|             2 |     7 |        233 | 2016-07-25T13:34:32 |     2.331e-04 |     9.875e-04 |
+|             2 |     8 |        266 | 2016-07-25T13:34:49 |     2.369e-04 |     9.955e-04 |
+|             2 |     9 |        262 | 2016-07-25T13:35:43 |     2.340e-04 |     9.895e-04 |
+|             2 |    10 |        301 | 2016-07-25T13:35:55 |     2.245e-04 |     9.692e-04 |
+|---------------+-------+------------+---------------------+---------------+---------------|
+|             3 |     2 |            |                     |               | Not converged |
+|             3 |     3 |       1151 | 2016-07-25T13:39:54 |     2.378e-04 |     9.975e-04 |
+|             3 |     4 |            |                     |               | Not converged |
+|             3 |     5 |        254 | 2016-07-25T13:35:32 |     2.275e-04 |     9.756e-04 |
+|             3 |     6 |            |                     |               | Not converged |
+|             3 |     7 |            |                     |               | Not converged |
+|             3 |     8 |        302 | 2016-07-25T13:36:33 |     2.300e-04 |     9.809e-04 |
+|             3 |     9 |        286 | 2016-07-25T13:36:42 |     2.317e-04 |     9.847e-04 |
+|             3 |    10 |        198 | 2016-07-25T13:36:12 |     2.280e-04 |     9.768e-04 |
+|---------------+-------+------------+---------------------+---------------+---------------|
+|             4 |     2 |            |                     |               | Not converged |
+|             4 |     3 |        387 | 2016-07-25T13:36:56 |     1.972e-04 |     9.083e-04 |
+|             4 |     4 |            |                     |               | Not converged |
+|             4 |     5 |        797 | 2016-07-25T13:38:36 |     2.322e-04 |     9.856e-04 |
+|             4 |     6 |            |                     |               | Not converged |
+|             4 |     7 |            |                     |               | Not converged |
+|             4 |     8 |        210 | 2016-07-25T13:36:57 |     1.932e-04 |     8.990e-04 |
+|             4 |     9 |       1315 | 2016-07-25T13:45:32 |     1.973e-04 |     9.087e-04 |
+|             4 |    10 |       2542 | 2016-07-25T13:55:58 |     2.243e-04 |     9.689e-04 |
+|---------------+-------+------------+---------------------+---------------+---------------|
+|             5 |     2 |            |                     |               | Not converged |
+|             5 |     3 |        238 | 2016-07-25T13:37:04 |     2.212e-04 |     9.620e-04 |
+|             5 |     4 |        424 | 2016-07-25T13:45:54 |     2.387e-04 |     9.993e-04 |
+|             5 |     5 |            |                     |               | Not converged |
+|             5 |     6 |            |                     |               | Not converged |
+|             5 |     7 |        290 | 2016-07-25T13:38:29 |     2.213e-04 |     9.622e-04 |
+|             5 |     8 |        330 | 2016-07-25T13:38:47 |     2.314e-04 |     9.840e-04 |
+|             5 |     9 |        384 | 2016-07-25T13:39:34 |     2.094e-04 |     9.359e-04 |
+|             5 |    10 |        239 | 2016-07-25T13:39:02 |     2.370e-04 |     9.958e-04 |
+:END:
+
+*** Test against training and test
+
+#+BEGIN_SRC python :tangle ./queue/test_validation/calc_energies.py
+#!/usr/bin/env python
+from amp import Amp
+from ase.db import connect
+import itertools
+import os
+
+import twodee as td
+
+
+wd = 'networks/test_validation'
+dbname = os.path.basename(wd) + '.db'
+db = connect(os.path.join(wd, dbname))
+
+h_layers = [2, 3, 4, 5]
+nodes = [2, 3, 5, 6, 7, 8, 9, 10]
+sizes = [2, 3, 4]
+
+unconverged = set()
+for h in h_layers:
+    for n in nodes:
+        pwd = os.path.join(wd, 'h={0}/n={1}/'.format(h,n))
+        output_files = td.calc_output_files(pwd)
+        output = os.path.join(pwd, output_files[0])
+
+        with open(output, 'r') as f:
+            if len(f.read()) != 0:
+                unconverged.add((h, n))
+
+converged = set(itertools.product(h_layers, nodes)) - unconverged
+
+for (h, n) in converged:
+    for s in sizes:
+        wd = 'networks/test_validation'
+        dbname = os.path.basename(wd) + '.db'
+        db = connect(os.path.join(wd, dbname))
+        pwd = os.path.join(wd, 'h={0}/n={1}/'.format(h, n))
+        key = 'nn-{0}_{1}'.format(h, n)
+        for d in db.select(['type=point', 'size={}'.format(s)]):
+            if key in d:
+                continue
+            calculator = Amp(pwd)
+            atoms = db.get_atoms(d.id)
+
+            atoms.set_calculator(calculator)
+            energy = atoms.get_potential_energy()
+            nnE = {key: energy}
+
+            db.update(d.id, nnE)
+#+END_SRC
+
+#+RESULTS:
+
+#+BEGIN_SRC python
+import twodee as td
+
+td.qsub('./queue/test_validation/calc_energies.py')
+#+END_SRC
+
+#+RESULTS:
+: 1429342.gilgamesh.cheme.cmu.edu
+
+Stopped at 23:42m
+
+#+BEGIN_SRC python
+#!/usr/bin/env python
+from amp import Amp
+from ase.db import connect
+import itertools
+import os
+
+import twodee as td
+
+
+wd = 'networks/test_validation'
+dbname = os.path.basename(wd) + '.db'
+db = connect(os.path.join(wd, dbname))
+
+h_layers = [2, 3, 4, 5]
+nodes = [2, 3, 5, 6, 7, 8, 9, 10]
+
+unconverged = set()
+for h in h_layers:
+    for n in nodes:
+        pwd = os.path.join(wd, 'h={0}/n={1}/'.format(h,n))
+        output_files = td.calc_output_files(pwd)
+        output = os.path.join(pwd, output_files[0])
+
+        with open(output, 'r') as f:
+            if len(f.read()) != 0:
+                unconverged.add((h, n))
+
+converged = set(itertools.product(h_layers, nodes)) - unconverged
+
+wd = 'networks/test_validation'
+dbname = os.path.basename(wd) + '.db'
+db = connect(os.path.join(wd, dbname))
+for d in db.select(['type=point', 'size=3']):
+    key = 'nn-2_3'
+    if key in d:
+        print(d[key])
+#+END_SRC
+
+#+RESULTS:
+
+** Create two solid networks
+*** Copy DB and separate into train and test sets
+#+BEGIN_SRC python
+import os.path
+import shutil
+
+import twodee as td
+
+wd = 'networks/nn_master'
+dbname = os.path.basename(wd) + '.db'
+new_db = os.path.join(wd, dbname)
+
+if not os.path.exists(wd):
+    os.makedirs(wd)
+if os.path.exists(new_db):
+    print("Database already exists at destination path.")
+else:
+    shutil.copyfile('database/master.db', new_db)
+    print("Database copied successfully.")
+#+END_SRC
+
+#+RESULTS:
+: Database copied successfully.
+
+#+BEGIN_SRC python
+from ase.db import connect
+import numpy as np
+import os
+import random
+
+import twodee as td
+
+wd = 'networks/nn_master'
+dbname = os.path.basename(wd) + '.db'
+db = connect(os.path.join(wd, dbname))
+
+n_ids = []
+for d in db.select(['type=point', '2<=size<=4']):
+    n_ids += [d.id]
+
+n = len(n_ids)
+n_train = int(round(n * 0.9))
+
+random.seed(256)
+train_samples = random.sample(n_ids, n_train)
+valid_samples = set(n_ids) - set(train_samples)
+
+db.update(list(train_samples), train_set=True)
+db.update(list(valid_samples), train_set=False)
+
+print("Done")
+#+END_SRC
+
+#+RESULTS:
+: Done
+
+*** Build networks
+
+#+BEGIN_SRC python :results output org drawer
+from jinja2 import Environment, PackageLoader
+import os
+
+import twodee as td
+
+# Load in python templates
+env = Environment(loader=PackageLoader('twodee', 'templates'))
+header = env.get_template("header.py")
+footer = env.get_template("footer.py")
+ase_db_get = env.get_template("ase_db_get.py")
+amp = env.get_template("amp.py")
+amp_train = env.get_template("amp_train.py")
+remove_file = env.get_template("remove_file.py")
+
+wd = 'networks/nn_master/'
+
+frameworks = ((5, 5), (8, 8), (8, 8, 8))
+for framework in frameworks:
+    # Build directory paths based off NN framework
+    framework_str = "-".join([str(f) for f in framework])
+    nn_dir = os.path.join(wd, framework_str, "")
+
+    # Check if job already submitted
+    if os.path.exists(os.path.join(nn_dir, 'submit.py')):
+        print('{0} already submitted.'.format(framework_str))
+    #    continue
+    if not os.path.exists(nn_dir):
+        os.makedirs(nn_dir)
+
+
+    # Collect the rendered code from the following templates
+    codes = []
+
+    # Build the Amp object with atoms from the database
+    db_path = os.path.join(wd, "nn_master.db")
+    select = "train_set=True"
+    codes.append(ase_db_get.render(db_path=db_path, select=select))
+    desc_type = "Behler"
+    desc_args = {"cutoff": 6.5}
+    reg_type = "NeuralNetwork"
+    reg_args = {"hiddenlayers": framework}
+    amp_args = {"label": nn_dir}
+    codes.append(amp.render(desc_type=desc_type,
+                            desc_args=desc_args,
+                            reg_type=reg_type,
+                            reg_args=reg_args,
+                            amp_args=amp_args))
+
+    # First training run - Wide tolerance to converge
+    gs_type = "SimulatedAnnealing"
+    gs_args = {"temperature": 70, "steps": 50}
+    train_args = {"data_format": 'db',
+                    "cores": 1,
+                    "energy_goal": 10,
+                    "force_goal": None,
+                    "extend_variables": False}
+    codes.append(amp_train.render(train_args=train_args,
+                                  gs_type=gs_type,
+                                  gs_args=gs_args))
+
+    # Remove parameters from first training run
+    file_path = os.path.join(nn_dir, 'train-log.txt')
+    codes.append(remove_file.render(file_path=file_path))
+    file_path = os.path.join(nn_dir, 'trained-parameters.json')
+    codes.append(remove_file.render(file_path=file_path))
+
+    # Second training run starting from the initial guess of run 1
+    amp_args = {"label": nn_dir,
+                 "load": os.path.join(nn_dir, 'initial-parameters.json')}
+    codes.append(amp.render(amp_args=amp_args))
+    train_args = {"data_format": 'db',
+                  "cores": 1,
+                  "energy_goal": 1e-3,
+                  "force_goal": None,
+                  "extend_variables": False}
+    codes.append(amp_train.render(train_args=train_args))
+    codes.append(footer.render())
+    
+    # Combine all templates into one .py file and submit to queue
+    code = "\n\n".join(codes)
+
+    submit_file = os.path.join(nn_dir, 'submit.py')
+    with open(submit_file, 'w') as f:
+        f.write(code)
+
+    td.qsub(submit_file, walltime="10:00:00")
+    print('{0} submitted.'.format(framework_str))
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+1434156.gilgamesh.cheme.cmu.edu
+1434158.gilgamesh.cheme.cmu.edu
+1434159.gilgamesh.cheme.cmu.edu
+5-5 submitted.
+8-8 submitted.
+8-8-8 submitted.
+:END:
+
+*** Calculate energies
 * References
 bibliographystyle:unsrt
 bibliography:references.bib
@@ -8117,3 +9315,5 @@ print('[[' + file_path + ']]')
   :RESULTS:
   :END:
   
+
+
