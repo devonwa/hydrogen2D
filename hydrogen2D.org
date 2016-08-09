@@ -96,6 +96,12 @@ import twodee as td
 td.qsub('./queue/database/estimate_4.py')
 #+END_SRC
 
+#+RESULTS:
+:RESULTS:
+1443356.gilgamesh.cheme.cmu.edu
+Job submitted.
+:END:
+
 **** Delete something from the database
 
 #+BEGIN_SRC python :results output org drawer
@@ -12115,14 +12121,16 @@ import os
 import twodee as td
 
 wd = 'networks/nn_master/'
-frameworks = ((5, 5), (8, 8), (8, 8, 8))
+#frameworks = ((5, 5), (8, 8), (8, 8, 8))
+frameworks = ((8, 8), (8, 8, 8))
 iteration = 0
-select = ["type=point", "2<=size<=5"]
+select = ["type=point", "2<=size<=4"]
+#select = ["type=point", "size=5"]
 
 db_path = os.path.join(wd, "nn_master.db")
 db = connect(db_path)
 
-fig, ax = plt.subplots(1, 3, sharey=True, figsize=(8, 4))
+fig, ax = plt.subplots(1, 2, sharey=True, figsize=(8, 4))
 
 for i, framework in enumerate(frameworks):
     framework_str = "-".join([str(f) for f in framework])
@@ -12134,11 +12142,13 @@ for i, framework in enumerate(frameworks):
         if update_key in d.key_value_pairs:
             E += [d.energy / d.natoms]
             nnE += [d[update_key]/ d.natoms]
-            var += [j]
+            var += [d.id]
             if hasattr(d, 'train_set'):
                 ind += [d.train_set]
             else:
                 ind += [False]
+            if abs((d[update_key] - d.energy) / d.natoms) > 0.005:
+                print(framework, d.id)
 
 
     res = np.array(nnE) - np.array(E)
@@ -12148,12 +12158,15 @@ for i, framework in enumerate(frameworks):
     vRMSE = np.sqrt(np.sum(valid ** 2)/ len(valid))
     tRMSE = np.sqrt(np.sum(train ** 2)/ len(train))
 
-    ax[i].text(5, -0.0075,
+    ax[i].text(250, -0.0075,
                'Trained RMSE: {:.2f} meV/atom'.format(tRMSE * 1000),
                color='b', ha='left')
-    ax[i].text(5, -0.009,
+    ax[i].text(250, -0.0090,
                'Validation RMSE: {:.2f} meV/atom'.format(vRMSE * 1000),
                color='r', ha='left')
+#    ax[i].text(515, 0.0085,
+#               'RMSE: {:.2f} meV/atom'.format(vRMSE * 1000),
+#               color='r', ha='left')
 
     ax[i].scatter(var, train, color='b')
     ax[i].scatter(var, valid, color='r')
@@ -12172,8 +12185,37 @@ td.print_image(image_path, plt)
 
   #+RESULTS:
   :RESULTS:
+  ((8, 8), 254)
+  ((8, 8), 266)
+  ((8, 8, 8), 238)
+  ((8, 8, 8), 229)
   [[./img/./img/networks/8-8-8/residuals_iter=0.png]]
   :END:
+
+Outliers:
+#+BEGIN_SRC python :results output org drawer
+from ase.db import connect
+import os
+import twodee as td
+
+two = [254, 266]
+three = [238, 229]
+
+wd = 'networks/nn_master/'
+db_path = os.path.join(wd, "nn_master.db")
+db = connect(db_path)
+
+#for d in db.select(['type=point', 'size=5']):
+#    td.bp(d.natoms)
+#    td.bp(db.get_atoms(d.id))
+td.bp(db.get_atoms(two[1]))
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+50
+:END:
+
 * References
 bibliographystyle:unsrt
 bibliography:references.bib
