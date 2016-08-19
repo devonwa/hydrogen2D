@@ -1,0 +1,11 @@
+Warning: Desired error not necessarily achieved due to precision loss.
+         Current function value: 0.000355
+         Iterations: 5029
+         Function evaluations: 5592
+         Gradient evaluations: 5580
+Traceback (most recent call last):
+  File "scripts/2016-07-28/2-2/submit.py", line 35, in <module>
+    extend_variables=False)
+  File "/home-guest/devonw/modules/python/amp/__init__.py", line 1131, in train
+    raise TrainingConvergenceError()
+amp.utilities.TrainingConvergenceError
