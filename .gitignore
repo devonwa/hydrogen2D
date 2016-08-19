@@ -75,3 +75,6 @@ tmp/
 vasp/
 queue/
 misc/
+database/archive/
+scripts/
+networks/
