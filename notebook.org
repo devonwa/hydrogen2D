@@ -1,4 +1,4 @@
-#+title: MS Thesis research notebook
+#+title: MS thesis research notebook
 #+author: Devon Walker
 #+email: devonw@andrew.cmu.edu
 #+TODO: TODO(t) INPROGRESS(w) | DONE(d) CANCELED(c)
@@ -478,7 +478,7 @@ Do I need to apply Monte Carlo to the selection of my training data?
   - 
 
 *** 2016-08-08 Mon
-- [ ] Start more DFT relaxation calculations
+- [X] Start more DFT relaxation calculations
   - Do not do relaxations on degenerate structures
 - [ ] Train 8-8, 8-8-8, 16-16, 16-16-16 networks
   - Maybe just pick 2?
@@ -492,11 +492,85 @@ Do I need to apply Monte Carlo to the selection of my training data?
 
 Read this too: Constructing high-dimensional neural network potentials: A tutorial review - Behler - 2015
 
+*** 2016-08-10 Wed
+- [X] Merge estimate_4.db into master
+- [X] DFT point calculations for size=4 uniques
+- [X] DFT relaxation calculations for size=4 on uniques
+- [X] Get LAMMPS running a calc
+
+Test merge
+#+BEGIN_SRC python :results output org drawer
+from ase.db import connect
+import shutil
+import twodee as td
+
+master = 'database/master.db'
+temp_master = 'tmp/test_master.db'
+shutil.copyfile(master, temp_master)
+
+estimate = 'database/estimate_4.db'
+temp_estimate = 'tmp/test_estimate.db'
+shutil.copyfile(estimate, temp_estimate)
+
+db_master = connect(temp_master)
+db_estimate = connect(temp_estimate)
+
+num_calcs = sum([1 for d in db_master.select()])
+print("Master: {}".format(num_calcs))
+
+n = 0
+for de in db_estimate.select():
+    atoms = db_estimate.get_atoms(de.id)
+    keys = de.key_value_pairs
+    db_master.write(atoms, **keys)
+    n += 1
+    if n == 100:
+        break
+
+num_calcs = sum([1 for d in db_master.select()])
+print("Master: {}".format(num_calcs))
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+Master: 745
+Master: 845
+:END:
+
+*** 2016-08-11 Thu
+- [X] Pull relaxation trajectory steps into database
+- [X] Change amp code to development version
+  - Use Gaussian instead of Behler for descriptor
+- [X] Train 8-8, 8-8-8, 16-16, 16-16-16 networks
+  - Maybe just pick 2?
+
+*** 2016-08-12 Fri
+- [X] Turn results into cohesive presentation
+- [X] Lecture at 1pm
+- [X] Group meeting presentation
+
+*** 2016-08-17 Wed
+- [-] Check cutoff distance for gaussian descriptor
+  - [X] LJ in progress
+  - [ ] Perturbation test
+    - Waiting for size=4 pristine calculation to finish.
+    - Compare to a calculated pore structure. 1, 2, & 3 carbon defects.
+  - [ ] Analyzed
+- [X] Start neural networks without force convergence
+- [ ] Create validation/extrapolation template
+- [ ] Get Amp training locally
+  - Possibly better performance since ssh parallel should work
+
+Future:
+- [ ] Get LAMMPS running comparison calcs
+- [ ] Add hash to keys (maybe just for uniques)
+
 * Lexicon
 - degenerate :: Identical structures, though possible viewed in a different way. Like 
 - interstitial defects :: Locations in a crystal lattice not typically occupied. Self-interstitial (same atom-type as lattice) and interstial impurities (different type of atom).
+- neural network potential (NNP) :: A potential that consists of using a neural network.
 * Meetings
-** DONE 2016-03-08 4pm
+** 2016-03-08 4pm
    CLOSED: [2016-03-09 Wed 09:26] DEADLINE: <2016-03-08 Tue 16:00>
 *** Questions
 quantum mechanics:
@@ -513,7 +587,7 @@ org-ref:
 *** Actions
 1. Table outlining separation data
 
-** DONE 2016-04-15 11am
+** 2016-04-15 11am
    CLOSED: [2016-05-11 Wed 16:02] DEADLINE: <2016-04-15 Fri 11:00>
 *** Final project suggestion
 - develop a suggestion related to research
@@ -526,7 +600,7 @@ Behler-Parrinello paper from 2007
   - how is it not overfit with an 8200 optimizing set and 800 test set?
   - is there a way to use different inputs or generalize them? (ie. an input could be the position or presence of a functional group)
 
-** DONE 2016-05-12 11am
+** 2016-05-12 11am
 *** Final project feedback
 [[file:~/techela/s16-06640/final-project/final-project.org::*Transport of carbon dioxide]]
 
@@ -791,7 +865,20 @@ view(atoms)
 #+END_SRC
 
 #+RESULTS:
-** DONE 2016-06-10 3pm Group meeting presentation
+** 2016-06-10 3pm Group meeting
+   CLOSED: [2016-06-15 Wed 09:44] DEADLINE: <2016-06-10 Fri 3pm>
+
+** 2016-06-24 3pm Group meeting
+   CLOSED: [2016-07-06 Wed 13:22]
+** 2016-07-06 3pm Group meeting
+   CLOSED: [2016-07-18 Mon 16:40]
+** 2016-07-15 3pm Group meeting
+   CLOSED: [2016-07-18 Mon 16:40]
+** 2016-08-12 3pm Group meeting
+*** Scimax issues
+
+* Presentations
+** DONE 2016-06-10 Group meeting
    CLOSED: [2016-06-15 Wed 09:44] DEADLINE: <2016-06-10 Fri 3pm>
 
 *** Presentation
@@ -936,9 +1023,7 @@ td.paint_atoms(atoms, neighbors, layers=struct['layers'])
 td.bp(atoms)
  #+END_SRC
 
-** DONE 2016-06-24 3pm Group meeting
-   CLOSED: [2016-07-06 Wed 13:22]
-** DONE 2016-07-06 3pm Group meeting presentation
+** DONE 2016-07-06 Group meeting
    CLOSED: [2016-07-18 Mon 16:40]
 *** 2D structure module - twodee
 For mainting helper functions for manipulating 2D materials
@@ -1125,13 +1210,445 @@ How to select the best structures for DFT calculations and training a neural net
 1. Start with a hand-curated set that are often found in literature.
 2. Use the previous algorith to determine all combinations. Select from a group that have been shown to have the most promise from a faster calculation type (MD).
 
-** DONE 2016-07-15 3pm Group meeting
-   CLOSED: [2016-07-18 Mon 16:40]
-** 2016-08-12 3pm Group meeting presentation
-*** Scimax issues
-- [ ] src block coloring
-- [ ] checkbox coloring
-- [ ] auto-completion. especially in lisp
+** TODO 2016-08-12 Group meeting
+*** Improved pore candidate selection algorithm
+- Cached get_neighbor call
+- Speed increased by an order of magnitude
+- Writing finished algorithms to a json file for future calls
+- Possible memory considerations for very large structures
+
+#+caption: A speed comparison of the pore candidate selection algorithm before and after optimizations for a graphene monolayer unitcell repeated 4 times.
+#+label: tbl:candidate-algo-speed
+|   Pore size | Choices | Candidates | Old algo. time | New algo. time |
+| (# carbons) |         |            |      (seconds) |      (seconds) |
+|-------------+---------+------------+----------------+----------------|
+|           1 |      18 |         18 |            0.7 |           0.09 |
+|           2 |     153 |         21 |            5.3 |           0.37 |
+|           3 |     816 |         32 |           26.9 |           1.69 |
+|           4 |    3060 |         54 |         *95.1* |         *5.87* |
+|           5 |    8568 |        102 |                |          15.58 |
+
+*** Neural network
+**** Overfit duplicate energies
+
+The neural networks were trained on single-point energy calculations of porous graphene structures. The sizes of these structures consisted of 2, 3, and 4 graphene monolayer repetitions. Pores were selected of various sizes and shapes for each size. Figure ref:fig:iter=-1-validation shows the error between neural networks and DFT for the calculated energies of the training and validation sets.
+
+#+caption: The error between neural network and DFT calculations for the training and validation sets.
+#+label fig:iter=-1-validation
+[[./img/presentation/20160812-group_meeting/validation.png]]
+
+I believe the patterns arising in this are due to energy duplicates in the pore candidates. I will need to address this before moving forward. The outliers around -0.007 eV/atom are from a 3 repetition superstructure with a 3 or 5 carbon pore that forms a symmetrical hole, as opposed to a crack. The networks did keep the RMSE below 1 meV/atom, but are probably severely overfit.
+
+The networks would ideally be able to handle larger structures than those in the training set. To test if they are currently able to do this, they were used to calculate porous structures (pore sizes of 0, 3, and 4 carbons removed) based on a 5 monolayer repetition. Figure ref:fig:size5-extrapolation.png shows the error between the neural network and DFT calculations for this larger structure.
+
+#+caption: The error between neural network and DFT calculations for the training and validation sets.
+#+label fig:size5-extrapolation
+[[./img/presentation/20160812-group_meeting/extrapolation.png]]
+
+We see the same patterns arise due to energy duplicates and the RMSE has risen to over 4 meV/atom in the best case. Pristine graphene shows a very small error, which is good though expected.
+
+**** Improvements
+1. Used the ASE implementation of EMT
+  - asap3 EMT code only contains potentials for metals
+  - ASE's EMT has experimental potentials for carbon and hydrogen
+  - Differences in energy between duplicates matched well with previously calculated VASP point-energy calculations
+  - Missed uniques are likely accounted for in relaxation steps
+  - Went from 77 to 19 candidates for sizes 2 and 3
+
+2. Added trajectories from relaxation steps
+
+3. Started training new networks with 528 calculations
+   - Previous network had 255 calculations for sizes 2, 3, and 4
+   - New iteration contains 528 calculations for sizes 2 and 3
+     - Size 4 DFT calculations are in queue and will be included on the next iteration
+
+*** Templates for queue submission
+
+We can use Jinja2 templates for constructing python code that can be submitted to gilgamesh. 
+
+Benefits:
+- Removes big string blocks
+- Increases consistency and reuse
+- Iteration is more intuitive than formatted strings
+
+**** Building a neural network
+***** Template
+#+BEGIN_SRC python :results output org drawer :tangle ./twodee/templates/build_nn.py
+#!/usr/bin/env python
+from amp import Amp
+from amp.descriptor.gaussian import Gaussian
+from amp.model import LossFunction
+from amp.model.neuralnetwork import NeuralNetwork
+from amp.utilities import Annealer
+from ase.db import connect
+import os
+import twodee as td
+
+# Required arguments from template
+iteration = {{ iteration }}
+framework = {{ framework }}
+work_dir = "{{ work_dir }}"
+db_path = "{{ db_path }}"
+cutoff = {{ cutoff }}
+energy_rmse = {{ energy_rmse }}
+force_rmse = {{ force_rmse }}
+cores = {{ cores }}
+
+# Set working directory
+os.chdir(work_dir)
+
+# Get atoms from the database
+images = []
+db = connect(db_path)
+for d in db.select(['iteration<={}'.format(iteration, 'train_set=True')]):
+    atoms = db.get_atoms(d.id)
+    del atoms.constraints
+    images.append(atoms)
+
+# Build Amp object
+framework_str = "-".join([str(f) for f in framework])
+label = "networks/iter={0}/{1}/{1}".format(iteration, framework_str)
+dblabel = "networks/iter={0}/iter={0}".format(iteration)
+desc = Gaussian(cutoff=cutoff)
+model = NeuralNetwork(hiddenlayers=framework)
+calc = Amp(label=label,
+           dblabel=dblabel,
+           descriptor=desc,
+           model=model,
+	   cores=cores)
+loss = LossFunction(convergence={'energy_rmse': energy_rmse,
+                                 'force_rmse': force_rmse})
+calc.model.lossfunction = loss
+           
+# Perform simulated annealing for global search
+Annealer(calc=calc, images=images)
+
+# Train the network
+calc.train(images=images)
+#+END_SRC
+
+***** Runner
+#+BEGIN_SRC python :results code
+from jinja2 import Environment, PackageLoader
+import os
+import twodee as td
+
+# Load in template
+env = Environment(loader=PackageLoader('twodee', 'templates'))
+template = env.get_template("build_nn.py")
+
+# Call template in loop
+frameworks = ((8, 8),)#, (8, 8, 8))
+for framework in frameworks:
+    args = {'iteration': 0,
+            'framework': framework,
+            'work_dir': os.getcwd(),
+            'db_path': "database/master.db",
+            'cutoff': 6.5,
+            'energy_rmse': 1e-2,
+            'force_rmse': 5e-2,
+            'cores': 1}
+
+    code = template.render(**args)
+
+    framework_str = "-".join([str(f) for f in framework])
+    nn_dir = "networks/iter={0}/{1}".format(args['iteration'], framework_str)
+
+    # Do something with the rendered template
+    print(code)
+    #submit_file = os.path.join(nn_dir, 'submit.py')
+    #with open(submit_file, 'w') as f:
+    #    f.write(code)
+    #
+    #td.qsub(submit_file, walltime="10:00:00", ppn=args['cores'])
+    #print('{0} submitted.'.format(framework_str))
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_SRC python
+#!/usr/bin/env python
+from amp import Amp
+from amp.descriptor.gaussian import Gaussian
+from amp.model import LossFunction
+from amp.model.neuralnetwork import NeuralNetwork
+from amp.utilities import Annealer
+from ase.db import connect
+import os
+import twodee as td
+
+# Required arguments from template
+iteration = 0
+framework = (8, 8)
+work_dir = "/home-guest/devonw/hydrogen2D"
+db_path = "database/master.db"
+cutoff = 6.5
+energy_rmse = 0.01
+force_rmse = 0.05
+cores = 1
+
+# Set working directory
+os.chdir(work_dir)
+
+# Get atoms from the database
+images = []
+db = connect(db_path)
+for d in db.select(['iteration<={}'.format(iteration, 'train_set=True')]):
+    atoms = db.get_atoms(d.id)
+    del atoms.constraints
+    images.append(atoms)
+
+# Build Amp object
+framework_str = "-".join([str(f) for f in framework])
+label = "networks/iter={0}/{1}/{1}".format(iteration, framework_str)
+dblabel = "networks/iter={0}/iter={0}".format(iteration)
+desc = Gaussian(cutoff=cutoff)
+model = NeuralNetwork(hiddenlayers=framework)
+calc = Amp(label=label,
+           dblabel=dblabel,
+           descriptor=desc,
+           model=model,
+	   cores=cores)
+loss = LossFunction(convergence={'energy_rmse': energy_rmse,
+                                 'force_rmse': force_rmse})
+calc.model.lossfunction = loss
+           
+# Perform simulated annealing for global search
+Annealer(calc=calc, images=images)
+
+# Train the network
+calc.train(images=images)
+#+END_SRC
+
+**** Generic building blocks
+***** Build neural network submission file
+A script which uses templates to build scripts that can be submitted to the queue on Gilgamesh.
+
+The generated code does the following: 
+1. Get atoms from a database with certain atoms marked 'train_set'.
+2. Build an Amp object with the Behler descriptor and Neural Network regression.
+3. Train to a moderate energy convergence.
+4. Remove all training data except initial parameters.
+5. Build an Amp object with the initial parameters.
+6. Train to a strict convergence.
+
+#+BEGIN_SRC python :results output org drawer
+from jinja2 import Environment, PackageLoader
+import os
+import twodee as td
+
+# Load in python templates
+env = Environment(loader=PackageLoader('twodee', 'templates'))
+header = env.get_template("header.py")
+footer = env.get_template("footer.py")
+ase_db_get = env.get_template("ase_db_get.py")
+amp = env.get_template("amp.py")
+amp_train = env.get_template("amp_train.py")
+remove_file = env.get_template("remove_file.py")
+
+wd = 'script_builder/'
+framework = (5, 5)
+framework_str = "-".join([str(f) for f in framework])
+nn_dir = os.path.join(wd, framework_str, "")
+
+# Collect the rendered code from the following templates
+codes = []
+
+# 1. Get atoms from a database with certain atoms marked 'train_set'.
+db_path = os.path.join(wd, "test.db")
+select = "train_set=True"
+codes.append(ase_db_get.render(db_path=db_path, select=select))
+
+# 2. Build an Amp object with the Behler descriptor and Neural Network regression.
+desc_type = "Behler"
+desc_args = {"cutoff": 6.5}
+reg_type = "NeuralNetwork"
+reg_args = {"hiddenlayers": framework}
+amp_args = {"label": nn_dir}
+codes.append(amp.render(desc_type=desc_type,
+                        desc_args=desc_args,
+                        reg_type=reg_type,
+                        reg_args=reg_args,
+                        amp_args=amp_args))
+
+# 3. Train to a moderate energy convergence.
+gs_type = "SimulatedAnnealing"
+gs_args = {"temperature": 70, "steps": 50}
+train_args = {"data_format": 'db',
+                "cores": 1,
+                "energy_goal": 10,
+                "force_goal": None,
+                "extend_variables": False}
+codes.append(amp_train.render(train_args=train_args,
+                                gs_type=gs_type,
+                                gs_args=gs_args))
+
+# 4. Remove all training data except initial parameters.
+file_path = os.path.join(nn_dir, 'train-log.txt')
+codes.append(remove_file.render(file_path=file_path))
+file_path = os.path.join(nn_dir, 'trained-parameters.json')
+codes.append(remove_file.render(file_path=file_path))
+
+# 5. Build an Amp object with the initial parameters.
+amp_args = {"label": nn_dir,
+                "load": os.path.join(nn_dir, 'initial-parameters.json')}
+codes.append(amp.render(amp_args=amp_args))
+
+# 6. Train to a strict convergence.
+train_args = {"data_format": 'db',
+                "cores": 1,
+                "energy_goal": 1e-3,
+                "force_goal": None,
+                "extend_variables": False}
+codes.append(amp_train.render(train_args=train_args))
+codes.append(footer.render())
+
+# Combine all templates into one .py file and submit to queue
+code = "\n\n".join(codes)
+
+submit_file = os.path.join(nn_dir, 'submit.py')
+with open(submit_file, 'w') as f:
+    f.write(code)
+
+#td.qsub(submit_file, walltime="10:00:00")
+#print('{0} submitted.'.format(framework_str))
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+:END:
+
+***** Output script
+The output in the [[file:./script_builder/5-5/submit.py][submit.py]] file from the previous script. Strange spacing is due to not controlling whitespace well around conditional statements in the templates.
+
+#+BEGIN_SRC python :results output org drawer
+#!/usr/bin/env python
+###############################################
+# ase_db_get.py
+# Template for selecting a list of atoms objects from an ASE DB
+
+db_path = "script_builder/test.db"
+select = "train_set=True"
+
+from ase.db import connect
+db = connect(db_path)
+
+images = []
+for d in db.select(select):
+    atoms = db.get_atoms(d.id)
+    del atoms.constraints
+    images += [atoms]
+
+#!/usr/bin/env python
+###############################################
+# amp.py
+# Template for building an Amp calculator object
+
+amp_args = {'label': 'script_builder/5-5/'}
+
+# Build descriptor object
+from amp.descriptor import Behler
+desc = Behler(**{'cutoff': 6.5})
+amp_args["descriptor"] = desc
+
+# Build regression object
+from amp.regression import NeuralNetwork
+reg = NeuralNetwork(**{'hiddenlayers': (5, 5)})
+amp_args["regression"] = reg
+
+# Build Amp calculator object
+from amp import Amp
+calc = Amp(**amp_args)
+
+#!/usr/bin/env python
+###############################################
+# amp_train.py
+# Template for training an Amp object
+# Required vars: calc (Amp)
+#                images (Atoms)
+
+train_args = {'cores': 1, 'force_goal': None, 'data_format': 'db', 'extend_variables': False, 'energy_goal': 10}
+
+
+# Define global search object
+from amp import SimulatedAnnealing
+gs = SimulatedAnnealing(**{'steps': 50, 'temperature': 70})
+train_args['global_search'] = gs
+
+
+# Run training calculations
+calc.train(images=images,
+           **train_args)
+
+#!/usr/bin/env python
+###############################################
+# remove_file.py
+# Template for removing a file
+# TODO devon: Deprecate? Consider a more generic setup.
+
+file_path = "script_builder/5-5/train-log.txt"
+
+import os
+os.unlink(file_path)
+
+#!/usr/bin/env python
+###############################################
+# remove_file.py
+# Template for removing a file
+# TODO devon: Deprecate? Consider a more generic setup.
+
+file_path = "script_builder/5-5/trained-parameters.json"
+
+import os
+os.unlink(file_path)
+
+#!/usr/bin/env python
+###############################################
+# amp.py
+# Template for building an Amp calculator object
+
+amp_args = {'load': 'script_builder/5-5/initial-parameters.json', 'label': 'script_builder/5-5/'}
+
+
+
+
+
+# Build Amp calculator object
+from amp import Amp
+calc = Amp(**amp_args)
+
+#!/usr/bin/env python
+###############################################
+# amp_train.py
+# Template for training an Amp object
+# Required vars: calc (Amp)
+#                images (Atoms)
+
+train_args = {'cores': 1, 'force_goal': None, 'data_format': 'db', 'extend_variables': False, 'energy_goal': 0.001}
+
+
+
+# Run training calculations
+calc.train(images=images,
+           **train_args)
+
+#!/usr/bin/env python
+###############################################
+# footer.py
+# Template for printing standard success message for parsing
+
+
+
+print("=======================================")
+print("Successfully completed script.")
+print("Exit status: 0")
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+=======================================
+Successfully completed script.
+Exit status: 0
+:END:
 
 * Research
 ** Literature
@@ -3397,6 +3914,48 @@ print(nrg)
 :RESULTS:
 :END:
 
+** 2016-08-10: Add estimate_4.db into master
+
+#+BEGIN_SRC python :results output org drawer :tangle ./scripts/2016-08-10/merge_dbs.py
+from ase.db import connect
+import os
+import shutil
+import twodee as td
+
+wd = "/home-guest/devonw/hydrogen2D/"
+master = os.path.join(wd, 'database/master.db')
+temp_master = os.path.join(wd, 'tmp/test_master.db')
+shutil.copyfile(master, temp_master)
+
+estimate = os.path.join(wd, 'scripts/2016-08-10/estimate_4.db')
+temp_estimate = os.path.join(wd, 'tmp/test_estimate.db')
+shutil.copyfile(estimate, temp_estimate)
+
+db_master = connect(temp_master)
+db_estimate = connect(temp_estimate)
+
+num_calcs = sum([1 for d in db_master.select()])
+print("Master: {}".format(num_calcs))
+
+n = 0
+for de in db_estimate.select():
+    atoms = db_estimate.get_atoms(de.id)
+    keys = de.key_value_pairs
+    db_master.write(atoms, **keys)
+    n += 1
+    if n % 500 == 0:
+        print("... " + str(n) + " added in total.")
+
+num_calcs = sum([1 for d in db_master.select()])
+print("Master: {}".format(num_calcs))
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+Master: 745
+...4added.
+:END:
+
 * Twodee
 
 Module to help me write code in this project. This header serves as a testing ground for the module.
@@ -3426,13 +3985,17 @@ atoms = td.create_base("graphene", layers=1, size=size)
 edges = td.edges(atoms, unitcell)
 indices = [a.index for a in atoms if a.index not in edges]
 
-pore_sizes = range(len(indices)+1)
+#pore_sizes = range(len(indices)+1)
 #pore_sizes = [0, 1, 2, 3, 4, 5]
+pore_sizes = [0, 1, 2, 3, 4, 5]
 times = []
 cans = []
 for pore_size in pore_sizes:
     start = time.time()
-    cans.append(td.candidates(atoms, edge=edges, size=pore_size))
+    cans.append(td.candidates(mat='graphene',
+                              layers=1,
+                              size=4,
+                              pores=[pore_size]))
     end = time.time()
     times.append(end - start)
 
@@ -3460,32 +4023,25 @@ for (c, t) in zip(cans, times):
 print("Total number of candidates: {}. Total time: {:0.2f} sec".format(tot_num, tot_time))
  #+END_SRC
 
- #+RESULTS:
- :RESULTS:
- |          Graphene size |   Pore size | # of candidates | Algo. time |
- | (unitcell repititions) | (# carbons) |                 |  (seconds) |
- |                      4 |           0 |               1 |       0.05 |
- |                      4 |           1 |              18 |       0.09 |
- |                      4 |           2 |              21 |       0.38 |
- |                      4 |           3 |              32 |       1.70 |
- |                      4 |           4 |              54 |       5.97 |
- |                      4 |           5 |             102 |      15.69 |
- |                      4 |           6 |             183 |      32.08 |
- |                      4 |           7 |             310 |      51.44 |
- |                      4 |           8 |             502 |      66.04 |
- |                      4 |           9 |             730 |      67.64 |
- |                      4 |          10 |             954 |      57.04 |
- |                      4 |          11 |            1102 |      38.68 |
- |                      4 |          12 |            1061 |      21.33 |
- |                      4 |          13 |             808 |       9.32 |
- |                      4 |          14 |             460 |       3.28 |
- |                      4 |          15 |             186 |       0.89 |
- |                      4 |          16 |              53 |       0.22 |
- |                      4 |          17 |              10 |       0.07 |
- |                      4 |          18 |               1 |       0.05 |
- Total number of candidates: 6588. Total time: 371.95 sec
- :END:
-
+#+RESULTS:
+:RESULTS:
+1
+18
+153
+816
+3060
+8568
+|          Graphene size |   Pore size | # of candidates | Algo. time |
+| (unitcell repititions) | (# carbons) |                 |  (seconds) |
+|                      4 |           0 |               1 |       0.53 |
+|                      4 |           1 |               1 |       0.57 |
+|                      4 |           2 |               1 |       0.86 |
+|                      4 |           3 |               1 |       2.40 |
+|                      4 |           4 |               1 |       6.53 |
+|                      4 |           5 |               1 |      16.77 |
+Total number of candidates: 6. Total time: 27.66 sec
+:END:
+ 
 
  |          Graphene size |   Pore size | Old algo. time | New algo. time |
  | (unitcell repititions) | (# carbons) |      (seconds) |      (seconds) |
@@ -3555,8 +4111,103 @@ print("Total number of candidates: {}. Total time: {:0.2f} sec".format(tot_num, 
  |                      4 |          16 |              53 |       0.22 |
  |                      4 |          17 |              10 |       0.07 |
  |                      4 |          18 |               1 |       0.05 |
- |                        |             |                 |            |
  Total number of candidates: 6588. Total time: 371.95 sec
+
+*** candidates_submit
+
+#+BEGIN_SRC python :results output org drawer
+import twodee as td
+
+cans = td.candidates(mat='graphene', layers=1, size=5, pores=[15],
+                     json_path='data/candidates.json', silent=False,
+                     write=True, overwrite_file=False)
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+| Graphene size          | Pore size   | # of candidates | Algo. time | Retrieval |
+| (unitcell repititions) | (# carbons) |                 | (seconds)  |           |
+|------------------------+-------------+-----------------+------------+-----------|
+| 5                      | 10          |            9819 | 231889.80  | From file |
+Total number of candidates: 9819. Total time: 231889.80 sec
+:END:
+
+
+
+
+#+BEGIN_SRC python :results code
+from jinja2 import Environment, PackageLoader
+import os
+import shutil
+
+import twodee as td
+
+size = 5
+mat = "graphene"
+layers = 1
+
+env = Environment(loader=PackageLoader('twodee', 'templates'))
+template = env.get_template("candidates.py")
+
+unitcell = td.create_base(mat, layers=layers)
+atoms = td.create_base(mat, layers=layers, size=size)
+
+edge = td.edges(atoms, unitcell)
+indices = [a.index for a in atoms if a.index not in edge]
+
+#pore_sizes = range(10, len(indices)+1)
+pore_sizes = range(13, 19+1)
+for ps in pore_sizes:
+    # Make submission directory
+    queue_path = 'queue/candidates/size={0}-pore={1}/'.format(size, ps)
+    if not os.path.exists(queue_path):
+        os.makedirs(queue_path)
+
+    # Copy json file
+    json_path = os.path.join(queue_path, 'size={0}-pore={1}.json'.format(size, ps))
+    shutil.copyfile('data/candidates.json', json_path)
+
+    args = {'work_dir': os.getcwd(),
+            'json_path': json_path,
+            'size': size,
+            'pore_size': [ps]}
+
+    code = template.render(**args)
+
+    submit_file = os.path.join(queue_path, 'cand-size={0}-pore={1}.py'.format(size, ps))
+
+    with open(submit_file, 'w') as f:
+        f.write(code)
+
+    td.qsub(submit_file, mem="4GB")
+    print('{0} submitted.'.format(submit_file))
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_SRC python
+1447009.gilgamesh.cheme.cmu.edu
+1447010.gilgamesh.cheme.cmu.edu
+1447011.gilgamesh.cheme.cmu.edu
+1447012.gilgamesh.cheme.cmu.edu
+1447013.gilgamesh.cheme.cmu.edu
+1447014.gilgamesh.cheme.cmu.edu
+1447015.gilgamesh.cheme.cmu.edu
+Job submitted.
+queue/candidates/size=5-pore=13/cand-size=5-pore=13.py submitted.
+Job submitted.
+queue/candidates/size=5-pore=14/cand-size=5-pore=14.py submitted.
+Job submitted.
+queue/candidates/size=5-pore=15/cand-size=5-pore=15.py submitted.
+Job submitted.
+queue/candidates/size=5-pore=16/cand-size=5-pore=16.py submitted.
+Job submitted.
+queue/candidates/size=5-pore=17/cand-size=5-pore=17.py submitted.
+Job submitted.
+queue/candidates/size=5-pore=18/cand-size=5-pore=18.py submitted.
+Job submitted.
+queue/candidates/size=5-pore=19/cand-size=5-pore=19.py submitted.
+#+END_SRC
+
 
 *** candidates - leaves islands
 

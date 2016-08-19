@@ -5,8 +5,7 @@
 #+STARTUP: hideblocks
 
 * Database
-
-** INPROGRESS Unique candidate database
+** Unique candidate database
 
 Some pore candidates returned by the pore candidate algorithm are rotations of one another and identical in energy. We do not want to include identical structures in our calculations because including identical structures in neural network training sets could cause overfitting.
 
@@ -14,18 +13,20 @@ In order to determine which candidates are unique, without running a VASP single
 
 We use ASE's EMT calculator for the energy estimations. The documentation notes that the calculator is reasonably accurate for metals and not very accurate for carbon. However, the calculations we will be doing are not looking for publishable results requiring high precision, so it should be alright to use the calculator for this filtering purpose. 
 
-#+BEGIN_SRC python :results output org drawer :tangle ./queue/database/estimate_4.py
+#+BEGIN_SRC python :results output org drawer
+#!/usr/bin/env python
 from ase.db import connect
 from ase.calculators.emt import EMT
 from ase.calculators.singlepoint import SinglePointCalculator
+import time
 import twodee as td
 
 
-db_path = "database/estimate_4.db"
+db_path = "./estimate_5.db"
 
 mat = "graphene"
 layers = 1
-size = 4
+size = 5
 atoms = td.create_base(mat, layers=layers, size=size)
 cans = td.candidates(mat=mat, layers=layers, size=size)
 
@@ -41,10 +42,13 @@ for c in cans:
 
     energies = set()
     keys['pore'] = len(c[0])
+    structures = 0
     uniques = 0
+    start = time.time()
 
     for pore in c:
         keys['porestr'] = 's' + td.pore_string(pore)
+        structures += 1
         
         # Don't add duplicates
         select = ['type=estimate',
@@ -59,7 +63,7 @@ for c in cans:
             row = next(rows)
             if row.key_value_pairs['unique']:
                 uniques += 1
-                skipped += 1
+            skipped += 1
             continue
 
         # Calculate energy estimate
@@ -80,7 +84,10 @@ for c in cans:
         db.write(a, **keys)
         added += 1
 
-    print("Pore size: {0}. Uniques: {1}.".format(len(c[0]), uniques))
+    end = time.time()
+    span = end - start
+    print_template = "Pore size: {0}. Structures: {1}. Uniques: {2}. Time {3:0.1f} sec."
+    print(print_template.format(len(c[0]), structures, uniques, span))
 print("{} added. {} skipped.".format(added, skipped))
 #+END_SRC
 
@@ -88,19 +95,9 @@ print("{} added. {} skipped.".format(added, skipped))
 :RESULTS:
 Pore size: 1. Uniques: 1.
 Pore size: 2. Uniques: 1.
-3 added. 0 skipped.
+0 added. 2 skipped.
 :END:
 
-#+BEGIN_SRC python :results output org drawer
-import twodee as td
-td.qsub('./queue/database/estimate_4.py')
-#+END_SRC
-
-#+RESULTS:
-:RESULTS:
-1443356.gilgamesh.cheme.cmu.edu
-Job submitted.
-:END:
 
 **** Delete something from the database
 
@@ -212,6 +209,7 @@ s008009011014015016017
 s009010011014015016017
 s008009010011014015016017 --unique
 :END:
+
 
 *** Test against VASP calculations
 
@@ -5719,7 +5717,61 @@ for p in pore_sizes:
 :RESULTS:
 :END:
 
+** Add uniques to json file
+
+#+BEGIN_SRC python :results output org drawer
+from ase.db import connect
+import json
+import os
+
+json_path = 'data/uniques.json'
+
+# Check for file
+if os.path.isfile(str(json_path)):
+    with open(json_path) as data_file:
+        data = json.load(data_file)
+else:
+    os.path.dirname(json_path)
+    data = {'uniques': []}
+
+# Get uniques from estimates
+added = 0
+skipped = 0
+db = connect('database/master.db')
+for d in db.select(['type=estimate', 'unique=True']):
+    unique = {'mat': d.mat,
+              'layers': d.layers,
+              'size': d.size,
+              'pore': d.pore,
+              'porestr': d.porestr}
+
+    # Check against data file
+    is_new = True
+    for dat in data['uniques']:
+        if dat == unique:
+            is_new = False
+            skipped +=1
+            break
+    
+    if is_new:
+        data['uniques'].append(unique)
+        added += 1
+
+# Overwrite json file with new list
+with open(json_path, 'w') as data_file:
+            json.dump(data, data_file)
+
+print("{} added. {} skipped.".format(added, skipped))
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+0 added. 1336 skipped.
+:END:
+
 ** Backup the master database
+
+Run this script to copy the database to the archive for a backup.
 
  #+BEGIN_SRC python
 import os.path
@@ -5737,15 +5789,131 @@ print("Database copied successfully to '{0}'".format(backup))
  #+END_SRC
 
  #+RESULTS:
- : Database copied successfully to 'database/archive/2016-08-06_master.db'
+ : Database copied successfully to 'database/archive/2016-08-11_master.db'
+
+** Check for broken directories
+
+#+BEGIN_SRC python :results output org drawer
+import twodee as td
+
+td.broken_calcs('vasp/')
+#+END_SRC
+
+** Check for duplicates
+
+*Not working currently due to lack of data.path for some calcs*
+This checks for and can also remove duplicate database entries.
+
+#+BEGIN_SRC python :results output org drawer
+import twodee as td
+
+td.db_duplicates('database/master.db')
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+7336 total entries. 0 duplicate entries. 0 deleted.
+:END:
+
+** Add calculations in directory recursively
+
+Add all completed equations within a directory (recursive) into the master database.
+
+#+BEGIN_SRC python :results output org drawer
+import twodee as td
+
+td.db_update('database/master.db', 'vasp/type=relax/mat=graphene/layers=1/size=3/')
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=3/pore=4/008009010014
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=3/pore=4/009010011014
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=3/pore=5/008009010011016
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=3/pore=5/009010011014015
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=3/pore=6/008009010011014016
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=3/pore=6/008009010011015016
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=3/pore=6/008009010011016017
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=3/pore=6/009010011014015016
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=3/pore=7/008009010011014016017
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=3/pore=8/008009010011014015016017
+7345 total entries. 10 new entries added.
+:END:
+
+** Add relaxation steps to the database
+Labeling:
+- Use pore_string from parent.
+- Add step number as a key.
+
+#+BEGIN_SRC python :results output org drawer
+from ase.db import connect
+from ase.io.trajectory import Trajectory
+from jbtools.gilgamesh import compile_trajectory
+import os
+from vasp import Vasp
+
+import twodee as td
+
+
+added = 0
+skipped = 0
+db = connect('database/master.db')
+wd = os.getcwd()
+for d in db.select(['type=relax', 'size=3']):
+    if 'path' not in d.data.keys():
+        skipped += 1
+        continue
+    
+    if 'traj' in d.data.keys():
+        skipped += 1
+        continue
+
+    path = d.data['path']
+    calc = Vasp(path)
+
+    # Pull steps into trajectory file
+    os.chdir(path)
+    compile_trajectory(calc)
+    traj = Trajectory('out.traj')
+    n = len(traj)
+    os.chdir(wd)
+
+    # Prep meta data for write
+    keys = d.key_value_pairs
+    pore_string = 's' + os.path.basename(path)
+    keys['porestr'] = pore_string
+    data = {'path': calc.directory,
+            'version': calc.version,
+            'resort': calc.resort,
+            'parameters': calc.parameters,
+            'ppp_list': calc.ppp_list}
+
+    # Add each step of traj file to the db
+    for i, atoms in enumerate(traj):
+        db.write(atoms, traj=i, data=data, **keys)
+        added += 1
+    
+    # Update the current db row to avoid future duplicate adds
+    db.update(d.id, traj=-1, porestr=pore_string)
+
+print("{} added. {} skipped.".format(added, skipped))
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+662 added. 0 skipped.
+:END:
 
 ** iteration=0
 
-Add the iternum=0 key-value to calculations to be used in this iteration of neural network training.
+To add:
+- Base calculation for pristine graphene
+- Equation of state for pristine graphene
+- Point calculations for unique pore structures of size 2 and 3
+- Relaxation steps for size 2 and 3
 
 *** DONE Base
-
-Add pristine graphene. Use it in training.
+Base calculation for pristine graphene. Use it in training.
 
 #+BEGIN_SRC python :results output org drawer
 from ase.db import connect
@@ -5762,7 +5930,6 @@ db.update(ids, iteration=0, train_set=True)
 :RESULTS:
 :END:
 
-
 *** DONE EOS
 Add equation of state calculations for pristine graphene.
 
@@ -5771,11 +5938,18 @@ from ase.db import connect
 import random
 import twodee as td
 
+iteration = 0
 db = connect('database/master.db')
 ids = []
+added = 0
+marked = 0
 for d in db.select(["type=eos", 'mat=graphene', 'layers=1', 'size=1']):
     if 'iteration' not in d.key_value_pairs:
         ids.append(d.id)
+        added += 1
+    else:
+        if d.iteration == iteration:
+            marked += 1
 
 n = len(ids)
 n_train = int(round(n * 0.9))
@@ -5784,16 +5958,17 @@ random.seed(31)
 train_samples = random.sample(ids, n_train)
 valid_samples = set(ids) - set(train_samples)
 
-db.update(list(train_samples), iteration=0, train_set=True)
-db.update(list(valid_samples), iteration=0, train_set=False)
+db.update(list(train_samples), iteration=iteration, train_set=True)
+db.update(list(valid_samples), iteration=iteration, train_set=False)
+print("{} added. {} marked for this iteration.".format(added, marked))
 #+END_SRC
 
 #+RESULTS:
 :RESULTS:
+0 added. 50 marked for this iteration.
 :END:
 
-*** INPROGRESS Point
-INPROGRESS:  Add size 4 when the estimations are done or in the next iteration.
+*** DONE Point
 
 Update point calculations with pores to include their pore string as a key.
 
@@ -5822,51 +5997,450 @@ print("{} updated. {} skipped.".format(updated, skipped))
 0 updated. 456 skipped.
 :END:
 
-Only add energy unique pore structures.
+
+Add energy unique pore structures.
 
 #+BEGIN_SRC python :results output org drawer
 from ase.db import connect
+import json
 import twodee as td
 
+iteration = 0
 db = connect('database/master.db')
+uniques_path = 'data/uniques.json'
+with open(uniques_path) as data_file:
+    uniques = json.load(data_file)
 
 ids = []
 added = 0
 skipped = 0
+marked = 0
 sizes = [2, 3]
+
 for s in sizes:
-    uniques = []
-    for d in db.select(["type=estimate", "size={}".format(s), "unique=True"]):
-        porestr = d.key_value_pairs["porestr"]
-        uniques.append(porestr)
-
-    for d in db.select(["type=point", "size={}".format(s), "pore>0"]):
+    for d in db.select(["type=point", "size={}".format(s)]):
         if 'iteration' in d.key_value_pairs:
-            skipped += 1
+            if d.iteration == iteration:
+                marked += 1
             continue
-        if 'porestr' in d.key_value_pairs:
-            if d.porestr in uniques:
-                ids.append(d.id)
-                added += 1
+        elif td.is_unique(d, uniques):
+            ids.append(d.id)
+            added += 1
+            marked += 1
+        else:
+            skipped += 1
 
-db.update(ids, iteration=0, train_set=True)
-print("{} added. {} skipped.".format(added, skipped))
+
+print("{} added. {} skipped. {} marked for this iteration.".format(added, skipped, marked))
+td.bp()
+db.update(ids, iteration=iteration, train_set=True)
 #+END_SRC
 
 #+RESULTS:
 :RESULTS:
-0 added. 19 skipped.
+0 added. 58 skipped. 19 already marked.
 :END:
 
-*** TODO Relax
+*** DONE Relax
+Relaxation steps for size 2 and 3.
 
-**** TODO Add relaxation ionic steps to database
 #+BEGIN_SRC python :results output org drawer
+from ase.db import connect
+import json
+import random
+import twodee as td
 
+iteration = 0
+db = connect('database/master.db')
+uniques_path = 'data/uniques.json'
+with open(uniques_path) as data_file:
+    uniques = json.load(data_file)
+
+sizes = [2, 3]
+
+for s in sizes:
+    ids = []
+    added = 0
+    skipped = 0
+    marked = 0
+
+    for d in db.select(["type=relax", "size={}".format(s)]):
+        if 'iteration' in d.key_value_pairs:
+            if d.iteration == iteration:
+                marked += 1
+            continue
+        elif td.is_unique(d, uniques):
+            ids.append(d.id)
+            added += 1
+            marked += 1
+        else:
+            skipped += 1
+
+    n = len(ids)
+    n_train = int(round(n * 0.9))
+
+    random.seed(31)
+    train_samples = random.sample(ids, n_train)
+    valid_samples = set(ids) - set(train_samples)
+
+    db.update(list(train_samples), iteration=iteration, train_set=True)
+    db.update(list(valid_samples), iteration=iteration, train_set=False)
+    print("size {}:".format(s))
+    print("{} added. {} skipped. {} marked for this iteration.".format(added, skipped, marked))
 #+END_SRC
 
-**** Add relaxations and ionic steps to iteration key
+#+RESULTS:
+:RESULTS:
+size 2:
+0 added. 6 skipped. 20 marked for this iteration.
+size 3:
+0 added. 210 skipped. 476 marked for this iteration.
+:END:
 
+*** DONE Check hashes for duplicates
+
+#+BEGIN_SRC python :results output org drawer
+from ase.db import connect
+from amp.utilities import hash_image
+
+db = connect('database/master.db')
+hashes = {}
+dups = 0
+for d in db.select('iteration=0'):
+    atoms = db.get_atoms(d.id)
+    hashi = hash_image(atoms)
+
+    if hashi in hashes:
+        print("Duplicate found: {}, {}".format(hashes[hashi], d.id))
+        orig = next(db.select('id={}'.format(hashes[hashi])))
+        print(orig.key_value_pairs)
+        print(d.key_value_pairs)
+        print("")
+        dups += 1
+    else:
+        hashes[hashi] = d.id
+
+print("Total duplicats: {}".format(dups))
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+Duplicate found: 275, 11130
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's006', u'pore': 1, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 2}
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's006', u'pore': 1, u'traj': 0, u'type': u'relax', u'size': 2}
+
+Duplicate found: 277, 11140
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's006007', u'pore': 2, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 2}
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's006007', u'pore': 2, u'traj': 0, u'type': u'relax', u'size': 2}
+
+Duplicate found: 11152, 11119
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's006007', u'pore': 2, u'traj': 12, u'type': u'relax', u'size': 2}
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's006007', u'pore': 2, u'traj': -1, u'type': u'relax', u'size': 2}
+
+Duplicate found: 11134, 11117
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's006', u'pore': 1, u'traj': 4, u'type': u'relax', u'size': 2}
+{u'layers': 1, u'mat': u'graphene', u'train_set': False, u'iteration': 0, u'porestr': u's006', u'pore': 1, u'traj': -1, u'type': u'relax', u'size': 2}
+
+Duplicate found: 241, 11537
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011016', u'pore': 5, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's008009010011016', u'pore': 5, u'traj': 0, u'type': u'relax', u'size': 3}
+
+Duplicate found: 11120, 11513
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's008009010014', u'pore': 4, u'traj': -1, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's008009010014', u'pore': 4, u'traj': 10, u'type': u'relax', u'size': 3}
+
+Duplicate found: 11797, 11128
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's008009010011014016017', u'pore': 7, u'traj': 49, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's008009010011014016017', u'pore': 7, u'traj': -1, u'type': u'relax', u'size': 3}
+
+Duplicate found: 11219, 661
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010', u'pore': 3, u'kptsz': 3, u'iteration': 0, u'traj': 14, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010', u'pore': 3, u'kptsz': 3, u'iteration': 0, u'traj': -1, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+
+Duplicate found: 261, 11743
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's009010011014015016', u'pore': 6, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's009010011014015016', u'pore': 6, u'traj': 0, u'type': u'relax', u'size': 3}
+
+Duplicate found: 11256, 663
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011', u'pore': 4, u'kptsz': 3, u'iteration': 0, u'traj': 21, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011', u'pore': 4, u'kptsz': 3, u'iteration': 0, u'traj': -1, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+
+Duplicate found: 255, 11604
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011014016', u'pore': 6, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's008009010011014016', u'pore': 6, u'traj': 0, u'type': u'relax', u'size': 3}
+
+Duplicate found: 210, 11171
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009', u'pore': 2, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009', u'pore': 2, u'kptsz': 3, u'iteration': 0, u'traj': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+
+Duplicate found: 229, 11503
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010014', u'pore': 4, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's008009010014', u'pore': 4, u'traj': 0, u'type': u'relax', u'size': 3}
+
+Duplicate found: 202, 11153
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008', u'pore': 1, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008', u'pore': 1, u'kptsz': 3, u'iteration': 0, u'traj': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+
+Duplicate found: 267, 11413
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011014015016', u'pore': 7, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011014015016', u'pore': 7, u'kptsz': 3, u'iteration': 0, u'traj': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+
+Duplicate found: 11653, 11124
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's008009010011014016', u'pore': 6, u'traj': 49, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's008009010011014016', u'pore': 6, u'traj': -1, u'type': u'relax', u'size': 3}
+
+Duplicate found: 11536, 11121
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's009010011014', u'pore': 4, u'traj': 22, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's009010011014', u'pore': 4, u'traj': -1, u'type': u'relax', u'size': 3}
+
+Duplicate found: 667, 11373
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011014015', u'pore': 6, u'kptsz': 3, u'iteration': 0, u'traj': -1, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011014015', u'pore': 6, u'kptsz': 3, u'iteration': 0, u'traj': 23, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+
+Duplicate found: 11814, 11129
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's008009010011014015016017', u'pore': 8, u'traj': 16, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's008009010011014015016017', u'pore': 8, u'traj': -1, u'type': u'relax', u'size': 3}
+
+Duplicate found: 657, 11161
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008', u'pore': 1, u'kptsz': 3, u'iteration': 0, u'traj': -1, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008', u'pore': 1, u'kptsz': 3, u'iteration': 0, u'traj': 8, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+
+Duplicate found: 11127, 11747
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's009010011014015016', u'pore': 6, u'traj': -1, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's009010011014015016', u'pore': 6, u'traj': 4, u'type': u'relax', u'size': 3}
+
+Duplicate found: 659, 11187
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009', u'pore': 2, u'kptsz': 3, u'iteration': 0, u'traj': -1, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009', u'pore': 2, u'kptsz': 3, u'iteration': 0, u'traj': 16, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+
+Duplicate found: 11299, 665
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011014', u'pore': 5, u'kptsz': 3, u'iteration': 0, u'traj': 19, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011014', u'pore': 5, u'kptsz': 3, u'iteration': 0, u'traj': -1, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+
+Duplicate found: 11452, 669
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011014015016', u'pore': 7, u'kptsz': 3, u'iteration': 0, u'traj': 39, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011014015016', u'pore': 7, u'kptsz': 3, u'iteration': 0, u'traj': -1, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+
+Duplicate found: 254, 11350
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011014015', u'pore': 6, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011014015', u'pore': 6, u'kptsz': 3, u'iteration': 0, u'traj': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+
+Duplicate found: 228, 11235
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011', u'pore': 4, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011', u'pore': 4, u'kptsz': 3, u'iteration': 0, u'traj': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+
+Duplicate found: 11603, 11123
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's009010011014015', u'pore': 5, u'traj': 16, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's009010011014015', u'pore': 5, u'traj': -1, u'type': u'relax', u'size': 3}
+
+Duplicate found: 273, 11798
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011014015016017', u'pore': 8, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's008009010011014015016017', u'pore': 8, u'traj': 0, u'type': u'relax', u'size': 3}
+
+Duplicate found: 244, 11587
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's009010011014015', u'pore': 5, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's009010011014015', u'pore': 5, u'traj': 0, u'type': u'relax', u'size': 3}
+
+Duplicate found: 218, 11205
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010', u'pore': 3, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010', u'pore': 3, u'kptsz': 3, u'iteration': 0, u'traj': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+
+Duplicate found: 240, 11280
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011014', u'pore': 5, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011014', u'pore': 5, u'kptsz': 3, u'iteration': 0, u'traj': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+
+Duplicate found: 256, 11654
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011015016', u'pore': 6, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': False, u'iteration': 0, u'porestr': u's008009010011015016', u'pore': 6, u'traj': 0, u'type': u'relax', u'size': 3}
+
+Duplicate found: 11125, 11703
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's008009010011015016', u'pore': 6, u'traj': -1, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': False, u'iteration': 0, u'porestr': u's008009010011015016', u'pore': 6, u'traj': 49, u'type': u'relax', u'size': 3}
+
+Duplicate found: 257, 11704
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011016017', u'pore': 6, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': False, u'iteration': 0, u'porestr': u's008009010011016017', u'pore': 6, u'traj': 0, u'type': u'relax', u'size': 3}
+
+Duplicate found: 11122, 11586
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's008009010011016', u'pore': 5, u'traj': -1, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': False, u'iteration': 0, u'porestr': u's008009010011016', u'pore': 5, u'traj': 49, u'type': u'relax', u'size': 3}
+
+Duplicate found: 11126, 11742
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's008009010011016017', u'pore': 6, u'traj': -1, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': False, u'iteration': 0, u'porestr': u's008009010011016017', u'pore': 6, u'traj': 38, u'type': u'relax', u'size': 3}
+
+Duplicate found: 268, 11748
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011014016017', u'pore': 7, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': False, u'iteration': 0, u'porestr': u's008009010011014016017', u'pore': 7, u'traj': 0, u'type': u'relax', u'size': 3}
+
+Duplicate found: 231, 11514
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's009010011014', u'pore': 4, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': False, u'iteration': 0, u'porestr': u's009010011014', u'pore': 4, u'traj': 0, u'type': u'relax', u'size': 3}
+
+Total duplicats: 38
+:END:
+
+*** DONE Remove duplicate hashes
+
+#+BEGIN_SRC python :results output org drawer
+from ase.db import connect
+from amp.utilities import hash_image
+
+db = connect('database/master.db')
+hashes = {}
+dups = 0
+for d in db.select('iteration=0'):
+    atoms = db.get_atoms(d.id)
+    hashi = hash_image(atoms)
+
+    if hashi in hashes:
+        print("Duplicate found: {}, {}".format(hashes[hashi], d.id))
+        orig = next(db.select('id={}'.format(hashes[hashi])))
+        print(orig.key_value_pairs)
+        print(d.key_value_pairs)
+        print("")
+        dups += 1
+        
+        remove = d.id
+        if "type" in orig.key_value_pairs and orig.key_value_pairs["type"] == "point":
+            remove = d.id
+        elif "traj" in d.key_value_pairs:
+            if "traj" in orig.key_value_pairs:
+                if orig.key_value_pairs["traj"] == -1:
+                    remove = d.id
+                elif d.key_value_pairs["traj"] <= 0:
+                    remove = orig.id
+        db.update(remove, iteration=99999)
+    else:
+        hashes[hashi] = d.id
+
+print("Total duplicates: {}".format(dups))
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+Duplicate found: 275, 11130
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's006', u'pore': 1, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 2}
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's006', u'pore': 1, u'traj': 0, u'type': u'relax', u'size': 2}
+Duplicate found: 277, 11140
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's006007', u'pore': 2, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 2}
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's006007', u'pore': 2, u'traj': 0, u'type': u'relax', u'size': 2}
+Duplicate found: 11152, 11119
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's006007', u'pore': 2, u'traj': 12, u'type': u'relax', u'size': 2}
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's006007', u'pore': 2, u'traj': -1, u'type': u'relax', u'size': 2}
+Duplicate found: 11134, 11117
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's006', u'pore': 1, u'traj': 4, u'type': u'relax', u'size': 2}
+{u'layers': 1, u'mat': u'graphene', u'train_set': False, u'iteration': 0, u'porestr': u's006', u'pore': 1, u'traj': -1, u'type': u'relax', u'size': 2}
+Duplicate found: 241, 11537
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011016', u'pore': 5, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's008009010011016', u'pore': 5, u'traj': 0, u'type': u'relax', u'size': 3}
+Duplicate found: 11120, 11513
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's008009010014', u'pore': 4, u'traj': -1, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's008009010014', u'pore': 4, u'traj': 10, u'type': u'relax', u'size': 3}
+Duplicate found: 11797, 11128
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's008009010011014016017', u'pore': 7, u'traj': 49, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's008009010011014016017', u'pore': 7, u'traj': -1, u'type': u'relax', u'size': 3}
+Duplicate found: 11219, 661
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010', u'pore': 3, u'kptsz': 3, u'iteration': 0, u'traj': 14, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010', u'pore': 3, u'kptsz': 3, u'iteration': 0, u'traj': -1, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+Duplicate found: 261, 11743
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's009010011014015016', u'pore': 6, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's009010011014015016', u'pore': 6, u'traj': 0, u'type': u'relax', u'size': 3}
+Duplicate found: 11256, 663
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011', u'pore': 4, u'kptsz': 3, u'iteration': 0, u'traj': 21, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011', u'pore': 4, u'kptsz': 3, u'iteration': 0, u'traj': -1, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+Duplicate found: 255, 11604
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011014016', u'pore': 6, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's008009010011014016', u'pore': 6, u'traj': 0, u'type': u'relax', u'size': 3}
+Duplicate found: 210, 11171
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009', u'pore': 2, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009', u'pore': 2, u'kptsz': 3, u'iteration': 0, u'traj': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+Duplicate found: 229, 11503
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010014', u'pore': 4, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's008009010014', u'pore': 4, u'traj': 0, u'type': u'relax', u'size': 3}
+Duplicate found: 202, 11153
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008', u'pore': 1, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008', u'pore': 1, u'kptsz': 3, u'iteration': 0, u'traj': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+Duplicate found: 267, 11413
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011014015016', u'pore': 7, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011014015016', u'pore': 7, u'kptsz': 3, u'iteration': 0, u'traj': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+Duplicate found: 11653, 11124
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's008009010011014016', u'pore': 6, u'traj': 49, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's008009010011014016', u'pore': 6, u'traj': -1, u'type': u'relax', u'size': 3}
+Duplicate found: 11536, 11121
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's009010011014', u'pore': 4, u'traj': 22, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's009010011014', u'pore': 4, u'traj': -1, u'type': u'relax', u'size': 3}
+Duplicate found: 667, 11373
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011014015', u'pore': 6, u'kptsz': 3, u'iteration': 0, u'traj': -1, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011014015', u'pore': 6, u'kptsz': 3, u'iteration': 0, u'traj': 23, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+Duplicate found: 11814, 11129
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's008009010011014015016017', u'pore': 8, u'traj': 16, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's008009010011014015016017', u'pore': 8, u'traj': -1, u'type': u'relax', u'size': 3}
+Duplicate found: 657, 11161
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008', u'pore': 1, u'kptsz': 3, u'iteration': 0, u'traj': -1, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008', u'pore': 1, u'kptsz': 3, u'iteration': 0, u'traj': 8, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+Duplicate found: 11127, 11747
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's009010011014015016', u'pore': 6, u'traj': -1, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's009010011014015016', u'pore': 6, u'traj': 4, u'type': u'relax', u'size': 3}
+Duplicate found: 659, 11187
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009', u'pore': 2, u'kptsz': 3, u'iteration': 0, u'traj': -1, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009', u'pore': 2, u'kptsz': 3, u'iteration': 0, u'traj': 16, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+Duplicate found: 11299, 665
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011014', u'pore': 5, u'kptsz': 3, u'iteration': 0, u'traj': 19, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011014', u'pore': 5, u'kptsz': 3, u'iteration': 0, u'traj': -1, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+Duplicate found: 11452, 669
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011014015016', u'pore': 7, u'kptsz': 3, u'iteration': 0, u'traj': 39, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011014015016', u'pore': 7, u'kptsz': 3, u'iteration': 0, u'traj': -1, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+Duplicate found: 254, 11350
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011014015', u'pore': 6, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011014015', u'pore': 6, u'kptsz': 3, u'iteration': 0, u'traj': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+Duplicate found: 228, 11235
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011', u'pore': 4, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011', u'pore': 4, u'kptsz': 3, u'iteration': 0, u'traj': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+Duplicate found: 11603, 11123
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's009010011014015', u'pore': 5, u'traj': 16, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's009010011014015', u'pore': 5, u'traj': -1, u'type': u'relax', u'size': 3}
+Duplicate found: 273, 11798
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011014015016017', u'pore': 8, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's008009010011014015016017', u'pore': 8, u'traj': 0, u'type': u'relax', u'size': 3}
+Duplicate found: 244, 11587
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's009010011014015', u'pore': 5, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's009010011014015', u'pore': 5, u'traj': 0, u'type': u'relax', u'size': 3}
+Duplicate found: 218, 11205
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010', u'pore': 3, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010', u'pore': 3, u'kptsz': 3, u'iteration': 0, u'traj': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+Duplicate found: 240, 11280
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011014', u'pore': 5, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011014', u'pore': 5, u'kptsz': 3, u'iteration': 0, u'traj': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'relax', u'size': 3}
+Duplicate found: 256, 11654
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011015016', u'pore': 6, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': False, u'iteration': 0, u'porestr': u's008009010011015016', u'pore': 6, u'traj': 0, u'type': u'relax', u'size': 3}
+Duplicate found: 11125, 11703
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's008009010011015016', u'pore': 6, u'traj': -1, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': False, u'iteration': 0, u'porestr': u's008009010011015016', u'pore': 6, u'traj': 49, u'type': u'relax', u'size': 3}
+Duplicate found: 257, 11704
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011016017', u'pore': 6, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': False, u'iteration': 0, u'porestr': u's008009010011016017', u'pore': 6, u'traj': 0, u'type': u'relax', u'size': 3}
+Duplicate found: 11122, 11586
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's008009010011016', u'pore': 5, u'traj': -1, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': False, u'iteration': 0, u'porestr': u's008009010011016', u'pore': 5, u'traj': 49, u'type': u'relax', u'size': 3}
+Duplicate found: 11126, 11742
+{u'layers': 1, u'mat': u'graphene', u'train_set': True, u'iteration': 0, u'porestr': u's008009010011016017', u'pore': 6, u'traj': -1, u'type': u'relax', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': False, u'iteration': 0, u'porestr': u's008009010011016017', u'pore': 6, u'traj': 38, u'type': u'relax', u'size': 3}
+Duplicate found: 268, 11748
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's008009010011014016017', u'pore': 7, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': False, u'iteration': 0, u'porestr': u's008009010011014016017', u'pore': 7, u'traj': 0, u'type': u'relax', u'size': 3}
+Duplicate found: 231, 11514
+{u'layers': 1, u'kpts': 7, u'mat': u'graphene', u'train_set': True, u'kpts_relax': 11, u'vac': 26, u'porestr': u's009010011014', u'pore': 4, u'kptsz': 3, u'iteration': 0, u'sigma': 0.1, u'ediffg': -0.05, u'lc': 3.0, u'ismear': 1, u'type': u'point', u'size': 3}
+{u'layers': 1, u'mat': u'graphene', u'train_set': False, u'iteration': 0, u'porestr': u's009010011014', u'pore': 4, u'traj': 0, u'type': u'relax', u'size': 3}
+Total duplicats: 38
+:END:
+
+** iteration=1
+
+To add:
+- Point calculations for unique pore structures of size 4
+- Relaxations for size=4
 
 * Vasp
 
@@ -5875,6 +6449,268 @@ DFT calculations.
 ** Convergence
 
 Tests for energy convergence based on different calculation parameters.
+
+*** INPROGRESS mat=graphene/layers=1/size=1/pore=0 - cutoff by LJ
+
+#+BEGIN_SRC python :results drawer
+from ase import Atoms, Atom
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import fsolve
+from vasp import Vasp
+
+import twodee as td
+
+
+def neighbor_distance(a):
+    a1 = a * np.array([3.0**0.5/2., -1./2., 0.])
+    a2 = a * np.array([3.0**0.5/2., 1./2., 0.])
+    c1 = np.array([0, 0, 0])
+    c2 = 1./3. * a1 + 1./3. * a2
+    return np.linalg.norm(c1-c2)
+
+A = []
+distances = np.linspace(4, 10, 13)
+for d in distances:
+    obj = lambda a: neighbor_distance(a) - d
+    a0 = 20
+    roots = fsolve(obj, a0)
+    A.append(roots[0])
+
+
+energies = []
+for a in A:
+    a1 = a * np.array([3.0**0.5/2., -1./2., 0.])
+    a2 = a * np.array([3.0**0.5/2., 1./2., 0.])
+    a3 = np.array([0., 0., 16.])
+
+    atoms = Atoms([Atom('C', 1./2. * a3),
+                    Atom('C', 1./3. * a1 + 1./3. * a2 + 1./2. * a3)],
+                    cell=[a1, a2, a3])
+
+    name = 'vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/lc={0:0.3f}'.format(a)
+    calc = Vasp(name,
+                xc='PBE',          # GGA functional type
+                encut=520,
+                kpts=[11,11,1],
+                ismear=0,          # Gaussian smearing
+                sigma=0.2,         # "Metallic" system smearing
+                atoms=atoms)
+
+    calc.calculate()
+    continue
+    energy = calc.potential_energy / len(atoms)
+    energies.append(energy)
+
+td.bp()
+plt.plot(A, energies)
+plt.xlabel('Lattice constant ($\AA$)')
+plt.ylabel('Energy (eV/atom)')
+plt.title('Graphene Equation of State')
+file_path = 'eos_graphene.png'
+td.print_image(file_path, plt)
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/lc=6.928 submitted: 1449131.gilgamesh.cheme.cmu.edu
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/lc=7.794 submitted: 1449132.gilgamesh.cheme.cmu.edu
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/lc=8.660 submitted: 1449133.gilgamesh.cheme.cmu.edu
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/lc=9.526 submitted: 1449134.gilgamesh.cheme.cmu.edu
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/lc=10.392 submitted: 1449135.gilgamesh.cheme.cmu.edu
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/lc=11.258 submitted: 1449136.gilgamesh.cheme.cmu.edu
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/lc=12.124 submitted: 1449137.gilgamesh.cheme.cmu.edu
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/lc=12.990 submitted: 1449138.gilgamesh.cheme.cmu.edu
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/lc=13.856 submitted: 1449139.gilgamesh.cheme.cmu.edu
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/lc=14.722 submitted: 1449140.gilgamesh.cheme.cmu.edu
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/lc=15.588 submitted: 1449141.gilgamesh.cheme.cmu.edu
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/lc=16.454 submitted: 1449142.gilgamesh.cheme.cmu.edu
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/lc=17.321 submitted: 1449143.gilgamesh.cheme.cmu.edu
+:END:
+
+*** TODO mat=graphene/layers=1/size=1/pore=0 - cutoff by perturbation
 
 *** DONE mat=graphene/layers=1/size=1/pore=0 - kpts
     CLOSED: [2016-06-22 Wed 10:11]
@@ -5923,14 +6759,14 @@ td.print_image(name + '.png', plt)
 
 #+RESULTS:
 :RESULTS:
-kpts= 3 x  3 x 1: Energy = -17.8966. Calc time: 0 min.
-kpts= 5 x  5 x 1: Energy = -18.4222. Calc time: 0 min.
-kpts= 7 x  7 x 1: Energy = -18.4602. Calc time: 0 min.
-kpts= 9 x  9 x 1: Energy = -18.4329. Calc time: 1 min.
-kpts=11 x 11 x 1: Energy = -18.4479. Calc time: 1 min.
-kpts=13 x 13 x 1: Energy = -18.4494. Calc time: 1 min.
-kpts=15 x 15 x 1: Energy = -18.4446. Calc time: 2 min.
-kpts=17 x 17 x 1: Energy = -18.4477. Calc time: 1 min.
+kpts= 3 x  3 x 1: Energy = -17.897. Calc time: 0 min.
+kpts= 5 x  5 x 1: Energy = -18.422. Calc time: 0 min.
+kpts= 7 x  7 x 1: Energy = -18.460. Calc time: 0 min.
+kpts= 9 x  9 x 1: Energy = -18.433. Calc time: 1 min.
+kpts=11 x 11 x 1: Energy = -18.448. Calc time: 1 min.
+kpts=13 x 13 x 1: Energy = -18.449. Calc time: 1 min.
+kpts=15 x 15 x 1: Energy = -18.445. Calc time: 2 min.
+kpts=17 x 17 x 1: Energy = -18.448. Calc time: 1 min.
 [[./img/vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/kpts=17.png]]
 :END:
 
@@ -6351,35 +7187,6 @@ for pore in pores:
 #td.print_image(name + '.png', plt)
 #+END_SRC
 
-#+RESULTS:
-:RESULTS:
-kpts= 1 x  1 x 1: Energy = -460.536. Calc time: 133 min.
-kpts= 3 x  3 x 1: Energy = -461.102. Calc time: 228 min.
-kpts= 5 x  5 x 1: Energy = -461.195. Calc time: 343 min.
-kpts= 7 x  7 x 1: Energy = -461.191. Calc time: 520 min.
-kpts= 1 x  1 x 1: Energy = -443.151. Calc time: 185 min.
-kpts= 3 x  3 x 1: Energy = -443.708. Calc time: 669 min.
-kpts= 5 x  5 x 1: Energy = -443.674. Calc time: 974 min.
-kpts= 7 x  7 x 1: Energy = -443.680. Calc time: 1331 min.
-kpts= 1 x  1 x 1: Energy = -432.595. Calc time: 158 min.
-kpts= 3 x  3 x 1: Energy = -433.043. Calc time: 571 min.
-kpts= 5 x  5 x 1: Energy = -433.036. Calc time: 1256 min.
-kpts= 7 x  7 x 1: Energy = -433.033. Calc time: 2500 min.
-kpts= 1 x  1 x 1: Energy = -419.818. Calc time: 235 min.
-kpts= 3 x  3 x 1: Energy = -420.314. Calc time: 847 min.
-kpts= 5 x  5 x 1: Energy = -420.308. Calc time: 1839 min.
-kpts= 7 x  7 x 1: Energy = -420.308. Calc time: 2596 min.
-kpts= 1 x  1 x 1: Energy = -408.860. Calc time: 177 min.
-kpts= 3 x  3 x 1: Energy = -409.277. Calc time: 554 min.
-kpts= 5 x  5 x 1: Energy = -409.281. Calc time: 694 min.
-kpts= 7 x  7 x 1: Energy = -409.280. Calc time: 1131 min.
-kpts= 1 x  1 x 1: Energy = -397.284. Calc time: 277 min.
-kpts= 3 x  3 x 1: Energy = -397.656. Calc time: 903 min.
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=5/kpts=5 submitted: 1430979.gilgamesh.cheme.cmu.edu
-kpts= 5 x  5 x 1: Inprogress.
-kpts= 7 x  7 x 1: Energy = -397.654. Calc time: 3475 min.
-:END:
-
 A k-point grid of 5x5x1 is the lowest grid converged to 10 meV.
 
 *** DONE mat=graphene/layers=1/size=3/pore=3 - kpts relaxed
@@ -6718,6 +7525,59 @@ td.print_image(file_path, plt)
 :END:
 
 ** Point energy calculations
+*** INPROGRESS mat=graphene/layers=1/size=*/pore=0
+
+Obtain calculations for pristine graphene at all relevant sizes.
+
+#+BEGIN_SRC python :results example
+from ase import Atoms, Atom
+import numpy as np
+import matplotlib.pyplot as plt
+from vasp import Vasp
+from vasp.vasprc import VASPRC
+#VASPRC['queue.mem'] = '4GB'
+
+import twodee as td
+
+sizes = [1,  2, 3, 4, 5, 6, 7]
+kpts =  [11, 9, 5, 5, 5, 3, 3]
+#sizes = [7]
+#kpts = [3]
+
+energies = []
+for size, k in zip(sizes, kpts):
+    atoms = td.create_base("graphene", layers=1, size=size)
+    name = 'vasp/type=point/mat=graphene/layers=1/size={0}/pore=0/000'.format(size)
+    calc = Vasp(name,
+                xc='PBE',
+                encut=520,
+                kpts=[k, k, 1],
+                nsw=0,
+                atoms=atoms)
+    #calc.calculate()
+    td.result('size={0}'.format(size), calc, per_atom=True)
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=7/pore=0/000 submitted: 1449175.gilgamesh.cheme.cmu.edu
+size=7: Inprogress.
+#+end_example
+
 *** DONE mat=graphene/layers=1/size=2/pore=*
     CLOSED: [2016-07-20 Wed 16:21]
 
@@ -6786,85 +7646,8 @@ for c in cans:
                     nsw=0,
                     atoms=a)
 #        calc.calculate()
-        td.result('pore={0}'.format(pname), calc, per_atom=True)
+#        td.result('pore={0}'.format(pname), calc, per_atom=True)
 #+END_SRC
-
-#+RESULTS:
-:RESULTS:
-pore=000: Energy/atom = -9.222. Calc time: 49 min.
-pore=008: Energy/atom = -8.746. Calc time: 51 min.
-pore=009: Energy/atom = -8.746. Calc time: 34 min.
-pore=010: Energy/atom = -8.746. Calc time: 52 min.
-pore=011: Energy/atom = -8.746. Calc time: 45 min.
-pore=014: Energy/atom = -8.746. Calc time: 41 min.
-pore=015: Energy/atom = -8.746. Calc time: 33 min.
-pore=016: Energy/atom = -8.746. Calc time: 48 min.
-pore=017: Energy/atom = -8.746. Calc time: 40 min.
-pore=008009: Energy/atom = -8.624. Calc time: 62 min.
-pore=009010: Energy/atom = -8.624. Calc time: 40 min.
-pore=009014: Energy/atom = -8.624. Calc time: 43 min.
-pore=010011: Energy/atom = -8.624. Calc time: 67 min.
-pore=011016: Energy/atom = -8.624. Calc time: 60 min.
-pore=014015: Energy/atom = -8.624. Calc time: 34 min.
-pore=015016: Energy/atom = -8.624. Calc time: 64 min.
-pore=016017: Energy/atom = -8.624. Calc time: 44 min.
-pore=008009010: Energy/atom = -8.380. Calc time: 50 min.
-pore=008009014: Energy/atom = -8.380. Calc time: 51 min.
-pore=009010011: Energy/atom = -8.380. Calc time: 59 min.
-pore=009010014: Energy/atom = -8.380. Calc time: 54 min.
-pore=009014015: Energy/atom = -8.380. Calc time: 72 min.
-pore=010011016: Energy/atom = -8.380. Calc time: 30 min.
-pore=011015016: Energy/atom = -8.380. Calc time: 28 min.
-pore=011016017: Energy/atom = -8.380. Calc time: 53 min.
-pore=014015016: Energy/atom = -8.380. Calc time: 27 min.
-pore=015016017: Energy/atom = -8.380. Calc time: 29 min.
-pore=008009010011: Energy/atom = -8.114. Calc time: 59 min.
-pore=008009010014: Energy/atom = -8.162. Calc time: 13 min.
-pore=008009014015: Energy/atom = -8.114. Calc time: 35 min.
-pore=009010011014: Energy/atom = -8.165. Calc time: 25 min.
-pore=009010011016: Energy/atom = -8.165. Calc time: 24 min.
-pore=009010014015: Energy/atom = -8.165. Calc time: 46 min.
-pore=009014015016: Energy/atom = -8.165. Calc time: 26 min.
-pore=010011015016: Energy/atom = -8.165. Calc time: 43 min.
-pore=010011016017: Energy/atom = -8.114. Calc time: 111 min.
-pore=011014015016: Energy/atom = -8.165. Calc time: 67 min.
-pore=011015016017: Energy/atom = -8.162. Calc time: 16 min.
-pore=014015016017: Energy/atom = -8.114. Calc time: 32 min.
-pore=008009010011014: Energy/atom = -7.975. Calc time: 31 min.
-pore=008009010011016: Energy/atom = -7.886. Calc time: 42 min.
-pore=008009010014015: Energy/atom = -7.975. Calc time: 64 min.
-pore=008009014015016: Energy/atom = -7.886. Calc time: 60 min.
-pore=009010011014015: Energy/atom = -7.879. Calc time: 31 min.
-pore=009010011014016: Energy/atom = -7.879. Calc time: 45 min.
-pore=009010011015016: Energy/atom = -7.879. Calc time: 28 min.
-pore=009010011016017: Energy/atom = -7.886. Calc time: 61 min.
-pore=009010014015016: Energy/atom = -7.879. Calc time: 48 min.
-pore=009011014015016: Energy/atom = -7.879. Calc time: 29 min.
-pore=009014015016017: Energy/atom = -7.886. Calc time: 56 min.
-pore=010011014015016: Energy/atom = -7.879. Calc time: 35 min.
-pore=010011015016017: Energy/atom = -7.975. Calc time: 57 min.
-pore=011014015016017: Energy/atom = -7.975. Calc time: 44 min.
-pore=008009010011014015: Energy/atom = -7.627. Calc time: 36 min.
-pore=008009010011014016: Energy/atom = -7.642. Calc time: 40 min.
-pore=008009010011015016: Energy/atom = -7.618. Calc time: 42 min.
-pore=008009010011016017: Energy/atom = -7.702. Calc time: 30 min.
-pore=008009010014015016: Energy/atom = -7.642. Calc time: 38 min.
-pore=008009011014015016: Energy/atom = -7.618. Calc time: 37 min.
-pore=008009014015016017: Energy/atom = -7.702. Calc time: 25 min.
-pore=009010011014015016: Energy/atom = -7.848. Calc time: 20 min.
-pore=009010011014016017: Energy/atom = -7.618. Calc time: 33 min.
-pore=009010011015016017: Energy/atom = -7.642. Calc time: 35 min.
-pore=009010014015016017: Energy/atom = -7.618. Calc time: 42 min.
-pore=009011014015016017: Energy/atom = -7.642. Calc time: 39 min.
-pore=010011014015016017: Energy/atom = -7.627. Calc time: 30 min.
-pore=008009010011014015016: Energy/atom = -7.598. Calc time: 25 min.
-pore=008009010011014016017: Energy/atom = -7.496. Calc time: 31 min.
-pore=008009010011015016017: Energy/atom = -7.496. Calc time: 33 min.
-pore=008009010014015016017: Energy/atom = -7.496. Calc time: 29 min.
-pore=008009011014015016017: Energy/atom = -7.496. Calc time: 26 min.
-pore=009010011014015016017: Energy/atom = -7.598. Calc time: 22 min.
-pore=008009010011014015016017: Energy/atom = -7.511. Calc time: 17 min.
-:END:
 
 *** DONE mat=graphene/layers=1/size=4/pore=3,4,5
     CLOSED: [2016-07-22 Fri 13:49]
@@ -6899,197 +7682,164 @@ for c in cans:
         td.result('pore={0}'.format(pname), calc)
 #+END_SRC
 
+*** INPROGRESS mat=graphene/layers=1/size=4/pore=uniques
+
+Test query for speed.
+#+BEGIN_SRC python :results output org drawer :tangle ./ase_test.py
+from ase.io import read
+import time
+
+start = time.time()
+a = read('database/master.db@type=estimate,size=4')
+runtime = time.time() - start
+print("{} sec".format(runtime))
+#+END_SRC
+
 #+RESULTS:
 :RESULTS:
-pore=010011012: Energy = -254.317. Calc time: 467 min.
-pore=010011018: Energy = -254.317. Calc time: 211 min.
-pore=011012013: Energy = -254.317. Calc time: 168 min.
-pore=011012018: Energy = -254.317. Calc time: 156 min.
-pore=011018019: Energy = -254.317. Calc time: 306 min.
-pore=012013014: Energy = -254.317. Calc time: 157 min.
-pore=012013020: Energy = -254.317. Calc time: 207 min.
-pore=013014015: Energy = -254.317. Calc time: 216 min.
-pore=013014020: Energy = -254.317. Calc time: 176 min.
-pore=013019020: Energy = -254.317. Calc time: 342 min.
-pore=013020021: Energy = -254.317. Calc time: 266 min.
-pore=014015022: Energy = -254.317. Calc time: 165 min.
-pore=015021022: Energy = -254.317. Calc time: 139 min.
-pore=015022023: Energy = -254.317. Calc time: 171 min.
-pore=018019020: Energy = -254.317. Calc time: 146 min.
-pore=018019026: Energy = -254.317. Calc time: 189 min.
-pore=019020021: Energy = -254.317. Calc time: 211 min.
-pore=019020026: Energy = -254.317. Calc time: 521 min.
-pore=019026027: Energy = -254.317. Calc time: 567 min.
-pore=020021022: Energy = -254.317. Calc time: 569 min.
-pore=020021028: Energy = -254.317. Calc time: 508 min.
-pore=021022023: Energy = -254.317. Calc time: 556 min.
-pore=021022028: Energy = -254.317. Calc time: 568 min.
-pore=021027028: Energy = -254.317. Calc time: 544 min.
-pore=021028029: Energy = -254.317. Calc time: 559 min.
-pore=022023030: Energy = -254.317. Calc time: 193 min.
-pore=023029030: Energy = -254.317. Calc time: 144 min.
-pore=023030031: Energy = -254.317. Calc time: 156 min.
-pore=026027028: Energy = -254.317. Calc time: 157 min.
-pore=027028029: Energy = -254.317. Calc time: 146 min.
-pore=028029030: Energy = -254.317. Calc time: 224 min.
-pore=029030031: Energy = -254.317. Calc time: 208 min.
-pore=010011012013: Energy = -242.197. Calc time: 185 min.
-pore=010011012018: Energy = -243.190. Calc time: 82 min.
-pore=010011018019: Energy = -242.197. Calc time: 186 min.
-pore=011012013014: Energy = -242.197. Calc time: 194 min.
-pore=011012013018: Energy = -242.922. Calc time: 151 min.
-pore=011012013020: Energy = -242.922. Calc time: 128 min.
-pore=011012018019: Energy = -242.922. Calc time: 142 min.
-pore=011018019020: Energy = -242.922. Calc time: 151 min.
-pore=011018019026: Energy = -242.197. Calc time: 227 min.
-pore=012013014015: Energy = -242.197. Calc time: 630 min.
-pore=012013014020: Energy = -243.190. Calc time: 404 min.
-pore=012013019020: Energy = -242.922. Calc time: 409 min.
-pore=012013020021: Energy = -242.197. Calc time: 259 min.
-pore=013014015020: Energy = -242.922. Calc time: 431 min.
-pore=013014015022: Energy = -242.922. Calc time: 496 min.
-pore=013014019020: Energy = -242.197. Calc time: 341 min.
-pore=013014020021: Energy = -242.922. Calc time: 188 min.
-pore=013018019020: Energy = -242.922. Calc time: 207 min.
-pore=013019020021: Energy = -243.190. Calc time: 64 min.
-pore=013019020026: Energy = -242.197. Calc time: 261 min.
-pore=013020021022: Energy = -242.922. Calc time: 125 min.
-pore=013020021028: Energy = -242.197. Calc time: 260 min.
-pore=014015021022: Energy = -242.922. Calc time: 138 min.
-pore=014015022023: Energy = -242.197. Calc time: 172 min.
-pore=015020021022: Energy = -242.922. Calc time: 121 min.
-pore=015021022023: Energy = -243.190. Calc time: 64 min.
-pore=015021022028: Energy = -242.197. Calc time: 240 min.
-pore=015022023030: Energy = -242.197. Calc time: 302 min.
-pore=018019020021: Energy = -242.197. Calc time: 207 min.
-pore=018019020026: Energy = -243.190. Calc time: 64 min.
-pore=018019026027: Energy = -242.197. Calc time: 227 min.
-pore=019020021022: Energy = -242.197. Calc time: 437 min.
-pore=019020021026: Energy = -242.922. Calc time: 273 min.
-pore=019020021028: Energy = -242.922. Calc time: 298 min.
-pore=019020026027: Energy = -242.922. Calc time: 288 min.
-pore=019026027028: Energy = -242.922. Calc time: 236 min.
-pore=020021022023: Energy = -242.197. Calc time: 351 min.
-pore=020021022028: Energy = -243.190. Calc time: 184 min.
-pore=020021027028: Energy = -242.922. Calc time: 317 min.
-pore=020021028029: Energy = -242.197. Calc time: 413 min.
-pore=021022023028: Energy = -242.922. Calc time: 330 min.
-pore=021022023030: Energy = -242.922. Calc time: 292 min.
-pore=021022027028: Energy = -242.197. Calc time: 406 min.
-pore=021022028029: Energy = -242.922. Calc time: 353 min.
-pore=021026027028: Energy = -242.922. Calc time: 322 min.
-pore=021027028029: Energy = -243.190. Calc time: 206 min.
-pore=021028029030: Energy = -242.922. Calc time: 328 min.
-pore=022023029030: Energy = -242.922. Calc time: 253 min.
-pore=022023030031: Energy = -242.197. Calc time: 417 min.
-pore=023028029030: Energy = -242.922. Calc time: 322 min.
-pore=023029030031: Energy = -243.190. Calc time: 186 min.
-pore=026027028029: Energy = -242.197. Calc time: 394 min.
-pore=027028029030: Energy = -242.197. Calc time: 441 min.
-pore=028029030031: Energy = -242.197. Calc time: 446 min.
-pore=010011012013014: Energy = -229.762. Calc time: 356 min.
-pore=010011012013018: Energy = -231.691. Calc time: 430 min.
-pore=010011012013020: Energy = -230.817. Calc time: 444 min.
-pore=010011012018019: Energy = -231.691. Calc time: 417 min.
-pore=010011018019020: Energy = -230.817. Calc time: 400 min.
-pore=010011018019026: Energy = -229.762. Calc time: 366 min.
-pore=011012013014015: Energy = -229.762. Calc time: 318 min.
-pore=011012013014018: Energy = -230.817. Calc time: 453 min.
-pore=011012013014020: Energy = -231.691. Calc time: 445 min.
-pore=011012013018019: Energy = -230.111. Calc time: 294 min.
-pore=011012013018020: Energy = -230.111. Calc time: 386 min.
-pore=011012013019020: Energy = -230.111. Calc time: 316 min.
-pore=011012013020021: Energy = -230.817. Calc time: 414 min.
-pore=011012018019020: Energy = -230.111. Calc time: 287 min.
-pore=011012018019026: Energy = -230.817. Calc time: 357 min.
-pore=011013018019020: Energy = -230.111. Calc time: 369 min.
-pore=011018019020021: Energy = -230.817. Calc time: 374 min.
-pore=011018019020026: Energy = -231.691. Calc time: 433 min.
-pore=011018019026027: Energy = -229.762. Calc time: 340 min.
-pore=012013014015020: Energy = -231.691. Calc time: 386 min.
-pore=012013014015022: Energy = -230.817. Calc time: 405 min.
-pore=012013014019020: Energy = -231.691. Calc time: 467 min.
-pore=012013014020021: Energy = -231.691. Calc time: 410 min.
-pore=012013018019020: Energy = -230.111. Calc time: 313 min.
-pore=012013019020021: Energy = -231.691. Calc time: 411 min.
-pore=012013019020026: Energy = -230.817. Calc time: 431 min.
-pore=012013020021022: Energy = -230.817. Calc time: 369 min.
-pore=012013020021028: Energy = -229.762. Calc time: 354 min.
-pore=013014015019020: Energy = -230.817. Calc time: 454 min.
-pore=013014015020021: Energy = -230.111. Calc time: 288 min.
-pore=013014015020022: Energy = -230.111. Calc time: 382 min.
-pore=013014015021022: Energy = -230.111. Calc time: 391 min.
-pore=013014015022023: Energy = -230.817. Calc time: 331 min.
-pore=013014018019020: Energy = -230.817. Calc time: 447 min.
-pore=013014019020021: Energy = -231.691. Calc time: 560 min.
-pore=013014019020026: Energy = -229.762. Calc time: 514 min.
-pore=013014020021022: Energy = -230.111. Calc time: 649 min.
-pore=013014020021028: Energy = -230.817. Calc time: 207 min.
-pore=013015020021022: Energy = -230.111. Calc time: 647 min.
-pore=013018019020021: Energy = -231.691. Calc time: 336 min.
-pore=013018019020026: Energy = -231.691. Calc time: 385 min.
-pore=013019020021022: Energy = -231.691. Calc time: 357 min.
-pore=013019020021026: Energy = -231.691. Calc time: 265 min.
-pore=013019020021028: Energy = -231.691. Calc time: 379 min.
-pore=013019020026027: Energy = -230.817. Calc time: 575 min.
-pore=013020021022023: Energy = -230.817. Calc time: 405 min.
-pore=013020021022028: Energy = -231.691. Calc time: 327 min.
-pore=013020021027028: Energy = -230.817. Calc time: 385 min.
-pore=013020021028029: Energy = -229.762. Calc time: 383 min.
-pore=014015020021022: Energy = -230.111. Calc time: 611 min.
-pore=014015021022023: Energy = -231.691. Calc time: 366 min.
-pore=014015021022028: Energy = -230.817. Calc time: 547 min.
-pore=014015022023030: Energy = -229.762. Calc time: 591 min.
-pore=015019020021022: Energy = -230.817. Calc time: 484 min.
-pore=015020021022023: Energy = -231.691. Calc time: 451 min.
-pore=015020021022028: Energy = -231.691. Calc time: 461 min.
-pore=015021022023028: Energy = -231.691. Calc time: 243 min.
-pore=015021022023030: Energy = -231.691. Calc time: 390 min.
-pore=015021022027028: Energy = -229.762. Calc time: 278 min.
-pore=015021022028029: Energy = -230.817. Calc time: 380 min.
-pore=015022023029030: Energy = -230.817. Calc time: 411 min.
-pore=015022023030031: Energy = -229.762. Calc time: 299 min.
-pore=018019020021022: Energy = -229.762. Calc time: 285 min.
-pore=018019020021026: Energy = -231.691. Calc time: 315 min.
-pore=018019020021028: Energy = -230.817. Calc time: 410 min.
-pore=018019020026027: Energy = -231.691. Calc time: 288 min.
-pore=018019026027028: Energy = -230.817. Calc time: 347 min.
-pore=019020021022023: Energy = -229.762. Calc time: 271 min.
-pore=019020021022026: Energy = -230.817. Calc time: 224 min.
-pore=019020021022028: Energy = -231.691. Calc time: 355 min.
-pore=019020021026027: Energy = -230.111. Calc time: 400 min.
-pore=019020021026028: Energy = -230.111. Calc time: 422 min.
-pore=019020021027028: Energy = -230.111. Calc time: 268 min.
-pore=019020021028029: Energy = -230.817. Calc time: 447 min.
-pore=019020026027028: Energy = -230.111. Calc time: 296 min.
-pore=019021026027028: Energy = -230.111. Calc time: 415 min.
-pore=019026027028029: Energy = -230.817. Calc time: 470 min.
-pore=020021022023028: Energy = -231.691. Calc time: 340 min.
-pore=020021022023030: Energy = -230.817. Calc time: 219 min.
-pore=020021022027028: Energy = -231.691. Calc time: 433 min.
-pore=020021022028029: Energy = -231.691. Calc time: 384 min.
-pore=020021026027028: Energy = -230.111. Calc time: 327 min.
-pore=020021027028029: Energy = -231.691. Calc time: 366 min.
-pore=020021028029030: Energy = -230.817. Calc time: 317 min.
-pore=021022023027028: Energy = -230.817. Calc time: 352 min.
-pore=021022023028029: Energy = -230.111. Calc time: 297 min.
-pore=021022023028030: Energy = -230.111. Calc time: 303 min.
-pore=021022023029030: Energy = -230.111. Calc time: 265 min.
-pore=021022023030031: Energy = -230.817. Calc time: 452 min.
-pore=021022026027028: Energy = -230.817. Calc time: 617 min.
-pore=021022027028029: Energy = -231.691. Calc time: 332 min.
-pore=021022028029030: Energy = -230.111. Calc time: 266 min.
-pore=021023028029030: Energy = -230.111. Calc time: 250 min.
-pore=021026027028029: Energy = -231.691. Calc time: 395 min.
-pore=021027028029030: Energy = -231.691. Calc time: 352 min.
-pore=021028029030031: Energy = -230.817. Calc time: 364 min.
-pore=022023028029030: Energy = -230.111. Calc time: 305 min.
-pore=022023029030031: Energy = -231.691. Calc time: 409 min.
-pore=023027028029030: Energy = -230.817. Calc time: 304 min.
-pore=023028029030031: Energy = -231.691. Calc time: 360 min.
-pore=026027028029030: Energy = -229.762. Calc time: 262 min.
-pore=027028029030031: Energy = -229.762. Calc time: 268 min.
+74.2396500111 sec
 :END:
+
+
+Run the point calculations on the unique structures.
+
+#+BEGIN_SRC python :results drawer
+from ase.db import connect
+import os
+from vasp import Vasp
+
+import twodee as td
+
+size = 4
+db = connect('database/master.db')
+selection = ["type=estimate", "size={}".format(size), "unique=True"]
+
+
+atoms = db.get_atoms(6489)
+d = next(db.select("id=6489"))
+td.bp(d.porestr)
+
+
+for i, d in enumerate(db.select(selection)):
+    pore_string = d.porestr[1:]
+    pore_size = d.pore
+    size_dir = 'vasp/type=point/mat=graphene/layers=1/size={0}'.format(size)
+    pore_dir = 'pore={0}/{1}'.format(pore_size, pore_string)
+    wd = os.path.join(size_dir, pore_dir)
+
+    atoms = db.get_atoms(d.id)
+    print(d.id)
+    try:
+        calc = Vasp(wd,
+                    xc='PBE',
+                    encut=520,
+                    kpts=[5, 5, 1],
+                    nsw=0,
+                    atoms=atoms)
+
+        energy = atoms.get_potential_energy()
+        td.result('pore={0}'.format(pore_string), calc)
+    except:
+        print("Issue with id={}".format(d.id))
+
+print("Jobs: {}".format(i))
+#+END_SRC
+
+#+RESULTS:
+
+
+6489
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp_core.py", line 370, in sort_atoms
+    if (atom.symbol not in symbols and
+  File "/home-guest/devonw/lib/python/ase/ase/atom.py", line 22, in getter
+    return self.get(name)
+  File "/home-guest/devonw/lib/python/ase/ase/atom.py", line 146, in get
+    value = self.get_raw(name)
+  File "/home-guest/devonw/lib/python/ase/ase/atom.py", line 133, in get_raw
+    return chemical_symbols[self.get_raw('number')]
+TypeError: only integer arrays with one element can be converted to an index
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/vasp/vasp/readers.py", line 330, in read
+    self.sort_atoms(atoms)
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 51, in inner
+    return self.exception_handler(self, *sys.exc_info())
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp_core.py", line 370, in sort_atoms
+    if (atom.symbol not in symbols and
+  File "/home-guest/devonw/lib/python/ase/ase/atom.py", line 22, in getter
+    return self.get(name)
+  File "/home-guest/devonw/lib/python/ase/ase/atom.py", line 146, in get
+    value = self.get_raw(name)
+  File "/home-guest/devonw/lib/python/ase/ase/atom.py", line 133, in get_raw
+    return chemical_symbols[self.get_raw('number')]
+TypeError: only integer arrays with one element can be converted to an index
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 196, in __init__
+    self.read(restart)  # read parameters, atoms and results
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 51, in inner
+    return self.exception_handler(self, *sys.exc_info())
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/vasp/vasp/readers.py", line 330, in read
+    self.sort_atoms(atoms)
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 51, in inner
+    return self.exception_handler(self, *sys.exc_info())
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp_core.py", line 370, in sort_atoms
+    if (atom.symbol not in symbols and
+  File "/home-guest/devonw/lib/python/ase/ase/atom.py", line 22, in getter
+    return self.get(name)
+  File "/home-guest/devonw/lib/python/ase/ase/atom.py", line 146, in get
+    value = self.get_raw(name)
+  File "/home-guest/devonw/lib/python/ase/ase/atom.py", line 133, in get_raw
+    return chemical_symbols[self.get_raw('number')]
+TypeError: only integer arrays with one element can be converted to an index
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 525, in __init__
+    atoms, **kwargs)
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 51, in inner
+    return self.exception_handler(self, *sys.exc_info())
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 196, in __init__
+    self.read(restart)  # read parameters, atoms and results
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 51, in inner
+    return self.exception_handler(self, *sys.exc_info())
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/vasp/vasp/readers.py", line 330, in read
+    self.sort_atoms(atoms)
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 51, in inner
+    return self.exception_handler(self, *sys.exc_info())
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp_core.py", line 370, in sort_atoms
+    if (atom.symbol not in symbols and
+  File "/home-guest/devonw/lib/python/ase/ase/atom.py", line 22, in getter
+    return self.get(name)
+  File "/home-guest/devonw/lib/python/ase/ase/atom.py", line 146, in get
+    value = self.get_raw(name)
+  File "/home-guest/devonw/lib/python/ase/ase/atom.py", line 133, in get_raw
+    return chemical_symbols[self.get_raw('number')]
+TypeError: only integer arrays with one element can be converted to an index
+Issue with id=6489
+
+
 
 *** DONE mat=graphene/layers=1/size=5/pore=0,3,4#,5
     CLOSED: [2016-07-23 Sat 11:45]
@@ -7124,201 +7874,6 @@ for c in cans:
 #        calc.calculate()
         td.result('pore={0}'.format(pname), calc)
 #+END_SRC
-
-#+RESULTS:
-:RESULTS:
-pore=000: Energy = -461.102. Calc time: 545 min.
-pore=012013014: Energy = -420.314. Calc time: 638 min.
-pore=012013022: Energy = -420.314. Calc time: 650 min.
-pore=013014015: Energy = -420.314. Calc time: 736 min.
-pore=013014022: Energy = -420.314. Calc time: 645 min.
-pore=013022023: Energy = -420.314. Calc time: 680 min.
-pore=014015016: Energy = -420.314. Calc time: 620 min.
-pore=014015024: Energy = -420.314. Calc time: 611 min.
-pore=015016017: Energy = -420.314. Calc time: 726 min.
-pore=015016024: Energy = -420.314. Calc time: 691 min.
-pore=015023024: Energy = -420.314. Calc time: 734 min.
-pore=015024025: Energy = -420.314. Calc time: 589 min.
-pore=016017018: Energy = -420.314. Calc time: 647 min.
-pore=016017026: Energy = -420.314. Calc time: 656 min.
-pore=017018019: Energy = -420.314. Calc time: 633 min.
-pore=017018026: Energy = -420.314. Calc time: 685 min.
-pore=017025026: Energy = -420.314. Calc time: 590 min.
-pore=017026027: Energy = -420.314. Calc time: 701 min.
-pore=018019028: Energy = -420.314. Calc time: 613 min.
-pore=019027028: Energy = -420.314. Calc time: 613 min.
-pore=019028029: Energy = -420.314. Calc time: 655 min.
-pore=022023024: Energy = -420.314. Calc time: 704 min.
-pore=022023032: Energy = -420.314. Calc time: 696 min.
-pore=023024025: Energy = -420.314. Calc time: 617 min.
-pore=023024032: Energy = -420.314. Calc time: 653 min.
-pore=023032033: Energy = -420.314. Calc time: 535 min.
-pore=024025026: Energy = -420.314. Calc time: 567 min.
-pore=024025034: Energy = -420.314. Calc time: 518 min.
-pore=025026027: Energy = -420.314. Calc time: 577 min.
-pore=025026034: Energy = -420.314. Calc time: 730 min.
-pore=025033034: Energy = -420.314. Calc time: 708 min.
-pore=025034035: Energy = -420.314. Calc time: 655 min.
-pore=026027028: Energy = -420.314. Calc time: 671 min.
-pore=026027036: Energy = -420.314. Calc time: 614 min.
-pore=027028029: Energy = -420.314. Calc time: 733 min.
-pore=027028036: Energy = -420.314. Calc time: 626 min.
-pore=027035036: Energy = -420.314. Calc time: 612 min.
-pore=027036037: Energy = -420.314. Calc time: 526 min.
-pore=028029038: Energy = -420.314. Calc time: 682 min.
-pore=029037038: Energy = -420.314. Calc time: 644 min.
-pore=029038039: Energy = -420.314. Calc time: 586 min.
-pore=032033034: Energy = -420.314. Calc time: 610 min.
-pore=032033042: Energy = -420.314. Calc time: 338 min.
-pore=033034035: Energy = -420.314. Calc time: 498 min.
-pore=033034042: Energy = -420.314. Calc time: 423 min.
-pore=033042043: Energy = -420.314. Calc time: 450 min.
-pore=034035036: Energy = -420.314. Calc time: 549 min.
-pore=034035044: Energy = -420.314. Calc time: 384 min.
-pore=035036037: Energy = -420.314. Calc time: 471 min.
-pore=035036044: Energy = -420.314. Calc time: 478 min.
-pore=035043044: Energy = -420.314. Calc time: 437 min.
-pore=035044045: Energy = -420.314. Calc time: 510 min.
-pore=036037038: Energy = -420.314. Calc time: 685 min.
-pore=036037046: Energy = -420.314. Calc time: 408 min.
-pore=037038039: Energy = -420.314. Calc time: 598 min.
-pore=037038046: Energy = -420.314. Calc time: 506 min.
-pore=037045046: Energy = -420.314. Calc time: 350 min.
-pore=037046047: Energy = -420.314. Calc time: 373 min.
-pore=038039048: Energy = -420.314. Calc time: 351 min.
-pore=039047048: Energy = -420.314. Calc time: 357 min.
-pore=039048049: Energy = -420.314. Calc time: 450 min.
-pore=042043044: Energy = -420.314. Calc time: 602 min.
-pore=043044045: Energy = -420.314. Calc time: 442 min.
-pore=044045046: Energy = -420.314. Calc time: 692 min.
-pore=045046047: Energy = -420.314. Calc time: 629 min.
-pore=046047048: Energy = -420.314. Calc time: 471 min.
-pore=047048049: Energy = -420.314. Calc time: 523 min.
-pore=012013014015: Energy = -408.182. Calc time: 439 min.
-pore=012013014022: Energy = -409.277. Calc time: 195 min.
-pore=012013022023: Energy = -408.182. Calc time: 827 min.
-pore=013014015016: Energy = -408.182. Calc time: 856 min.
-pore=013014015022: Energy = -408.868. Calc time: 1039 min.
-pore=013014015024: Energy = -408.868. Calc time: 997 min.
-pore=013014022023: Energy = -408.868. Calc time: 640 min.
-pore=013022023024: Energy = -408.868. Calc time: 660 min.
-pore=013022023032: Energy = -408.182. Calc time: 1086 min.
-pore=014015016017: Energy = -408.182. Calc time: 1198 min.
-pore=014015016024: Energy = -409.277. Calc time: 586 min.
-pore=014015023024: Energy = -408.868. Calc time: 1032 min.
-pore=014015024025: Energy = -408.182. Calc time: 1057 min.
-pore=015016017018: Energy = -408.182. Calc time: 1089 min.
-pore=015016017024: Energy = -408.868. Calc time: 908 min.
-pore=015016017026: Energy = -408.868. Calc time: 1025 min.
-pore=015016023024: Energy = -408.182. Calc time: 961 min.
-pore=015016024025: Energy = -408.868. Calc time: 897 min.
-pore=015022023024: Energy = -408.868. Calc time: 859 min.
-pore=015023024025: Energy = -409.277. Calc time: 697 min.
-pore=015023024032: Energy = -408.182. Calc time: 1097 min.
-pore=015024025026: Energy = -408.868. Calc time: 889 min.
-pore=015024025034: Energy = -408.182. Calc time: 1060 min.
-pore=016017018019: Energy = -408.182. Calc time: 1034 min.
-pore=016017018026: Energy = -409.277. Calc time: 778 min.
-pore=016017025026: Energy = -408.868. Calc time: 790 min.
-pore=016017026027: Energy = -408.182. Calc time: 1086 min.
-pore=017018019026: Energy = -408.868. Calc time: 1061 min.
-pore=017018019028: Energy = -408.868. Calc time: 911 min.
-pore=017018025026: Energy = -408.182. Calc time: 1123 min.
-pore=017018026027: Energy = -408.868. Calc time: 930 min.
-pore=017024025026: Energy = -408.868. Calc time: 1086 min.
-pore=017025026027: Energy = -409.277. Calc time: 627 min.
-pore=017025026034: Energy = -408.182. Calc time: 1204 min.
-pore=017026027028: Energy = -408.868. Calc time: 960 min.
-pore=017026027036: Energy = -408.182. Calc time: 1014 min.
-pore=018019027028: Energy = -408.868. Calc time: 909 min.
-pore=018019028029: Energy = -408.182. Calc time: 1302 min.
-pore=019026027028: Energy = -408.868. Calc time: 828 min.
-pore=019027028029: Energy = -409.277. Calc time: 649 min.
-pore=019027028036: Energy = -408.182. Calc time: 1065 min.
-pore=019028029038: Energy = -408.182. Calc time: 1129 min.
-pore=022023024025: Energy = -408.182. Calc time: 1038 min.
-pore=022023024032: Energy = -409.277. Calc time: 769 min.
-pore=022023032033: Energy = -408.182. Calc time: 1088 min.
-pore=023024025026: Energy = -408.182. Calc time: 1001 min.
-pore=023024025032: Energy = -408.868. Calc time: 912 min.
-pore=023024025034: Energy = -408.868. Calc time: 957 min.
-pore=023024032033: Energy = -408.868. Calc time: 831 min.
-pore=023032033034: Energy = -408.868. Calc time: 964 min.
-pore=023032033042: Energy = -408.182. Calc time: 1029 min.
-pore=024025026027: Energy = -408.182. Calc time: 1058 min.
-pore=024025026034: Energy = -409.277. Calc time: 638 min.
-pore=024025033034: Energy = -408.868. Calc time: 1002 min.
-pore=024025034035: Energy = -408.182. Calc time: 426 min.
-pore=025026027028: Energy = -408.182. Calc time: 706 min.
-pore=025026027034: Energy = -408.868. Calc time: 383 min.
-pore=025026027036: Energy = -408.868. Calc time: 1118 min.
-pore=025026033034: Energy = -408.182. Calc time: 1177 min.
-pore=025026034035: Energy = -408.868. Calc time: 291 min.
-pore=025032033034: Energy = -408.868. Calc time: 319 min.
-pore=025033034035: Energy = -409.277. Calc time: 215 min.
-pore=025033034042: Energy = -408.182. Calc time: 385 min.
-pore=025034035036: Energy = -408.868. Calc time: 294 min.
-pore=025034035044: Energy = -408.182. Calc time: 378 min.
-pore=026027028029: Energy = -408.182. Calc time: 353 min.
-pore=026027028036: Energy = -409.277. Calc time: 205 min.
-pore=026027035036: Energy = -408.868. Calc time: 272 min.
-pore=026027036037: Energy = -408.182. Calc time: 347 min.
-pore=027028029036: Energy = -408.868. Calc time: 332 min.
-pore=027028029038: Energy = -408.868. Calc time: 455 min.
-pore=027028035036: Energy = -408.182. Calc time: 593 min.
-pore=027028036037: Energy = -408.868. Calc time: 472 min.
-pore=027034035036: Energy = -408.868. Calc time: 495 min.
-pore=027035036037: Energy = -409.277. Calc time: 374 min.
-pore=027035036044: Energy = -408.182. Calc time: 749 min.
-pore=027036037038: Energy = -408.868. Calc time: 310 min.
-pore=027036037046: Energy = -408.182. Calc time: 759 min.
-pore=028029037038: Energy = -408.868. Calc time: 553 min.
-pore=028029038039: Energy = -408.182. Calc time: 937 min.
-pore=029036037038: Energy = -408.868. Calc time: 873 min.
-pore=029037038039: Energy = -409.277. Calc time: 422 min.
-pore=029037038046: Energy = -408.182. Calc time: 786 min.
-pore=029038039048: Energy = -408.182. Calc time: 916 min.
-pore=032033034035: Energy = -408.182. Calc time: 752 min.
-pore=032033034042: Energy = -409.277. Calc time: 399 min.
-pore=032033042043: Energy = -408.182. Calc time: 689 min.
-pore=033034035036: Energy = -408.182. Calc time: 930 min.
-pore=033034035042: Energy = -408.868. Calc time: 411 min.
-pore=033034035044: Energy = -408.868. Calc time: 357 min.
-pore=033034042043: Energy = -408.868. Calc time: 361 min.
-pore=033042043044: Energy = -408.868. Calc time: 363 min.
-pore=034035036037: Energy = -408.182. Calc time: 616 min.
-pore=034035036044: Energy = -409.277. Calc time: 439 min.
-pore=034035043044: Energy = -408.868. Calc time: 634 min.
-pore=034035044045: Energy = -408.182. Calc time: 600 min.
-pore=035036037038: Energy = -408.182. Calc time: 706 min.
-pore=035036037044: Energy = -408.868. Calc time: 604 min.
-pore=035036037046: Energy = -408.868. Calc time: 532 min.
-pore=035036043044: Energy = -408.182. Calc time: 708 min.
-pore=035036044045: Energy = -408.868. Calc time: 523 min.
-pore=035042043044: Energy = -408.868. Calc time: 537 min.
-pore=035043044045: Energy = -409.277. Calc time: 427 min.
-pore=035044045046: Energy = -408.868. Calc time: 549 min.
-pore=036037038039: Energy = -408.182. Calc time: 640 min.
-pore=036037038046: Energy = -409.277. Calc time: 405 min.
-pore=036037045046: Energy = -408.868. Calc time: 556 min.
-pore=036037046047: Energy = -408.182. Calc time: 677 min.
-pore=037038039046: Energy = -408.868. Calc time: 546 min.
-pore=037038039048: Energy = -408.868. Calc time: 533 min.
-pore=037038045046: Energy = -408.182. Calc time: 683 min.
-pore=037038046047: Energy = -408.868. Calc time: 456 min.
-pore=037044045046: Energy = -408.868. Calc time: 458 min.
-pore=037045046047: Energy = -409.277. Calc time: 401 min.
-pore=037046047048: Energy = -408.868. Calc time: 450 min.
-pore=038039047048: Energy = -408.868. Calc time: 456 min.
-pore=038039048049: Energy = -408.182. Calc time: 960 min.
-pore=039046047048: Energy = -408.868. Calc time: 411 min.
-pore=039047048049: Energy = -409.277. Calc time: 321 min.
-pore=042043044045: Energy = -408.182. Calc time: 562 min.
-pore=043044045046: Energy = -408.182. Calc time: 566 min.
-pore=044045046047: Energy = -408.182. Calc time: 683 min.
-pore=045046047048: Energy = -408.182. Calc time: 540 min.
-pore=046047048049: Energy = -408.182. Calc time: 586 min.
-:END:
 
 ** Relaxations
 
@@ -7453,7 +8008,7 @@ pore=008009010011014015016: Energy = -86.3767. Calc time: 391 min.
 pore=008009010014015016017: Energy = -88.3831. Calc time: 648 min.
 :END:
 
-*** TODO mat=graphene/layers=1/size=3/pore=*: Unique structures
+*** DONE mat=graphene/layers=1/size=3/pore=*: Unique structures
     CLOSED: [2016-07-19 Tue 16:15]
 
 Get relaxations for all energy unique size=3 pore structures.
@@ -7500,7 +8055,6 @@ for i, porestr in zip(ids, porestrs):
     td.result('pore={0}'.format(porestr[1:]), calc)
 #        energy = atoms.get_potential_energy()
 #        energies.append(energy)
-
 #+END_SRC
 
 #+RESULTS:
@@ -7509,29 +8063,207 @@ pore=008: Energy = -148.913. Calc time: 63 min.
 pore=008009: Energy = -138.749. Calc time: 243 min.
 pore=008009010: Energy = -126.244. Calc time: 228 min.
 pore=008009010011: Energy = -114.713. Calc time: 351 min.
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=3/pore=4/008009010014 submitted: 1442974.gilgamesh.cheme.cmu.edu
-pore=008009010014: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=3/pore=4/009010011014 submitted: 1442975.gilgamesh.cheme.cmu.edu
-pore=009010011014: Inprogress.
+pore=008009010014: Energy = -115.310. Calc time: 85 min.
+pore=009010011014: Energy = -115.367. Calc time: 792 min.
 pore=008009010011014: Energy = -104.479. Calc time: 377 min.
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=3/pore=5/008009010011016 submitted: 1442976.gilgamesh.cheme.cmu.edu
-pore=008009010011016: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=3/pore=5/009010011014015 submitted: 1442977.gilgamesh.cheme.cmu.edu
-pore=009010011014015: Inprogress.
+pore=008009010011016: Energy = -104.697. Calc time: 2045 min.
+pore=009010011014015: Energy = -103.305. Calc time: 601 min.
 pore=008009010011014015: Energy = -93.685. Calc time: 216 min.
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=3/pore=6/008009010011014016 submitted: 1442978.gilgamesh.cheme.cmu.edu
-pore=008009010011014016: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=3/pore=6/008009010011015016 submitted: 1442979.gilgamesh.cheme.cmu.edu
-pore=008009010011015016: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=3/pore=6/008009010011016017 submitted: 1442980.gilgamesh.cheme.cmu.edu
-pore=008009010011016017: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=3/pore=6/009010011014015016 submitted: 1442981.gilgamesh.cheme.cmu.edu
-pore=009010011014015016: Inprogress.
+pore=008009010011014016: Energy = -95.588. Calc time: 2684 min.
+pore=008009010011015016: Energy = -95.680. Calc time: 1695 min.
+pore=008009010011016017: Energy = -96.632. Calc time: 901 min.
+pore=009010011014015016: Energy = -95.378. Calc time: 79 min.
 pore=008009010011014015016: Energy = -86.377. Calc time: 391 min.
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=3/pore=7/008009010011014016017 submitted: 1442982.gilgamesh.cheme.cmu.edu
-pore=008009010011014016017: Inprogress.
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=3/pore=8/008009010011014015016017 submitted: 1442983.gilgamesh.cheme.cmu.edu
-pore=008009010011014015016017: Inprogress.
+pore=008009010011014016017: Energy = -88.383. Calc time: 894 min.
+pore=008009010011014015016017: Energy = -81.606. Calc time: 177 min.
+:END:
+
+*** INPROGRESS mat=graphene/layers=1/size=4/pore=*: Unique structures
+
+#+BEGIN_SRC python :results drawer
+from ase.db import connect
+import os
+import random
+from vasp import Vasp
+
+import twodee as td
+
+size = 4
+db = connect('database/master.db')
+selection = ["type=estimate", "size={}".format(size), "unique=True"]
+
+pores = {}
+for i, d in enumerate(db.select(selection)):
+    if d.pore not in pores.keys():
+        pores[d.pore] = [] 
+    pores[d.pore].append(d.id)
+
+
+# Get ids for up to 10 structures for each pore size
+ids = []
+random.seed(31)
+for p in pores:
+    if len(pores[p]) < 10:
+        ids += pores[p]
+    else:
+        ids += random.sample(pores[p], 10)
+
+
+for i in ids:
+    d = next(db.select(id=i))
+
+    pore_string = d.porestr[1:]
+    pore_size = d.pore
+    size_dir = 'vasp/type=relax/mat=graphene/layers=1/size={0}'.format(size)
+    pore_dir = 'pore={0}/{1}'.format(pore_size, pore_string)
+    wd = os.path.join(size_dir, pore_dir)
+
+    atoms = db.get_atoms(d.id)
+    try:
+        calc = Vasp(wd,
+                    xc='PBE',
+                    encut=520,
+                    kpts=[5, 5, 1],
+                    ismear=0,          # Gaussian smearing
+                    sigma=0.2,         # "Metallic" system smearing
+                    isif=2,            # relax positions only
+                    ibrion=2,          # conjugate gradient optimizer
+                    nsw=50,            # max number of steps to relax
+                    atoms=atoms)
+
+        energy = atoms.get_potential_energy()
+#        td.result('pore={0}'.format(pore_string), calc)
+    except:
+        print("Issue with id={}".format(d.id))
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=1/010 Queued: 1446395.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=2/010011 Queued: 1446396.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=3/010011012 Queued: 1446397.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=4/010011012013 Queued: 1446398.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=4/010011012018 Queued: 1446399.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=4/011012013018 Queued: 1446400.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=5/010011012013014 Queued: 1446401.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=5/010011012013018 Queued: 1446402.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=5/010011012013020 Queued: 1446403.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=5/011012013018019 Queued: 1446404.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=6/010011012013014015 Queued: 1446405.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=6/010011012013014018 Queued: 1446406.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=6/010011012013018020 Queued: 1446407.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=6/010011012013020021 Queued: 1446408.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=6/012013014019020021 Queued: 1446409.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=6/011012013014015018 Queued: 1446410.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=6/011012013020021022 Queued: 1446411.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=6/011012013018019020 Queued: 1446412.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=6/011012013014015020 Queued: 1446413.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=6/010011012013019020 Queued: 1446414.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=7/011012013014018020021 Queued: 1446415.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=7/010011012013014018019 Queued: 1446416.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=7/011012013014015018019 Queued: 1446417.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=7/010011012013019020026 Queued: 1446418.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=7/010011012013018020021 Queued: 1446419.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=7/011012013014020021022 Queued: 1446420.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=7/010011012013014015020 Queued: 1446421.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=7/010011012013014015018 Queued: 1446422.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=7/011012013014015019020 Queued: 1446423.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=7/010011012013014020021 Queued: 1446424.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=8/010011012013014019020021 Queued: 1446425.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=8/010011012013019020021026 Queued: 1446426.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=8/010011012013019020021028 Queued: 1446427.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=8/012013014019020021026028 Queued: 1446428.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=8/012013019020021022028029 Queued: 1446429.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=8/012013014019020021028029 Queued: 1446430.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=8/011012013014015019020021 Queued: 1446431.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=8/011012013014015018020021 Queued: 1446432.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=8/011012013020021022023030 Queued: 1446433.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=8/011012013014020021027028 Queued: 1446434.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=9/010011012013019020021026028 Queued: 1446435.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=9/010011012013014019020021028 Queued: 1446436.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=9/011012013019020021022028029 Queued: 1446437.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=9/012013019020021022023026027 Queued: 1446438.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=9/010011012013014015018020021 Queued: 1446439.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=9/011012013015019020021022026 Queued: 1446440.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=9/011012013020021022027028029 Queued: 1446441.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=9/011012013014019020021028029 Queued: 1446442.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=9/010011012013014019020026027 Queued: 1446443.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=9/011012013019020021022023026 Queued: 1446444.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=10/011012013014020021026027028029 Queued: 1446445.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=10/010011012013014019020021022026 Queued: 1446446.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=10/011012013014019020021022023028 Queued: 1446447.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=10/010011012013014019020026027028 Queued: 1446448.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=10/010011012013014015018020021028 Queued: 1446449.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=10/010011012013018020021028029030 Queued: 1446450.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=10/010011012013020021022023028030 Queued: 1446451.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=10/011012013014019020021022023030 Queued: 1446452.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=10/011012013019020021022023026030 Queued: 1446453.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=10/012013014019020021022023027028 Queued: 1446454.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=11/012013014015019020021026027028029 Queued: 1446455.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=11/012013014019020021022023026027028 Queued: 1446456.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=11/011012013014019020021022027028029 Queued: 1446457.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=11/010011012013014020021022028029030 Queued: 1446458.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=11/010011012013014015021022026027028 Queued: 1446459.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=11/011012013014015019020021022023028 Queued: 1446460.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=11/011012013014015018019020021027028 Queued: 1446461.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=11/011012013014015020021026027028029 Queued: 1446462.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=11/010011012013014015019020021026027 Queued: 1446463.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=11/010011012013014018019020021022026 Queued: 1446464.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=12/011012013015018019020021022023028029 Queued: 1446465.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=12/010011012013019020021022023028030031 Queued: 1446466.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=12/011012013014015018019022023026027030 Queued: 1446467.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=12/010011012013014015018021022023029030 Queued: 1446468.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=12/010011012013014020021022023028030031 Queued: 1446469.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=12/011012013014020021022023026027028029 Queued: 1446470.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=12/010011012013020021023026027028029030 Queued: 1446471.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=12/012013014015019020021022023026027028 Queued: 1446472.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=12/010011012013014015020021022026027028 Queued: 1446473.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=12/010011012013015018020021022023029030 Queued: 1446474.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=13/011012013014015018019020021022023026027 Queued: 1446475.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=13/010011012013014018020021023028029030031 Queued: 1446476.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=13/010011012013019020021023026027028029030 Queued: 1446477.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=13/010011012013014019020023026027028029030 Queued: 1446478.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=13/010011012013014015018020021022027028029 Queued: 1446479.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=13/010011012013014015018020021022023028029 Queued: 1446480.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=13/011012013015018019020021022023027028029 Queued: 1446481.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=13/010011012013014015019020021022023028029 Queued: 1446482.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=13/010011012013014015021022026027028029030 Queued: 1446483.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=13/010011012013015020021022023026027028030 Queued: 1446484.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=14/010011012013018019020021022023028029030031 Queued: 1446485.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=14/010011012013014018019020021022023026028029 Queued: 1446486.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=14/010011012013014018019020021022023026030031 Queued: 1446487.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=14/010011012013015018020021022023027028029030 Queued: 1446488.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=14/010011012013014015019020021022023026028029 Queued: 1446489.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=14/010011012013014015019020021026027028029030 Queued: 1446490.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=14/010011012013014018020021022027028029030031 Queued: 1446491.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=14/010011012013014019020021022023026027028030 Queued: 1446492.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=14/010011012013014015018019020021022023028029 Queued: 1446493.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=14/010011012013014015018019020021027028029030 Queued: 1446494.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=15/010011012013014015018019020021022023027028029 Queued: 1446495.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=15/010011012013014018019020021022023026029030031 Queued: 1446496.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=15/010011012013014015020021022023026027028029030 Queued: 1446497.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=15/010011012013015018019020021022023027028029030 Queued: 1446498.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=15/010011012013014018019020021022023026028030031 Queued: 1446499.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=15/010011012013014015018019020021022023029030031 Queued: 1446500.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=15/010011012013014018019020021022023026028029030 Queued: 1446501.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=15/010011012013014019020021022023026027028029030 Queued: 1446502.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=15/010011012013014015018019020021022028029030031 Queued: 1446503.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=15/010011012013014015018019020021022023026027028 Queued: 1446504.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=16/010011012013014015018019020021022023027028029030 Queued: 1446505.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=16/010011012013014015018019020021022023026028030031 Queued: 1446506.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=16/010011012013014015018019020021022023026027030031 Queued: 1446507.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=16/010011012013014015018019020021022023026027028029 Queued: 1446508.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=16/010011012013014015018019020021022023026027028030 Queued: 1446509.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=16/010011012013014015018019020021022027028029030031 Queued: 1446510.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=16/010011012013014015019020021022026027028029030031 Queued: 1446511.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=16/011012013014015018019020021022023026027028029030 Queued: 1446512.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=16/010011012013014015019020021022023026027028030031 Queued: 1446513.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=16/010011012013014015018019020021022023028029030031 Queued: 1446514.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=17/010011012013014015018019020021022023026027028029030 Queued: 1446515.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=17/010011012013014015018019020021022023026027028030031 Queued: 1446516.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=17/010011012013014015018019020021022023026028029030031 Queued: 1446517.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=18/010011012013014015018019020021022023026027028029030031 Queued: 1446518.gilgamesh.cheme.cmu.edu
+Jobs: 11116
 :END:
 
 ** Results
@@ -7602,25 +8334,185 @@ td.print_image(file_path, plt, caption=caption, fig_name=fig_name)
 
 Methodology for iterating the neural networks:
 1. Update the master database with all current DFT data from the =vasp= directory
-2. Specify the new calculations to include. Make a human-readable note of the select statement in the iteration notes .
+2. Specify the new calculations to include in the [[*Databse][Database]] header.
+3. Make a note as to what has changed in this iteration.
+   
+** Templates
+*** Build
 
+#+BEGIN_SRC python :results output org drawer :tangle ./twodee/templates/nn_build.py
+#!/usr/bin/env python
+from amp import Amp
+from amp.descriptor.gaussian import Gaussian
+from amp.model import LossFunction
+from amp.model.neuralnetwork import NeuralNetwork
+from amp.utilities import Annealer
+from ase.db import connect
+import os
+import twodee as td
 
-** Iteration 0: 
+# Required arguments from template
+iteration = {{ iteration }}
+framework = {{ framework }}
+work_dir = "{{ work_dir }}"
+db_path = "{{ db_path }}"
+label = "{{ label }}"
+dblabel = "{{ dblabel }}"
+cutoff = {{ cutoff }}
+energy_rmse = {{ energy_rmse }}
+force_rmse = {{ force_rmse }}
+cores = {{ cores }}
 
-Included calculations (#):
-- Base (1)
-- EOS
-- Point
-- Relax
+# Set working directory
+os.chdir(work_dir)
 
-*** Build neural networks
+# Get atoms from the database
+images = []
+db = connect(db_path)
+for d in db.select(['iteration<={}'.format(iteration, 'train_set=True')]):
+    atoms = db.get_atoms(d.id)
+    del atoms.constraints
+    images.append(atoms)
 
-#+BEGIN_SRC python :results output org drawer
+# Build Amp object
+framework_str = "-".join([str(f) for f in framework])
+label = label
+dblabel = dblabel
+desc = Gaussian(cutoff=cutoff)
+model = NeuralNetwork(hiddenlayers=framework)
+calc = Amp(label=label,
+           dblabel=dblabel,
+           descriptor=desc,
+           model=model,
+	   cores=cores)
+loss = LossFunction(convergence={'energy_rmse': energy_rmse,
+                                 'force_rmse': force_rmse})
+calc.model.lossfunction = loss
+           
+# Perform simulated annealing for global search
+Annealer(calc=calc, images=images)
 
+# Train the network
+calc.train(images=images)
 #+END_SRC
 
-* Lammps
+*** Calculate
+#+BEGIN_SRC python :results output org drawer :tangle ./twodee/templates/nn_calculate.py
+#!/usr/bin/env python
+from amp import Amp
+from amp.descriptor.gaussian import Gaussian
+from amp.model import LossFunction
+from amp.model.neuralnetwork import NeuralNetwork
+from amp.utilities import Annealer
+from ase.db import connect
+import os
+import twodee as td
 
+# Required arguments from template
+iteration = {{ iteration }}
+framework = {{ framework }}
+work_dir = "{{ work_dir }}"
+db_path = "{{ db_path }}"
+selection = {{ selection }}
+
+# Set working directory
+os.chdir(work_dir)
+
+# Get atoms from the database
+images = []
+db = connect(db_path)
+for d in db.select(selection):
+    atoms = db.get_atoms(d.id)
+    del atoms.constraints
+    images.append(atoms)
+
+# Build Amp object
+framework_str = "-".join([str(f) for f in framework])
+label = "networks/iter={0}/{1}/{1}".format(iteration, framework_str)
+dblabel = "networks/iter={0}/iter={0}".format(iteration)
+desc = Gaussian(cutoff=cutoff)
+model = NeuralNetwork(hiddenlayers=framework)
+calc = Amp(label=label,
+           dblabel=dblabel,
+           descriptor=desc,
+           model=model,
+	   cores=cores)
+loss = LossFunction(convergence={'energy_rmse': energy_rmse,
+                                 'force_rmse': force_rmse})
+calc.model.lossfunction = loss
+           
+# Perform simulated annealing for global search
+Annealer(calc=calc, images=images)
+
+# Train the network
+calc.train(images=images)
+#+END_SRC
+
+
+** Iteration 0
+*** Build neural networks
+
+#+BEGIN_SRC python :results code
+from jinja2 import Environment, PackageLoader
+import os
+import twodee as td
+
+iteration = 0
+
+env = Environment(loader=PackageLoader('twodee', 'templates'))
+template = env.get_template("nn_build.py")
+
+frameworks = ((8, 8), (8, 8, 8))
+for framework in frameworks:
+    framework_str = "-".join([str(f) for f in framework])
+#    iter_dir = "networks/iter={0}".format(iteration)
+    iter_dir = "networks/iter_noforce={0}".format(iteration)
+    nn_dir = os.path.join(iter_dir, framework_str)
+    label = os.path.join(nn_dir, framework_str)
+    dblabel = os.path.join(iter_dir, os.path.basename(iter_dir))
+
+    args = {'iteration': iteration,
+            'framework': framework,
+            'work_dir': os.getcwd(),
+            'db_path': "database/master.db",
+            'label': label,
+            'dblabel': dblabel,
+            'cutoff': 6.5,
+            'energy_rmse': 1e-2,
+#            'force_rmse': 5e-2,
+            'force_rmse': None,
+            'cores': 1}
+
+    code = template.render(**args)
+
+    #print(code)
+    #submit_file = os.path.join(nn_dir, 'submit.py')
+    #with open(submit_file, 'w') as f:
+    #    f.write(code)
+    #
+    #td.qsub(submit_file, walltime="168:00:00", ppn=args['cores'])
+    #print('{0} submitted.'.format(framework_str))
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_SRC python
+1449153.gilgamesh.cheme.cmu.edu
+1449154.gilgamesh.cheme.cmu.edu
+Job submitted.
+8-8 submitted.
+Job submitted.
+8-8-8 submitted.
+#+END_SRC
+
+#+RESULTS:
+
+
+*** Validate
+
+** Iteration 1
+*** Build neural networks
+
+* Lammps
 ** Examples
 
 *** lammps
@@ -7632,13 +8524,13 @@ lmp = lammps()
 
 #+RESULTS:
 :RESULTS:
-LAMMPS (5 Aug 2016)
+LAMMPS (30 Jul 2016)
 Total wall time: 0:00:00
 :END:
 
 *** ASE with LAMMPSRun
 
-#+BEGIN_SRC python :results output org drawer
+#+BEGIN_SRC python :results output org drawer :tangle ./run_test.py
 from ase import Atoms, Atom
 from ase.calculators.lammpsrun import LAMMPS
 
@@ -7660,9 +8552,12 @@ print(NaCl.get_stress())
 
 *** ASE with lammpslib
 
-#+BEGIN_SRC python :results output org drawer
+#+BEGIN_SRC python :results output org drawer :tangle ./lammpslib_test
 from ase import Atom, Atoms
 from lammpslib import LAMMPSlib
+import time
+import twodee as td
+
 
 cmds = ["pair_style eam/alloy",
         "pair_coeff * * NiAlH_jea.eam.alloy Al H"]
@@ -7675,7 +8570,9 @@ alh = al + h
 lammps = LAMMPSlib(lmpcmds = cmds, logfile='test.log')
 
 alh.set_calculator(lammps)
-print "Energy ", alh.get_potential_energy()
+energy = alh.get_potential_energy()
+time.sleep(10)
+print("Energy: {}".format(energy))
 #+END_SRC
 
 #+RESULTS:
@@ -7763,11 +8660,7 @@ for n in nsw:
 
    #+RESULTS:
    :RESULTS:
-   Did not converge: [10]
-   nsw: 0
-   [[./img/material/g-bi/3x3/pore=1/test/nsw=0.png]]
-   Final structure calculation: Energy/f.u. = -8.742. Calculation time: 308 min.
-   :END:
+:END:
 
    The calculation did not converge for nsw=10 (probably should have expected).
 
@@ -11662,6 +12555,7 @@ for d in db.select(['type=point', '2<=size<=4']):
 
 n = len(n_ids)
 n_train = int(round(n * 0.9))
+td.bp(n)
 
 random.seed(256)
 train_samples = random.sample(n_ids, n_train)
@@ -11674,8 +12568,7 @@ print("Done")
   #+END_SRC
 
   #+RESULTS:
-  : Done
-
+: Done
 **** Build networks
 
   #+BEGIN_SRC python :results output org drawer
@@ -12191,6 +13084,140 @@ td.print_image(image_path, plt)
   ((8, 8, 8), 229)
   [[./img/./img/networks/8-8-8/residuals_iter=0.png]]
   :END:
+
+
+#+BEGIN_SRC python :results output org drawer
+import numpy as np
+import matplotlib.pyplot as plt
+from ase.db import connect
+from amp import Amp
+import os
+import twodee as td
+
+wd = 'networks/nn_master/'
+frameworks = ((8, 8), (8, 8, 8))
+iteration = 0
+select = ["type=point", "size=5"]
+
+db_path = os.path.join(wd, "nn_master.db")
+db = connect(db_path)
+
+fig, ax = plt.subplots(1, 2, sharey=True, figsize=(8, 4))
+
+for i, framework in enumerate(frameworks):
+    framework_str = "-".join([str(f) for f in framework])
+    update_str = "_".join([str(f) for f in framework])
+    update_key = "nn_" + update_str + "_iter{}".format(iteration)
+
+    E, nnE, var, ind = [], [], [], []
+    for j, d in enumerate(db.select(select)):
+        if update_key in d.key_value_pairs:
+            E += [d.energy / d.natoms]
+            nnE += [d[update_key]/ d.natoms]
+            var += [d.id]
+            if hasattr(d, 'train_set'):
+                ind += [d.train_set]
+            else:
+                ind += [False]
+
+
+    res = np.array(nnE) - np.array(E)
+    RMSE = np.sqrt(np.sum(res ** 2)/ len(res))
+
+    ax[i].text(515, 0.0085,
+               'RMSE: {:.2f} meV/atom'.format(RMSE * 1000),
+               color='r', ha='left')
+
+    for v in var:
+        if v < 500:
+            print(framework, v)
+    ax[i].scatter(var, res, color='r')
+    ax[i].plot([min(var), max(var)], [0, 0], 'k--')
+    ax[i].set_xlim(min(var), max(var))
+
+    ax[i].set_xlabel('Calculation ID')
+    ax[i].set_title('{} framework'.format(framework_str))
+
+ax[0].set_ylim(-0.01, 0.01)
+ax[0].set_ylabel('Residual error (eV/atom)')
+plt.tight_layout()
+image_path = 'img/networks/{}/extrapolation_iter=0.png'.format(framework_str, iteration)
+td.print_image(image_path, plt)
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+((8, 8), 466)
+((8, 8), 467)
+((8, 8), 468)
+((8, 8), 469)
+((8, 8), 470)
+((8, 8), 471)
+((8, 8), 472)
+((8, 8), 473)
+((8, 8), 474)
+((8, 8), 475)
+((8, 8), 476)
+((8, 8), 477)
+((8, 8), 478)
+((8, 8), 479)
+((8, 8), 480)
+((8, 8), 481)
+((8, 8), 482)
+((8, 8), 483)
+((8, 8), 484)
+((8, 8), 485)
+((8, 8), 486)
+((8, 8), 487)
+((8, 8), 488)
+((8, 8), 489)
+((8, 8), 490)
+((8, 8), 491)
+((8, 8), 492)
+((8, 8), 493)
+((8, 8), 494)
+((8, 8), 495)
+((8, 8), 496)
+((8, 8), 497)
+((8, 8), 498)
+((8, 8), 499)
+((8, 8, 8), 466)
+((8, 8, 8), 467)
+((8, 8, 8), 468)
+((8, 8, 8), 469)
+((8, 8, 8), 470)
+((8, 8, 8), 471)
+((8, 8, 8), 472)
+((8, 8, 8), 473)
+((8, 8, 8), 474)
+((8, 8, 8), 475)
+((8, 8, 8), 476)
+((8, 8, 8), 477)
+((8, 8, 8), 478)
+((8, 8, 8), 479)
+((8, 8, 8), 480)
+((8, 8, 8), 481)
+((8, 8, 8), 482)
+((8, 8, 8), 483)
+((8, 8, 8), 484)
+((8, 8, 8), 485)
+((8, 8, 8), 486)
+((8, 8, 8), 487)
+((8, 8, 8), 488)
+((8, 8, 8), 489)
+((8, 8, 8), 490)
+((8, 8, 8), 491)
+((8, 8, 8), 492)
+((8, 8, 8), 493)
+((8, 8, 8), 494)
+((8, 8, 8), 495)
+((8, 8, 8), 496)
+((8, 8, 8), 497)
+((8, 8, 8), 498)
+((8, 8, 8), 499)
+[[./img/img/networks/8-8-8/extrapolation_iter=0.png]]
+:END:
+
 
 Outliers:
 #+BEGIN_SRC python :results output org drawer
