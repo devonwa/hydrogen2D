@@ -6450,7 +6450,8 @@ DFT calculations.
 
 Tests for energy convergence based on different calculation parameters.
 
-*** INPROGRESS mat=graphene/layers=1/size=1/pore=0 - cutoff by LJ
+*** DONE mat=graphene/layers=1/size=1/pore=0 - cutoff by LJ
+    CLOSED: [2016-08-20 Sat 21:46]
 
 #+BEGIN_SRC python :results drawer
 from ase import Atoms, Atom
@@ -6471,12 +6472,12 @@ def neighbor_distance(a):
 
 A = []
 distances = np.linspace(4, 10, 13)
+
 for d in distances:
     obj = lambda a: neighbor_distance(a) - d
     a0 = 20
     roots = fsolve(obj, a0)
     A.append(roots[0])
-
 
 energies = []
 for a in A:
@@ -6497,220 +6498,45 @@ for a in A:
                 sigma=0.2,         # "Metallic" system smearing
                 atoms=atoms)
 
-    calc.calculate()
-    continue
     energy = calc.potential_energy / len(atoms)
     energies.append(energy)
 
-td.bp()
-plt.plot(A, energies)
-plt.xlabel('Lattice constant ($\AA$)')
+ds = [5.5, 6, 6.5, 10]
+for d in ds:
+    index = np.where(distances==d)[0][0]
+    print("Distance: {:4.1f}. Energy: {:0.3f}".format(d, energies[index]))
+
+plt.plot(distances, energies)
+plt.xlabel('Neighbor distance ($\AA$)')
 plt.ylabel('Energy (eV/atom)')
-plt.title('Graphene Equation of State')
-file_path = 'eos_graphene.png'
+plt.xlim([5, 8])
+plt.ylim([-0.2, -0.16])
+plt.title('Graphene self-interaction energy')
+file_path = 'cutoff-self-interaction.png'
 td.print_image(file_path, plt)
 #+END_SRC
 
 #+RESULTS:
 :RESULTS:
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
-    raise NotImplementedError
-NotImplementedError
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
-    raise NotImplementedError
-NotImplementedError
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/lc=6.928 submitted: 1449131.gilgamesh.cheme.cmu.edu
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
-    raise NotImplementedError
-NotImplementedError
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
-    raise NotImplementedError
-NotImplementedError
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/lc=7.794 submitted: 1449132.gilgamesh.cheme.cmu.edu
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
-    raise NotImplementedError
-NotImplementedError
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
-    raise NotImplementedError
-NotImplementedError
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/lc=8.660 submitted: 1449133.gilgamesh.cheme.cmu.edu
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
-    raise NotImplementedError
-NotImplementedError
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
-    raise NotImplementedError
-NotImplementedError
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/lc=9.526 submitted: 1449134.gilgamesh.cheme.cmu.edu
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
-    raise NotImplementedError
-NotImplementedError
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
-    raise NotImplementedError
-NotImplementedError
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/lc=10.392 submitted: 1449135.gilgamesh.cheme.cmu.edu
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
-    raise NotImplementedError
-NotImplementedError
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
-    raise NotImplementedError
-NotImplementedError
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/lc=11.258 submitted: 1449136.gilgamesh.cheme.cmu.edu
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
-    raise NotImplementedError
-NotImplementedError
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
-    raise NotImplementedError
-NotImplementedError
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/lc=12.124 submitted: 1449137.gilgamesh.cheme.cmu.edu
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
-    raise NotImplementedError
-NotImplementedError
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
-    raise NotImplementedError
-NotImplementedError
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/lc=12.990 submitted: 1449138.gilgamesh.cheme.cmu.edu
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
-    raise NotImplementedError
-NotImplementedError
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
-    raise NotImplementedError
-NotImplementedError
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/lc=13.856 submitted: 1449139.gilgamesh.cheme.cmu.edu
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
-    raise NotImplementedError
-NotImplementedError
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
-    raise NotImplementedError
-NotImplementedError
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/lc=14.722 submitted: 1449140.gilgamesh.cheme.cmu.edu
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
-    raise NotImplementedError
-NotImplementedError
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
-    raise NotImplementedError
-NotImplementedError
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/lc=15.588 submitted: 1449141.gilgamesh.cheme.cmu.edu
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
-    raise NotImplementedError
-NotImplementedError
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
-    raise NotImplementedError
-NotImplementedError
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/lc=16.454 submitted: 1449142.gilgamesh.cheme.cmu.edu
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
-    raise NotImplementedError
-NotImplementedError
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
-    raise NotImplementedError
-NotImplementedError
-/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=1/pore=0/lc=17.321 submitted: 1449143.gilgamesh.cheme.cmu.edu
+Distance:  5.5. Energy: -0.176
+Distance:  6.0. Energy: -0.166
+Distance:  6.5. Energy: -0.163
+Distance: 10.0. Energy: -0.162
+[[./img/cutoff-self-interaction.png]]
 :END:
 
+The cutoff distance for this method is converged to within 10 meV at a neighbor distance of 6.0 Å.
+
 *** TODO mat=graphene/layers=1/size=1/pore=0 - cutoff by perturbation
+
+Check the radius of impact for pores of multiple sizes.
+
+#+BEGIN_SRC python :results output org drawer
+import twodee as td
+
+atoms = td.create_base(mat='graphene', layers=1, size=5)
+td.bp(atoms)
+#+END_SRC
 
 *** DONE mat=graphene/layers=1/size=1/pore=0 - kpts
     CLOSED: [2016-06-22 Wed 10:11]
@@ -7155,15 +6981,19 @@ from ase import Atoms, Atom
 import matplotlib.pyplot as plt
 import numpy as np
 from vasp import Vasp
+from vasp.vasprc import VASPRC
+#VASPRC['queue.mem'] = '4GB'
 
 import twodee as td
 
 
 size = 5
 supercell = td.create_base("graphene", layers=1, size=size)
-pores = [[], [12], [12, 13], [12, 13, 14], [12, 13, 14, 22], [12, 13, 14, 22, 15]]
+#pores = [[], [12], [12, 13], [12, 13, 14], [12, 13, 14, 22], [12, 13, 14, 22, 15]]
+#ks = [1, 3, 5, 7]
+pores = [[12, 13, 14, 22, 15]]
+ks = [5, 6]
 
-ks = [1, 3, 5, 7]
 energies = []
 for pore in pores:
     atoms = supercell.copy()
@@ -7186,6 +7016,44 @@ for pore in pores:
 #plt.ylabel("Total energy [eV]")
 #td.print_image(name + '.png', plt)
 #+END_SRC
+
+#+RESULTS:
+:RESULTS:
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=5/kpts=5 submitted: 1451441.gilgamesh.cheme.cmu.edu
+kpts= 5 x  5 x 1: Inprogress.
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+/home-guest/devonw/hydrogen2D/vasp/type=conv/mat=graphene/layers=1/size=5/pore=5/kpts=6 submitted: 1451442.gilgamesh.cheme.cmu.edu
+kpts= 6 x  6 x 1: Inprogress.
+:END:
+
+The pore=5, kpts=5 calculation consistently returns the following error: =forrtl: error (78): process killed (SIGTERM)=
 
 A k-point grid of 5x5x1 is the lowest grid converged to 10 meV.
 
@@ -7525,11 +7393,12 @@ td.print_image(file_path, plt)
 :END:
 
 ** Point energy calculations
-*** INPROGRESS mat=graphene/layers=1/size=*/pore=0
+*** DONE mat=graphene/layers=1/size=*/pore=0
+    CLOSED: [2016-08-20 Sat 21:13]
 
 Obtain calculations for pristine graphene at all relevant sizes.
 
-#+BEGIN_SRC python :results example
+#+BEGIN_SRC python :results drawer
 from ase import Atoms, Atom
 import numpy as np
 import matplotlib.pyplot as plt
@@ -7559,24 +7428,15 @@ for size, k in zip(sizes, kpts):
 #+END_SRC
 
 #+RESULTS:
-#+begin_example
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
-    raise NotImplementedError
-NotImplementedError
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
-    raise NotImplementedError
-NotImplementedError
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=7/pore=0/000 submitted: 1449175.gilgamesh.cheme.cmu.edu
-size=7: Inprogress.
-#+end_example
+:RESULTS:
+size=1: Energy/atom = -9.224. Calc time: 1 min.
+size=2: Energy/atom = -9.223. Calc time: 5 min.
+size=3: Energy/atom = -9.222. Calc time: 49 min.
+size=4: Energy/atom = -9.224. Calc time: 157 min.
+size=5: Energy/atom = -9.224. Calc time: 507 min.
+size=6: Energy/atom = -9.223. Calc time: 869 min.
+size=7: Energy/atom = -9.223. Calc time: 1770 min.
+:END:
 
 *** DONE mat=graphene/layers=1/size=2/pore=*
     CLOSED: [2016-07-20 Wed 16:21]
@@ -7685,7 +7545,7 @@ for c in cans:
 *** INPROGRESS mat=graphene/layers=1/size=4/pore=uniques
 
 Test query for speed.
-#+BEGIN_SRC python :results output org drawer :tangle ./ase_test.py
+#+BEGIN_SRC python :results output org drawer
 from ase.io import read
 import time
 
@@ -7717,8 +7577,8 @@ selection = ["type=estimate", "size={}".format(size), "unique=True"]
 
 atoms = db.get_atoms(6489)
 d = next(db.select("id=6489"))
-td.bp(d.porestr)
-
+selection = "id=6489"
+#td.bp(d.unique)
 
 for i, d in enumerate(db.select(selection)):
     pore_string = d.porestr[1:]
@@ -7746,6 +7606,29 @@ print("Jobs: {}".format(i))
 #+END_SRC
 
 #+RESULTS:
+:RESULTS:
+6489
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=4/pore=10/010011012013014015018020021028 submitted: 1451456.gilgamesh.cheme.cmu.edu
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=4/pore=10/010011012013014015018020021028 Queued: 1451456.gilgamesh.cheme.cmu.edu
+pore=010011012013014015018020021028: Inprogress.
+Jobs: 0
+:END:
+
+
 
 
 6489
@@ -7839,10 +7722,9 @@ Traceback (most recent call last):
 TypeError: only integer arrays with one element can be converted to an index
 Issue with id=6489
 
+*** INPROGRESS mat=graphene/layers=1/size=5/pore=1,2
 
-
-*** DONE mat=graphene/layers=1/size=5/pore=0,3,4#,5
-    CLOSED: [2016-07-23 Sat 11:45]
+Calculations for the cutoff radius comparison.
 
 #+BEGIN_SRC python :results drawer
 from ase import Atoms, Atom
@@ -7854,29 +7736,44 @@ import twodee as td
 
 
 size = 5
-pore_sizes = [0, 3, 4]#, 5]
-atoms = td.create_base("graphene", layers=1, size=size)
-cans = td.candidates(mat='graphene', layers=1, size=size, pores=pore_sizes)
-
-energies = []
-for c in cans:
-    for pore in c:
-        a = atoms.copy()
-        a = td.make_pore(a, pore)
-        pname = td.pore_string(pore)
-        name = 'vasp/type=point/mat=graphene/layers=1/size={0}/pore={1}/{2}'.format(size, len(pore), pname)
-        calc = Vasp(name,
-                    xc='PBE',
-                    encut=520,
-                    kpts=[3, 3, 1],
-                    nsw=0,
-                    atoms=a)
-#        calc.calculate()
-        td.result('pore={0}'.format(pname), calc)
+pores = [[0], [0,1,2,10]]
+for pore in pores:
+    atoms = td.create_base("graphene", layers=1, size=size)
+    atoms = td.make_pore(atoms, pore)
+    porestr = td.pore_string(pore)
+    name = 'vasp/type=point/mat=graphene/layers=1/size={0}/pore={1}/{2}'.format(size, len(pore), porestr)
+    calc = Vasp(name,
+                xc='PBE',
+                encut=520,
+                kpts=[5, 5, 1],
+                nsw=0,
+                atoms=atoms)
+    td.result('pore={0}'.format(porestr), calc)
 #+END_SRC
 
-** Relaxations
+#+RESULTS:
+:RESULTS:
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=1/000 Queued: 1451470.gilgamesh.cheme.cmu.edu
+pore=000: Inprogress.
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+Unhandled exception in Vasp
+Traceback (most recent call last):
+  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
+    return func(self, *args, **kwargs)
+  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
+    raise NotImplementedError
+NotImplementedError
+/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/000001002010 submitted: 1451471.gilgamesh.cheme.cmu.edu
+pore=000001002010: Inprogress.
+:END:
 
+** Relaxations
 *** DONE mat=graphene/layers=1/size=2/pore=*
 
 #+BEGIN_SRC python :results drawer
@@ -8078,7 +7975,8 @@ pore=008009010011014016017: Energy = -88.383. Calc time: 894 min.
 pore=008009010011014015016017: Energy = -81.606. Calc time: 177 min.
 :END:
 
-*** INPROGRESS mat=graphene/layers=1/size=4/pore=*: Unique structures
+*** DONE mat=graphene/layers=1/size=4/pore=*: Unique structures
+    CLOSED: [2016-08-20 Sat 23:46]
 
 #+BEGIN_SRC python :results drawer
 from ase.db import connect
@@ -8139,131 +8037,6 @@ for i in ids:
 
 #+RESULTS:
 :RESULTS:
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=1/010 Queued: 1446395.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=2/010011 Queued: 1446396.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=3/010011012 Queued: 1446397.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=4/010011012013 Queued: 1446398.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=4/010011012018 Queued: 1446399.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=4/011012013018 Queued: 1446400.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=5/010011012013014 Queued: 1446401.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=5/010011012013018 Queued: 1446402.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=5/010011012013020 Queued: 1446403.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=5/011012013018019 Queued: 1446404.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=6/010011012013014015 Queued: 1446405.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=6/010011012013014018 Queued: 1446406.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=6/010011012013018020 Queued: 1446407.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=6/010011012013020021 Queued: 1446408.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=6/012013014019020021 Queued: 1446409.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=6/011012013014015018 Queued: 1446410.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=6/011012013020021022 Queued: 1446411.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=6/011012013018019020 Queued: 1446412.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=6/011012013014015020 Queued: 1446413.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=6/010011012013019020 Queued: 1446414.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=7/011012013014018020021 Queued: 1446415.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=7/010011012013014018019 Queued: 1446416.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=7/011012013014015018019 Queued: 1446417.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=7/010011012013019020026 Queued: 1446418.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=7/010011012013018020021 Queued: 1446419.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=7/011012013014020021022 Queued: 1446420.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=7/010011012013014015020 Queued: 1446421.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=7/010011012013014015018 Queued: 1446422.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=7/011012013014015019020 Queued: 1446423.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=7/010011012013014020021 Queued: 1446424.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=8/010011012013014019020021 Queued: 1446425.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=8/010011012013019020021026 Queued: 1446426.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=8/010011012013019020021028 Queued: 1446427.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=8/012013014019020021026028 Queued: 1446428.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=8/012013019020021022028029 Queued: 1446429.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=8/012013014019020021028029 Queued: 1446430.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=8/011012013014015019020021 Queued: 1446431.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=8/011012013014015018020021 Queued: 1446432.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=8/011012013020021022023030 Queued: 1446433.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=8/011012013014020021027028 Queued: 1446434.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=9/010011012013019020021026028 Queued: 1446435.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=9/010011012013014019020021028 Queued: 1446436.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=9/011012013019020021022028029 Queued: 1446437.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=9/012013019020021022023026027 Queued: 1446438.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=9/010011012013014015018020021 Queued: 1446439.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=9/011012013015019020021022026 Queued: 1446440.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=9/011012013020021022027028029 Queued: 1446441.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=9/011012013014019020021028029 Queued: 1446442.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=9/010011012013014019020026027 Queued: 1446443.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=9/011012013019020021022023026 Queued: 1446444.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=10/011012013014020021026027028029 Queued: 1446445.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=10/010011012013014019020021022026 Queued: 1446446.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=10/011012013014019020021022023028 Queued: 1446447.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=10/010011012013014019020026027028 Queued: 1446448.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=10/010011012013014015018020021028 Queued: 1446449.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=10/010011012013018020021028029030 Queued: 1446450.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=10/010011012013020021022023028030 Queued: 1446451.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=10/011012013014019020021022023030 Queued: 1446452.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=10/011012013019020021022023026030 Queued: 1446453.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=10/012013014019020021022023027028 Queued: 1446454.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=11/012013014015019020021026027028029 Queued: 1446455.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=11/012013014019020021022023026027028 Queued: 1446456.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=11/011012013014019020021022027028029 Queued: 1446457.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=11/010011012013014020021022028029030 Queued: 1446458.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=11/010011012013014015021022026027028 Queued: 1446459.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=11/011012013014015019020021022023028 Queued: 1446460.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=11/011012013014015018019020021027028 Queued: 1446461.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=11/011012013014015020021026027028029 Queued: 1446462.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=11/010011012013014015019020021026027 Queued: 1446463.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=11/010011012013014018019020021022026 Queued: 1446464.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=12/011012013015018019020021022023028029 Queued: 1446465.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=12/010011012013019020021022023028030031 Queued: 1446466.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=12/011012013014015018019022023026027030 Queued: 1446467.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=12/010011012013014015018021022023029030 Queued: 1446468.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=12/010011012013014020021022023028030031 Queued: 1446469.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=12/011012013014020021022023026027028029 Queued: 1446470.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=12/010011012013020021023026027028029030 Queued: 1446471.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=12/012013014015019020021022023026027028 Queued: 1446472.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=12/010011012013014015020021022026027028 Queued: 1446473.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=12/010011012013015018020021022023029030 Queued: 1446474.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=13/011012013014015018019020021022023026027 Queued: 1446475.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=13/010011012013014018020021023028029030031 Queued: 1446476.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=13/010011012013019020021023026027028029030 Queued: 1446477.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=13/010011012013014019020023026027028029030 Queued: 1446478.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=13/010011012013014015018020021022027028029 Queued: 1446479.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=13/010011012013014015018020021022023028029 Queued: 1446480.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=13/011012013015018019020021022023027028029 Queued: 1446481.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=13/010011012013014015019020021022023028029 Queued: 1446482.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=13/010011012013014015021022026027028029030 Queued: 1446483.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=13/010011012013015020021022023026027028030 Queued: 1446484.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=14/010011012013018019020021022023028029030031 Queued: 1446485.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=14/010011012013014018019020021022023026028029 Queued: 1446486.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=14/010011012013014018019020021022023026030031 Queued: 1446487.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=14/010011012013015018020021022023027028029030 Queued: 1446488.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=14/010011012013014015019020021022023026028029 Queued: 1446489.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=14/010011012013014015019020021026027028029030 Queued: 1446490.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=14/010011012013014018020021022027028029030031 Queued: 1446491.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=14/010011012013014019020021022023026027028030 Queued: 1446492.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=14/010011012013014015018019020021022023028029 Queued: 1446493.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=14/010011012013014015018019020021027028029030 Queued: 1446494.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=15/010011012013014015018019020021022023027028029 Queued: 1446495.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=15/010011012013014018019020021022023026029030031 Queued: 1446496.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=15/010011012013014015020021022023026027028029030 Queued: 1446497.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=15/010011012013015018019020021022023027028029030 Queued: 1446498.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=15/010011012013014018019020021022023026028030031 Queued: 1446499.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=15/010011012013014015018019020021022023029030031 Queued: 1446500.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=15/010011012013014018019020021022023026028029030 Queued: 1446501.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=15/010011012013014019020021022023026027028029030 Queued: 1446502.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=15/010011012013014015018019020021022028029030031 Queued: 1446503.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=15/010011012013014015018019020021022023026027028 Queued: 1446504.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=16/010011012013014015018019020021022023027028029030 Queued: 1446505.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=16/010011012013014015018019020021022023026028030031 Queued: 1446506.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=16/010011012013014015018019020021022023026027030031 Queued: 1446507.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=16/010011012013014015018019020021022023026027028029 Queued: 1446508.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=16/010011012013014015018019020021022023026027028030 Queued: 1446509.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=16/010011012013014015018019020021022027028029030031 Queued: 1446510.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=16/010011012013014015019020021022026027028029030031 Queued: 1446511.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=16/011012013014015018019020021022023026027028029030 Queued: 1446512.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=16/010011012013014015019020021022023026027028030031 Queued: 1446513.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=16/010011012013014015018019020021022023028029030031 Queued: 1446514.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=17/010011012013014015018019020021022023026027028029030 Queued: 1446515.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=17/010011012013014015018019020021022023026027028030031 Queued: 1446516.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=17/010011012013014015018019020021022023026028029030031 Queued: 1446517.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=relax/mat=graphene/layers=1/size=4/pore=18/010011012013014015018019020021022023026027028029030031 Queued: 1446518.gilgamesh.cheme.cmu.edu
-Jobs: 11116
 :END:
 
 ** Results
@@ -8330,11 +8103,13 @@ td.print_image(file_path, plt, caption=caption, fig_name=fig_name)
 [[./img/results/pore-size-comparison.png]]
 :END:
 
+*** TODO Cutoff distance convergence
+
 * Neural network
 
 Methodology for iterating the neural networks:
 1. Update the master database with all current DFT data from the =vasp= directory
-2. Specify the new calculations to include in the [[*Databse][Database]] header.
+2. Specify the new calculations to include in the [[*Database][Database]] header.
 3. Make a note as to what has changed in this iteration.
    
 ** Templates
@@ -8448,7 +8223,6 @@ Annealer(calc=calc, images=images)
 calc.train(images=images)
 #+END_SRC
 
-
 ** Iteration 0
 *** Build neural networks
 
@@ -8506,15 +8280,14 @@ Job submitted.
 
 #+RESULTS:
 
-
 *** Validate
+
 
 ** Iteration 1
 *** Build neural networks
 
 * Lammps
 ** Examples
-
 *** lammps
 
 #+BEGIN_SRC python :results output org drawer
@@ -8548,11 +8321,12 @@ print(NaCl.get_stress())
 
 #+RESULTS:
 :RESULTS:
+[-0.        -0.         0.0004212 -0.        -0.        -0.       ]
 :END:
 
 *** ASE with lammpslib
 
-#+BEGIN_SRC python :results output org drawer :tangle ./lammpslib_test
+#+BEGIN_SRC python :results output org drawer :tangle ./lammpslib_test.py
 from ase import Atom, Atoms
 from lammpslib import LAMMPSlib
 import time
@@ -8577,6 +8351,127 @@ print("Energy: {}".format(energy))
 
 #+RESULTS:
 :RESULTS:
+Energy: nan
+:END:
+
+** TODO Pristine Graphene
+   
+Calculate pristine graphene using AIREBO in LAMMPS. Use this calculation for improving the parameters used in the simulation to get closer to the DFT value.
+
+#+BEGIN_SRC python :results output org drawer
+from ase.calculators.lammpsrun import LAMMPS
+from ase.db import connect
+import os
+
+import twodee as td
+
+potentials_path = os.getenv("LAMMPS_POTENTIALS")
+potential = os.path.join(potentials_path, "CH.airebo")
+files = [potential]
+parameters = {"mass": ["* 1.0"],
+              "pair_style": "airebo 6.5 1 1",
+              #"pair_style": "rebo",
+              "pair_coeff": ['* * ' + potential + ' C']}
+calc = LAMMPS(parameters=parameters, files=files, tmp_dir="/home-guest/devonw/tmp/lammpstmp")
+
+atoms = td.create_base(mat="graphene", layers=1, size=1)
+atoms.set_calculator(calc)
+
+energy = atoms.get_potential_energy()
+
+db = connect("database/master.db")
+for d in db.select(["type=base", "mat=graphene", "layers=1"]):
+    print("DFT:    {:0.3f} eV".format(d.energy))
+    print("AIREBO: {:0.3f} eV".format(energy))
+    db.update(d.id, lmp=energy)
+#+END_SRC 
+
+#+RESULTS:
+:RESULTS:
+DFT:    -18.449 eV
+AIREBO: -14.816 eV
+:END:
+
+** DONE Equation of state
+   CLOSED: [2016-08-21 Sun 22:34]
+
+
+Add LAMMPS calcs to the database.
+
+#+BEGIN_SRC python :results output org drawer
+from ase.db import connect
+from ase.calculators.lammpsrun import LAMMPS
+import os
+import twodee as td
+
+db = connect("database/master.db")
+
+ids = []
+energies_dft = []
+for d in db.select(["type=eos", "mat=graphene", "layers=1", "size=1", "lc>2.15"]):
+    ids.append(d.id)
+    energies_dft.append(d.energy)
+
+potentials_path = os.getenv("LAMMPS_POTENTIALS")
+potential = os.path.join(potentials_path, "CH.airebo")
+files = [potential]
+parameters = {"mass": ["* 1.0"],
+              "pair_style": "airebo 6.5 1 1",
+              "pair_coeff": ['* * ' + potential + ' C']}
+
+for i in ids:
+    atoms = db.get_atoms(i)
+    calc = LAMMPS(parameters=parameters, files=files, tmp_dir="/home-guest/devonw/tmp/lammpstmp")
+
+    atoms.set_calculator(calc)
+    energy = atoms.get_potential_energy()
+
+    db.update(i, lmp=energy)
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+:END:
+
+** TODO Point energy calculations
+** TODO Relaxations?
+* Results
+** Equation of state comparison
+
+#+BEGIN_SRC python :results output org drawer
+from ase.db import connect
+import matplotlib.pyplot as plt
+
+import twodee as td
+
+db = connect("database/master.db")
+
+lcs = []
+energies_dft = []
+energies_lmp = []
+for d in db.select(["type=eos", "mat=graphene", "layers=1", "size=1", "lc>2.15"]):
+    lcs.append(d.lc)
+    energies_dft.append(d.energy/d.natoms)
+    energies_lmp.append(d.lmp/d.natoms)
+
+energies_dft = [nrg for (lc, nrg) in sorted(zip(lcs, energies_dft))]
+energies_lmp = [nrg for (lc, nrg) in sorted(zip(lcs, energies_lmp))]
+lcs = sorted(lcs)
+
+plt.plot(lcs, energies_dft, label="DFT")
+plt.plot(lcs, energies_lmp, label="AIREBO")
+plt.xlabel('Lattice constant ($\AA$)')
+plt.ylabel('Energy (eV/atom)')
+plt.title('Graphene Equation of State')
+plt.legend()
+plt.xlim([2.15, 3.0])
+file_path = 'eos_comparison.png'
+td.print_image(file_path, plt)
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+[[./img/eos_comparison.png]]
 :END:
 
 * Misc :noexport:

@@ -565,6 +565,30 @@ Future:
 - [ ] Get LAMMPS running comparison calcs
 - [ ] Add hash to keys (maybe just for uniques)
 
+*** 2016-08-20 Sat
+
+Progress report items:
+- [ ] Cutoff distance convergence
+- [ ] Neural network analysis
+- [X] LAMMPS calculation
+- [X] Gold paper comparable plan
+- [ ] 1 new paper
+
+**** Gold paper comparable plan
+
+BPNN:
+- 9972 calculations
+- 9734 used in training set
+
+Result figures:
+- Validation set RMSE for the BPNN
+- EOS for three structures
+- Bulk vacancy formation
+- NEB for bulk vacancy diffusion
+- Terrace and dimer diffusion pathway
+- fcc(100) diffusion pathway residual
+- NEB for slipping barrier
+
 * Lexicon
 - degenerate :: Identical structures, though possible viewed in a different way. Like 
 - interstitial defects :: Locations in a crystal lattice not typically occupied. Self-interstitial (same atom-type as lattice) and interstial impurities (different type of atom).
