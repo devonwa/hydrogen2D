@@ -5789,7 +5789,7 @@ print("Database copied successfully to '{0}'".format(backup))
  #+END_SRC
 
  #+RESULTS:
- : Database copied successfully to 'database/archive/2016-08-11_master.db'
+ : Database copied successfully to 'database/archive/2016-08-24_master.db'
 
 ** Check for broken directories
 
@@ -5822,22 +5822,136 @@ Add all completed equations within a directory (recursive) into the master datab
 #+BEGIN_SRC python :results output org drawer
 import twodee as td
 
-td.db_update('database/master.db', 'vasp/type=relax/mat=graphene/layers=1/size=3/')
+td.db_update('database/master.db', 'vasp/type=relax/mat=graphene/layers=1/size=4/')
 #+END_SRC
 
 #+RESULTS:
 :RESULTS:
-Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=3/pore=4/008009010014
-Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=3/pore=4/009010011014
-Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=3/pore=5/008009010011016
-Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=3/pore=5/009010011014015
-Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=3/pore=6/008009010011014016
-Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=3/pore=6/008009010011015016
-Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=3/pore=6/008009010011016017
-Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=3/pore=6/009010011014015016
-Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=3/pore=7/008009010011014016017
-Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=3/pore=8/008009010011014015016017
-7345 total entries. 10 new entries added.
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=1/010
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=2/010011
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=3/010011012
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=4/010011012013
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=4/010011012018
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=4/011012013018
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=5/010011012013014
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=5/010011012013018
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=5/010011012013020
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=5/011012013018019
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=6/010011012013014015
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=6/010011012013014018
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=6/010011012013018020
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=6/010011012013020021
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=6/012013014019020021
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=6/011012013014015018
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=6/011012013020021022
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=6/011012013018019020
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=6/011012013014015020
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=6/010011012013019020
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=7/011012013014018020021
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=7/010011012013014018019
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=7/011012013014015018019
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=7/010011012013019020026
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=7/010011012013018020021
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=7/011012013014020021022
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=7/010011012013014015020
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=7/010011012013014015018
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=7/011012013014015019020
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=7/010011012013014020021
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=8/010011012013014019020021
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=8/010011012013019020021026
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=8/010011012013019020021028
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=8/012013014019020021026028
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=8/012013019020021022028029
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=8/012013014019020021028029
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=8/011012013014015019020021
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=8/011012013014015018020021
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=8/011012013020021022023030
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=8/011012013014020021027028
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=9/010011012013019020021026028
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=9/010011012013014019020021028
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=9/011012013019020021022028029
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=9/012013019020021022023026027
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=9/010011012013014015018020021
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=9/011012013015019020021022026
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=9/011012013020021022027028029
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=9/011012013014019020021028029
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=9/010011012013014019020026027
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=9/011012013019020021022023026
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=10/011012013014020021026027028029
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=10/010011012013014019020021022026
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=10/011012013014019020021022023028
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=10/010011012013014019020026027028
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=10/010011012013014015018020021028
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=10/010011012013018020021028029030
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=10/010011012013020021022023028030
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=10/011012013014019020021022023030
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=10/011012013019020021022023026030
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=10/012013014019020021022023027028
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=11/012013014015019020021026027028029
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=11/012013014019020021022023026027028
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=11/011012013014019020021022027028029
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=11/010011012013014020021022028029030
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=11/010011012013014015021022026027028
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=11/011012013014015019020021022023028
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=11/011012013014015018019020021027028
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=11/011012013014015020021026027028029
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=11/010011012013014015019020021026027
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=11/010011012013014018019020021022026
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=12/011012013015018019020021022023028029
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=12/010011012013019020021022023028030031
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=12/011012013014015018019022023026027030
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=12/010011012013014015018021022023029030
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=12/010011012013014020021022023028030031
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=12/011012013014020021022023026027028029
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=12/010011012013020021023026027028029030
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=12/012013014015019020021022023026027028
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=12/010011012013014015020021022026027028
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=12/010011012013015018020021022023029030
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=13/011012013014015018019020021022023026027
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=13/010011012013014018020021023028029030031
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=13/010011012013019020021023026027028029030
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=13/010011012013014019020023026027028029030
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=13/010011012013014015018020021022027028029
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=13/010011012013014015018020021022023028029
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=13/011012013015018019020021022023027028029
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=13/010011012013014015019020021022023028029
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=13/010011012013014015021022026027028029030
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=13/010011012013015020021022023026027028030
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=14/010011012013018019020021022023028029030031
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=14/010011012013014018019020021022023026028029
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=14/010011012013014018019020021022023026030031
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=14/010011012013015018020021022023027028029030
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=14/010011012013014015019020021022023026028029
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=14/010011012013014015019020021026027028029030
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=14/010011012013014018020021022027028029030031
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=14/010011012013014019020021022023026027028030
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=14/010011012013014015018019020021022023028029
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=14/010011012013014015018019020021027028029030
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=15/010011012013014015018019020021022023027028029
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=15/010011012013014018019020021022023026029030031
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=15/010011012013014015020021022023026027028029030
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=15/010011012013015018019020021022023027028029030
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=15/010011012013014018019020021022023026028030031
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=15/010011012013014015018019020021022023029030031
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=15/010011012013014018019020021022023026028029030
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=15/010011012013014019020021022023026027028029030
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=15/010011012013014015018019020021022028029030031
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=15/010011012013014015018019020021022023026027028
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=16/010011012013014015018019020021022023027028029030
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=16/010011012013014015018019020021022023026028030031
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=16/010011012013014015018019020021022023026027030031
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=16/010011012013014015018019020021022023026027028029
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=16/010011012013014015018019020021022023026027028030
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=16/010011012013014015018019020021022027028029030031
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=16/010011012013014015019020021022026027028029030031
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=16/011012013014015018019020021022023026027028029030
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=16/010011012013014015019020021022023026027028030031
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=16/010011012013014015018019020021022023028029030031
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=17/010011012013014015018019020021022023026027028029030
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=17/010011012013014015018019020021022023026027028030031
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=17/010011012013014015018019020021022023026028029030031
+Added calc to DB: vasp/type=relax/mat=graphene/layers=1/size=4/pore=18/010011012013014015018019020021022023026027028029030031
+9273 total entries. 124 new entries added.
 :END:
 
 ** Add relaxation steps to the database
@@ -5859,7 +5973,7 @@ added = 0
 skipped = 0
 db = connect('database/master.db')
 wd = os.getcwd()
-for d in db.select(['type=relax', 'size=3']):
+for d in db.select(['type=relax', 'size=4']):
     if 'path' not in d.data.keys():
         skipped += 1
         continue
@@ -5901,7 +6015,7 @@ print("{} added. {} skipped.".format(added, skipped))
 
 #+RESULTS:
 :RESULTS:
-662 added. 0 skipped.
+5233 added. 0 skipped.
 :END:
 
 ** iteration=0
@@ -6032,7 +6146,7 @@ for s in sizes:
 
 
 print("{} added. {} skipped. {} marked for this iteration.".format(added, skipped, marked))
-td.bp()
+td.bp("Breakpoint")
 db.update(ids, iteration=iteration, train_set=True)
 #+END_SRC
 
@@ -6442,6 +6556,221 @@ To add:
 - Point calculations for unique pore structures of size 4
 - Relaxations for size=4
 
+*** DONE Point
+    CLOSED: [2016-08-24 Wed 15:34]
+
+Update point calculations with pores to include their pore string as a key.
+
+#+BEGIN_SRC python :results output org drawer
+from ase.db import connect
+import os
+import twodee as td
+
+db = connect('database/master.db')
+
+updated = 0
+skipped = 0
+for d in db.select(["type=point"]):
+    if 'porestr' in d.key_value_pairs:
+        skipped += 1
+        continue
+    ps = "s" + os.path.basename(d.data['path'])
+    db.update(d.id, porestr=ps)
+    updated += 1
+
+print("{} updated. {} skipped.".format(updated, skipped))
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+1310 updated. 265 skipped.
+:END:
+
+
+Add energy unique pore structures.
+
+#+BEGIN_SRC python :results output org drawer
+from ase.db import connect
+import json
+import random
+import twodee as td
+
+######################
+# Update the iteration
+iteration = 1
+######################
+
+db = connect('database/master.db')
+uniques_path = 'data/uniques.json'
+with open(uniques_path) as data_file:
+    uniques = json.load(data_file)
+
+ids = []
+added = 0
+skipped = 0
+marked = 0
+
+for d in db.select(["type=point", "size=4"]):
+    if 'iteration' in d.key_value_pairs:
+        if d.iteration == iteration:
+            marked += 1
+        continue
+    elif td.is_unique(d, uniques):
+        ids.append(d.id)
+        added += 1
+        marked += 1
+    else:
+        skipped += 1
+
+#td.bp("Breakpoint")
+
+n = len(ids)
+n_train = int(round(n * 0.9))
+
+random.seed(31)
+train_samples = random.sample(ids, n_train)
+valid_samples = set(ids) - set(train_samples)
+
+db.update(list(train_samples), iteration=iteration, train_set=True)
+db.update(list(valid_samples), iteration=iteration, train_set=False)
+print("{} added. {} skipped. {} marked for iteration {}.".format(added, skipped, marked, iteration))
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+0 added. 181 skipped. 1317 marked for this iteration.
+:END:
+
+*** DONE Relax
+    CLOSED: [2016-08-24 Wed 15:55]
+Include all relaxation steps.
+
+#+BEGIN_SRC python :results output org drawer
+from ase.db import connect
+import json
+import random
+import twodee as td
+
+######################
+# Update the iteration
+iteration = 1
+######################
+
+db = connect('database/master.db')
+uniques_path = 'data/uniques.json'
+with open(uniques_path) as data_file:
+    uniques = json.load(data_file)
+
+
+ids = []
+added = 0
+skipped = 0
+marked = 0
+for d in db.select(["type=relax", "size=4"]):
+    if 'iteration' in d.key_value_pairs:
+        if d.iteration == iteration:
+            marked += 1
+        continue
+    elif td.is_unique(d, uniques):
+        ids.append(d.id)
+        added += 1
+        marked += 1
+    else:
+        skipped += 1
+
+n = len(ids)
+n_train = int(round(n * 0.9))
+
+random.seed(31)
+train_samples = random.sample(ids, n_train)
+valid_samples = set(ids) - set(train_samples)
+
+db.update(list(train_samples), iteration=iteration, train_set=True)
+db.update(list(valid_samples), iteration=iteration, train_set=False)
+print("{} added. {} skipped. {} marked for iteration {}.".format(added, skipped, marked, iteration))
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+5357 added. 0 skipped. 5357 marked for iteration 1.
+:END:
+
+*** TODO Check hashes for duplicates
+
+#+BEGIN_SRC python :results output org drawer
+from ase.db import connect
+from amp.utilities import hash_image
+
+######################
+# Update the iteration
+iteration = 1
+######################
+
+db = connect('database/master.db')
+hashes = {}
+dups = 0
+for d in db.select('iteration={}'.format(iteration)):
+    atoms = db.get_atoms(d.id)
+    hashi = hash_image(atoms)
+
+    if hashi in hashes:
+        print("Duplicate found: {}, {}".format(hashes[hashi], d.id))
+        orig = next(db.select('id={}'.format(hashes[hashi])))
+        print(orig.key_value_pairs)
+        print(d.key_value_pairs)
+        print("")
+        dups += 1
+    else:
+        hashes[hashi] = d.id
+
+print("Total duplicats: {}".format(dups))
+#+END_SRC
+
+
+*** DONE Remove duplicate hashes
+    CLOSED: [2016-08-24 Wed 16:00]
+
+#+BEGIN_SRC python :results output org drawer
+from ase.db import connect
+from amp.utilities import hash_image
+
+######################
+# Update the iteration
+iteration = 1
+######################
+
+db = connect('database/master.db')
+hashes = {}
+dups = 0
+for d in db.select('iteration={}'.format(iteration)):
+    atoms = db.get_atoms(d.id)
+    hashi = hash_image(atoms)
+
+    if hashi in hashes:
+        orig = next(db.select('id={}'.format(hashes[hashi])))
+        dups += 1
+        
+        remove = d.id
+        if "type" in orig.key_value_pairs and orig.key_value_pairs["type"] == "point":
+            remove = d.id
+        elif "traj" in d.key_value_pairs:
+            if "traj" in orig.key_value_pairs:
+                if orig.key_value_pairs["traj"] == -1:
+                    remove = d.id
+                elif d.key_value_pairs["traj"] <= 0:
+                    remove = orig.id
+        db.update(remove, iteration=99999)
+    else:
+        hashes[hashi] = d.id
+
+print("Total duplicates: {}".format(dups))
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+Total duplicates: 248
+:END:
+
 * Vasp
 
 DFT calculations.
@@ -6506,13 +6835,15 @@ for d in ds:
     index = np.where(distances==d)[0][0]
     print("Distance: {:4.1f}. Energy: {:0.3f}".format(d, energies[index]))
 
-plt.plot(distances, energies)
+plt.plot(distances, energies, 'b-')
+plt.plot(distances, energies, 'bo')
+plt.plot([distances[0], distances[-1]], [energies[-1]]*2, 'k--')
 plt.xlabel('Neighbor distance ($\AA$)')
 plt.ylabel('Energy (eV/atom)')
 plt.xlim([5, 8])
 plt.ylim([-0.2, -0.16])
 plt.title('Graphene self-interaction energy')
-file_path = 'cutoff-self-interaction.png'
+file_path = 'cutoff_self_interaction.png'
 td.print_image(file_path, plt)
 #+END_SRC
 
@@ -6522,21 +6853,84 @@ Distance:  5.5. Energy: -0.176
 Distance:  6.0. Energy: -0.166
 Distance:  6.5. Energy: -0.163
 Distance: 10.0. Energy: -0.162
-[[./img/cutoff-self-interaction.png]]
+[[./img/cutoff_self_interaction.png]]
 :END:
 
 The cutoff distance for this method is converged to within 10 meV at a neighbor distance of 6.0 Å.
 
-*** TODO mat=graphene/layers=1/size=1/pore=0 - cutoff by perturbation
+*** DONE mat=graphene/layers=1/size=1/pore=0 - cutoff by perturbation
+    CLOSED: [2016-08-22 Mon 12:41]
 
 Check the radius of impact for pores of multiple sizes.
 
 #+BEGIN_SRC python :results output org drawer
+from ase.visualize import view
+import numpy as np
+import matplotlib.pyplot as plt
+from vasp import Vasp
+
 import twodee as td
 
-atoms = td.create_base(mat='graphene', layers=1, size=5)
-td.bp(atoms)
+
+size = 5
+forces = {}
+distances = {}
+pores = [[0], [0,1,2,10]]
+for pore in pores:
+    atoms = td.create_base("graphene", layers=1, size=size)
+    center = np.matrix([atoms[p].position for p in pore]).mean(0)
+    atoms = td.make_pore(atoms, pore)
+
+    porestr = td.pore_string(pore)
+    name = 'vasp/type=point/mat=graphene/layers=1/size={0}/pore={1}/{2}'.format(size, len(pore), porestr)
+    calc = Vasp(name)
+    atoms = calc.get_atoms()
+
+    forces[porestr] = []
+    for f in atoms.get_forces():
+        forces[porestr].append(np.sqrt(((f) ** 2).mean()))
+
+    dists = []
+    for a in atoms:
+        dists.append(np.linalg.norm(a.position - center))
+    distances[porestr] = dists
+
+    # Print forces around minimum
+    for (d, f) in zip(distances[porestr], forces[porestr]):
+       if d > 5.5 and d < 7.5:
+           print("Pore: {}. Distance: {:0.3f} \AA. RMS Force: {:0.3f}".format(len(pore), d, f))
+
+
+    plt.plot(distances[porestr], forces[porestr], 'o', label="Defect size = {}".format(len(pore)))
+
+
+plt.xlabel('Distance from defect center ($\AA$)')
+plt.ylabel('RMS Force (eV/$\AA$)')
+plt.xlim([0, 9.84])
+plt.legend()
+plt.title('Graphene defect disturbance')
+file_path = 'cutoff_disturbance.png'
+td.print_image(file_path, plt)
 #+END_SRC
+
+#+RESULTS:
+:RESULTS:
+Pore: 1. Distance: 6.191 \AA. RMS Force: 0.079
+Pore: 1. Distance: 7.380 \AA. RMS Force: 0.157
+Pore: 1. Distance: 5.681 \AA. RMS Force: 0.062
+Pore: 1. Distance: 6.509 \AA. RMS Force: 0.014
+Pore: 1. Distance: 6.191 \AA. RMS Force: 0.079
+Pore: 1. Distance: 6.509 \AA. RMS Force: 0.014
+Pore: 1. Distance: 7.380 \AA. RMS Force: 0.157
+Pore: 4. Distance: 6.191 \AA. RMS Force: 0.080
+Pore: 4. Distance: 7.380 \AA. RMS Force: 0.214
+Pore: 4. Distance: 6.509 \AA. RMS Force: 0.072
+Pore: 4. Distance: 6.509 \AA. RMS Force: 0.072
+Pore: 4. Distance: 7.101 \AA. RMS Force: 0.000
+Pore: 4. Distance: 6.191 \AA. RMS Force: 0.080
+Pore: 4. Distance: 7.380 \AA. RMS Force: 0.214
+[[./img/cutoff_disturbance.png]]
+:END:
 
 *** DONE mat=graphene/layers=1/size=1/pore=0 - kpts
     CLOSED: [2016-06-22 Wed 10:11]
@@ -7187,6 +7581,9 @@ Structures for use in building more complex structures.
 
 *** DONE mat=graphene/layers=1
     CLOSED: [2016-06-22 Wed 11:39]
+    :PROPERTIES:
+    :iteration: 0
+    :END:
 
 #+BEGIN_SRC python :results drawer
 from ase import Atoms, Atom
@@ -7229,6 +7626,9 @@ Final bilayer graphene: Energy = -18.4493. Calc time: 0 min.
 
 *** DONE mat=graphene/layers=2
     CLOSED: [2016-06-22 Wed 11:39]
+    :PROPERTIES:
+    :iteration: -1
+    :END:
 
 #+BEGIN_SRC python :results drawer
 from ase import Atoms, Atom
@@ -7286,6 +7686,9 @@ Final bilayer graphene: Energy = -36.8838. Calc time: 1 min.
 ** Equations of state
 *** DONE mat=graphene/layers=1/size=1/pore=0
     CLOSED: [2016-07-18 Mon 11:56]
+    :PROPERTIES:
+    :iteration: 0
+    :END:
 
 #+BEGIN_SRC python :results drawer
 from ase import Atoms, Atom
@@ -7334,6 +7737,9 @@ td.print_image(file_path, plt)
 
 *** DONE mat=graphene/layers=1/size=3/pore=3
     CLOSED: [2016-07-18 Mon 11:56]
+    :PROPERTIES:
+    :iteration: -1
+    :END:
 
 Should atoms be allowed to relax positions? Don't include these calculation in the neural networks for the time being.
 
@@ -7395,6 +7801,9 @@ td.print_image(file_path, plt)
 ** Point energy calculations
 *** DONE mat=graphene/layers=1/size=*/pore=0
     CLOSED: [2016-08-20 Sat 21:13]
+    :PROPERTIES:
+    :iteration: 0
+    :END:
 
 Obtain calculations for pristine graphene at all relevant sizes.
 
@@ -7440,6 +7849,9 @@ size=7: Energy/atom = -9.223. Calc time: 1770 min.
 
 *** DONE mat=graphene/layers=1/size=2/pore=*
     CLOSED: [2016-07-20 Wed 16:21]
+    :PROPERTIES:
+    :iteration: 0
+    :END:
 
 #+BEGIN_SRC python :results example
 from ase import Atoms, Atom
@@ -7479,6 +7891,9 @@ for c in cans:
 
 *** DONE mat=graphene/layers=1/size=3/pore=*
     CLOSED: [2016-07-18 Mon 16:23]
+    :PROPERTIES:
+    :iteration: 0
+    :END:
 
 #+BEGIN_SRC python :results drawer
 from ase import Atoms, Atom
@@ -7511,6 +7926,11 @@ for c in cans:
 
 *** DONE mat=graphene/layers=1/size=4/pore=3,4,5
     CLOSED: [2016-07-22 Fri 13:49]
+    :PROPERTIES:
+    :iteration: -1
+    :END:
+
+These calculations include duplicate energy structures. Do not include this in NN iterations.
 
 #+BEGIN_SRC python :results drawer
 from ase import Atoms, Atom
@@ -7542,24 +7962,11 @@ for c in cans:
         td.result('pore={0}'.format(pname), calc)
 #+END_SRC
 
-*** INPROGRESS mat=graphene/layers=1/size=4/pore=uniques
-
-Test query for speed.
-#+BEGIN_SRC python :results output org drawer
-from ase.io import read
-import time
-
-start = time.time()
-a = read('database/master.db@type=estimate,size=4')
-runtime = time.time() - start
-print("{} sec".format(runtime))
-#+END_SRC
-
-#+RESULTS:
-:RESULTS:
-74.2396500111 sec
-:END:
-
+*** DONE mat=graphene/layers=1/size=4/pore=uniques
+    CLOSED: [2016-08-22 Mon 12:42]
+    :PROPERTIES:
+    :iteration: 1
+    :END:
 
 Run the point calculations on the unique structures.
 
@@ -7573,12 +7980,6 @@ import twodee as td
 size = 4
 db = connect('database/master.db')
 selection = ["type=estimate", "size={}".format(size), "unique=True"]
-
-
-atoms = db.get_atoms(6489)
-d = next(db.select("id=6489"))
-selection = "id=6489"
-#td.bp(d.unique)
 
 for i, d in enumerate(db.select(selection)):
     pore_string = d.porestr[1:]
@@ -7608,121 +8009,15 @@ print("Jobs: {}".format(i))
 #+RESULTS:
 :RESULTS:
 6489
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
-    raise NotImplementedError
-NotImplementedError
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
-    raise NotImplementedError
-NotImplementedError
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=4/pore=10/010011012013014015018020021028 submitted: 1451456.gilgamesh.cheme.cmu.edu
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=4/pore=10/010011012013014015018020021028 Queued: 1451456.gilgamesh.cheme.cmu.edu
-pore=010011012013014015018020021028: Inprogress.
+pore=010011012013014015018020021028: Energy = -172.742. Calc time: 247 min.
 Jobs: 0
 :END:
 
-
-
-
-6489
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp_core.py", line 370, in sort_atoms
-    if (atom.symbol not in symbols and
-  File "/home-guest/devonw/lib/python/ase/ase/atom.py", line 22, in getter
-    return self.get(name)
-  File "/home-guest/devonw/lib/python/ase/ase/atom.py", line 146, in get
-    value = self.get_raw(name)
-  File "/home-guest/devonw/lib/python/ase/ase/atom.py", line 133, in get_raw
-    return chemical_symbols[self.get_raw('number')]
-TypeError: only integer arrays with one element can be converted to an index
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/vasp/vasp/readers.py", line 330, in read
-    self.sort_atoms(atoms)
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 51, in inner
-    return self.exception_handler(self, *sys.exc_info())
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp_core.py", line 370, in sort_atoms
-    if (atom.symbol not in symbols and
-  File "/home-guest/devonw/lib/python/ase/ase/atom.py", line 22, in getter
-    return self.get(name)
-  File "/home-guest/devonw/lib/python/ase/ase/atom.py", line 146, in get
-    value = self.get_raw(name)
-  File "/home-guest/devonw/lib/python/ase/ase/atom.py", line 133, in get_raw
-    return chemical_symbols[self.get_raw('number')]
-TypeError: only integer arrays with one element can be converted to an index
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 196, in __init__
-    self.read(restart)  # read parameters, atoms and results
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 51, in inner
-    return self.exception_handler(self, *sys.exc_info())
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/vasp/vasp/readers.py", line 330, in read
-    self.sort_atoms(atoms)
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 51, in inner
-    return self.exception_handler(self, *sys.exc_info())
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp_core.py", line 370, in sort_atoms
-    if (atom.symbol not in symbols and
-  File "/home-guest/devonw/lib/python/ase/ase/atom.py", line 22, in getter
-    return self.get(name)
-  File "/home-guest/devonw/lib/python/ase/ase/atom.py", line 146, in get
-    value = self.get_raw(name)
-  File "/home-guest/devonw/lib/python/ase/ase/atom.py", line 133, in get_raw
-    return chemical_symbols[self.get_raw('number')]
-TypeError: only integer arrays with one element can be converted to an index
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 525, in __init__
-    atoms, **kwargs)
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 51, in inner
-    return self.exception_handler(self, *sys.exc_info())
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 196, in __init__
-    self.read(restart)  # read parameters, atoms and results
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 51, in inner
-    return self.exception_handler(self, *sys.exc_info())
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/vasp/vasp/readers.py", line 330, in read
-    self.sort_atoms(atoms)
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 51, in inner
-    return self.exception_handler(self, *sys.exc_info())
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp_core.py", line 370, in sort_atoms
-    if (atom.symbol not in symbols and
-  File "/home-guest/devonw/lib/python/ase/ase/atom.py", line 22, in getter
-    return self.get(name)
-  File "/home-guest/devonw/lib/python/ase/ase/atom.py", line 146, in get
-    value = self.get_raw(name)
-  File "/home-guest/devonw/lib/python/ase/ase/atom.py", line 133, in get_raw
-    return chemical_symbols[self.get_raw('number')]
-TypeError: only integer arrays with one element can be converted to an index
-Issue with id=6489
-
-*** INPROGRESS mat=graphene/layers=1/size=5/pore=1,2
+*** DONE mat=graphene/layers=1/size=5/pore=1,2
+    CLOSED: [2016-08-22 Mon 12:42]
+    :PROPERTIES:
+    :iteration: -1
+    :END:
 
 Calculations for the cutoff radius comparison.
 
@@ -7753,28 +8048,15 @@ for pore in pores:
 
 #+RESULTS:
 :RESULTS:
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=1/000 Queued: 1451470.gilgamesh.cheme.cmu.edu
-pore=000: Inprogress.
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
-    raise NotImplementedError
-NotImplementedError
-Unhandled exception in Vasp
-Traceback (most recent call last):
-  File "/home-guest/devonw/lib/python/vasp/vasp/vasp.py", line 48, in inner
-    return func(self, *args, **kwargs)
-  File "/home-guest/devonw/lib/python/ase/ase/calculators/calculator.py", line 390, in get_property
-    raise NotImplementedError
-NotImplementedError
-/home-guest/devonw/hydrogen2D/vasp/type=point/mat=graphene/layers=1/size=5/pore=4/000001002010 submitted: 1451471.gilgamesh.cheme.cmu.edu
-pore=000001002010: Inprogress.
+pore=000: Energy = -443.674. Calc time: 619 min.
+pore=000001002010: Energy = -409.281. Calc time: 340 min.
 :END:
 
 ** Relaxations
 *** DONE mat=graphene/layers=1/size=2/pore=*
+    :PROPERTIES:
+    :iteration: 0
+    :END:
 
 #+BEGIN_SRC python :results drawer
 from ase import Atoms, Atom
@@ -7836,6 +8118,9 @@ pore=006007: Energy = -47.638. Calc time: 80 min.
 
 *** DONE mat=graphene/layers=1/size=3/pore=*: 10 relaxed structures of varying pore sizes 
     CLOSED: [2016-07-19 Tue 16:15]
+    :PROPERTIES:
+    :iteration: -1
+    :END:
 
 #+BEGIN_SRC python :results drawer
 from ase import Atoms, Atom
@@ -7907,6 +8192,9 @@ pore=008009010014015016017: Energy = -88.3831. Calc time: 648 min.
 
 *** DONE mat=graphene/layers=1/size=3/pore=*: Unique structures
     CLOSED: [2016-07-19 Tue 16:15]
+    :PROPERTIES:
+    :iteration: 0
+    :END:
 
 Get relaxations for all energy unique size=3 pore structures.
 
@@ -7977,6 +8265,9 @@ pore=008009010011014015016017: Energy = -81.606. Calc time: 177 min.
 
 *** DONE mat=graphene/layers=1/size=4/pore=*: Unique structures
     CLOSED: [2016-08-20 Sat 23:46]
+    :PROPERTIES:
+    :iteration: 1
+    :END:
 
 #+BEGIN_SRC python :results drawer
 from ase.db import connect
@@ -8039,72 +8330,6 @@ for i in ids:
 :RESULTS:
 :END:
 
-** Results
-*** Pore energy comparison
-
-#+BEGIN_SRC python :results drawer
-from ase import Atoms, Atom
-from ase.db import connect
-import numpy as np
-import matplotlib.pyplot as plt
-from vasp import Vasp
-
-import twodee as td
-
-sizes = [3, 4, 5]
-db = connect('database/master.db')
-
-for size in sizes:
-    energies = {}
-    pore_sizes = set()
-    for d in db.select(['type=point', 'mat=graphene', 'layers=1',
-                        'size={}'.format(size)]):
-
-        energy = d.energy / d.natoms
-        pore_size = d['pore']
-        pore_sizes.add(pore_size)
-        if pore_size not in energies:
-            energies[pore_size] = [energy]
-        else:
-            energies[pore_size] += [energy]
-
-
-    for ps in sorted(pore_sizes):
-        num_calcs = len(energies[ps])
-        if size == 3:
-            plt.plot([ps]*num_calcs, energies[ps], 'bo', label="Size=3x3")
-#            plt.boxplot(energies[ps], ps)
-        elif size == 4:
-            plt.plot([ps]*num_calcs, energies[ps], 'go', label="Size=4x4")
-#            plt.boxplot(energies[ps], ps)
-        elif size == 5:
-            plt.plot([ps]*num_calcs, energies[ps], 'ro', label="Size=5x5")
-
-file_path = 'results/pore-size-comparison.png'
-#plt.legend(['Size = 3x3', 'Size = 4x4'])
-from collections import OrderedDict
-handles, labels = plt.gca().get_legend_handles_labels()
-by_label = OrderedDict(zip(labels, handles))
-plt.legend(by_label.values(), by_label.keys())
-#plt.legend()
-plt.xlabel('Pore size (atoms)')
-plt.ylabel('Energy (eV/atom)')
-#plt.savefig(file_path)
-#print('[[' + file_path + ']]')
-fig_name = "fig:pore-size-comparison"
-caption = "An energy comparison of different pore structure for a 3x3 graphene superstructure. The calculations have not been relaxed after the pore was created. label:" + fig_name
-td.print_image(file_path, plt, caption=caption, fig_name=fig_name)
-#+END_SRC
-
-#+RESULTS:
-:RESULTS:
-#+CAPTION: An energy comparison of different pore structure for a 3x3 graphene superstructure. The calculations have not been relaxed after the pore was created. label:fig:pore-size-comparison
-#+NAME: fig:fig:pore-size-comparison
-[[./img/results/pore-size-comparison.png]]
-:END:
-
-*** TODO Cutoff distance convergence
-
 * Neural network
 
 Methodology for iterating the neural networks:
@@ -8116,6 +8341,119 @@ Methodology for iterating the neural networks:
 *** Build
 
 #+BEGIN_SRC python :results output org drawer :tangle ./twodee/templates/nn_build.py
+#!/usr/bin/env python
+from amp import Amp
+from amp import SimulatedAnnealing
+from amp.descriptor import Gaussian
+from amp.regression import NeuralNetwork
+from ase.db import connect
+import os
+import twodee as td
+
+# Required arguments from template
+iteration = {{ iteration }}
+framework = {{ framework }}
+work_dir = "{{ work_dir }}"
+db_path = "{{ db_path }}"
+label = "{{ label }}"
+dblabel = "{{ dblabel }}"
+cutoff = {{ cutoff }}
+energy_rmse = {{ energy_rmse }}
+force_rmse = {{ force_rmse }}
+cores = {{ cores }}
+
+# Set working directory
+os.chdir(work_dir)
+
+# Get atoms from the database
+images = []
+db = connect(db_path)
+for d in db.select(['iteration<={}'.format(iteration), 'train_set=True']):
+    atoms = db.get_atoms(d.id)
+    del atoms.constraints
+    images.append(atoms)
+
+# Build Amp object
+framework_str = "-".join([str(f) for f in framework])
+label = label
+dblabel = dblabel
+desc = Gaussian(cutoff=cutoff)
+model = NeuralNetwork(hiddenlayers=framework)
+calc = Amp(label=label,
+           dblabel=dblabel,
+           descriptor=desc,
+           regression=model)
+           
+# Train the network
+calc.train(images=images,
+           data_format='db',
+           cores=cores,
+           energy_goal=energy_rmse,
+           force_goal=force_rmse,
+	   global_search=SimulatedAnnealing(temperature=70,
+					    steps=50),
+           extend_variables=False)
+#+END_SRC
+
+*** Calculate
+
+#+BEGIN_SRC python :results output org drawer :tangle ./twodee/templates/nn_calculate.py
+#!/usr/bin/env python
+from amp import Amp
+from ase.db import connect
+import os
+import shutil
+
+import twodee as td
+
+# Required arguments from template
+iteration = {{ iteration }}
+framework = {{ framework }}
+work_dir = "{{ work_dir }}"
+load_path = "{{ load_path }}"
+db_path = "{{ db_path }}"
+selection = {{ selection }}
+{% if overwrite %}
+overwrite = {{ overwrite }}
+{% else %}
+overwrite = False
+{% endif %}
+cores = {{ cores }}
+
+# Set working directory
+os.chdir(work_dir)
+
+# Create DB update strings
+update_str = "_".join([str(f) for f in framework])
+update_key = "nn_" + update_str + "_iter{}".format(iteration)
+
+# Load Amp object
+calc = Amp.load(load_path, cores=cores)
+
+# Get atoms from the database
+images = []
+new_db = os.path.join(os.path.dirname(load_path), "DB.db")
+shutil.copyfile(db_path, new_db)
+db = connect(new_db)
+for d in db.select(selection):
+    if not overwrite and update_key in d.key_value_pairs.keys():
+        continue
+
+    atoms = db.get_atoms(d.id)
+    atoms.set_calculator(calc)
+    energy = atoms.get_potential_energy()
+
+    update = {update_key: energy}
+    db.update(d.id, **update)
+#+END_SRC
+
+** Iteration 0_bitbucket
+
+*** Build_bitbucket template
+
+Bitbucket version that has ssh parallel processing that I don't have working.
+
+#+BEGIN_SRC python :results output org drawer :tangle ./twodee/templates/nn_build_bitbucket.py
 #!/usr/bin/env python
 from amp import Amp
 from amp.descriptor.gaussian import Gaussian
@@ -8144,7 +8482,7 @@ os.chdir(work_dir)
 # Get atoms from the database
 images = []
 db = connect(db_path)
-for d in db.select(['iteration<={}'.format(iteration, 'train_set=True')]):
+for d in db.select(['iteration<={}'.format(iteration), 'train_set=True']):
     atoms = db.get_atoms(d.id)
     del atoms.constraints
     images.append(atoms)
@@ -8171,59 +8509,58 @@ Annealer(calc=calc, images=images)
 calc.train(images=images)
 #+END_SRC
 
-*** Calculate
+*** Calculate template
+
 #+BEGIN_SRC python :results output org drawer :tangle ./twodee/templates/nn_calculate.py
 #!/usr/bin/env python
 from amp import Amp
-from amp.descriptor.gaussian import Gaussian
-from amp.model import LossFunction
-from amp.model.neuralnetwork import NeuralNetwork
-from amp.utilities import Annealer
 from ase.db import connect
 import os
+import shutil
+
 import twodee as td
 
 # Required arguments from template
 iteration = {{ iteration }}
 framework = {{ framework }}
 work_dir = "{{ work_dir }}"
+load_path = "{{ load_path }}"
 db_path = "{{ db_path }}"
 selection = {{ selection }}
+{% if overwrite %}
+overwrite = {{ overwrite }}
+{% else %}
+overwrite = False
+{% endif %}
+cores = {{ cores }}
 
 # Set working directory
 os.chdir(work_dir)
 
+# Create DB update strings
+update_str = "_".join([str(f) for f in framework])
+update_key = "nn_" + update_str + "_iter{}".format(iteration)
+
+# Load Amp object
+calc = Amp.load(load_path, cores=cores)
+
 # Get atoms from the database
 images = []
-db = connect(db_path)
+new_db = os.path.join(os.path.dirname(load_path), "DB.db")
+shutil.copyfile(db_path, new_db)
+db = connect(new_db)
 for d in db.select(selection):
+    if not overwrite and update_key in d.key_value_pairs.keys():
+        continue
+
     atoms = db.get_atoms(d.id)
-    del atoms.constraints
-    images.append(atoms)
+    atoms.set_calculator(calc)
+    energy = atoms.get_potential_energy()
 
-# Build Amp object
-framework_str = "-".join([str(f) for f in framework])
-label = "networks/iter={0}/{1}/{1}".format(iteration, framework_str)
-dblabel = "networks/iter={0}/iter={0}".format(iteration)
-desc = Gaussian(cutoff=cutoff)
-model = NeuralNetwork(hiddenlayers=framework)
-calc = Amp(label=label,
-           dblabel=dblabel,
-           descriptor=desc,
-           model=model,
-	   cores=cores)
-loss = LossFunction(convergence={'energy_rmse': energy_rmse,
-                                 'force_rmse': force_rmse})
-calc.model.lossfunction = loss
-           
-# Perform simulated annealing for global search
-Annealer(calc=calc, images=images)
-
-# Train the network
-calc.train(images=images)
+    update = {update_key: energy}
+    db.update(d.id, **update)
 #+END_SRC
 
-** Iteration 0
 *** Build neural networks
 
 #+BEGIN_SRC python :results code
@@ -8260,7 +8597,7 @@ for framework in frameworks:
     code = template.render(**args)
 
     #print(code)
-    #submit_file = os.path.join(nn_dir, 'submit.py')
+    #submit_file = os.path.join(nn_dir, 'nn_build_bitbucket.py')
     #with open(submit_file, 'w') as f:
     #    f.write(code)
     #
@@ -8280,11 +8617,380 @@ Job submitted.
 
 #+RESULTS:
 
-*** Validate
+*** Calculate
 
+#+BEGIN_SRC python :results code
+from jinja2 import Environment, PackageLoader
+import os
+import twodee as td
+
+iteration = 0
+converged = False
+
+env = Environment(loader=PackageLoader('twodee', 'templates'))
+template = env.get_template("nn_calculate.py")
+
+#frameworks = ((8, 8), (8, 8, 8))
+frameworks = ((16, 16),)
+for framework in frameworks:
+    framework_str = "-".join([str(f) for f in framework])
+    iter_dir = "networks/iter={0}".format(iteration)
+    nn_dir = os.path.join(iter_dir, framework_str)
+    if converged:
+        pass
+    else:
+        unconvstr = '-untrained-parameters.amp'
+        load_path = os.path.join(nn_dir, framework_str + unconvstr)
+
+    args = {'iteration': iteration,
+            'framework': framework,
+            'work_dir': os.getcwd(),
+            'load_path': load_path,
+            'db_path': "database/master.db",
+            'selection': ["iteration={}".format(iteration)],
+            'overwrite': True,
+            'cores': 1}
+
+    code = template.render(**args)
+
+    td.bp(code)
+    submit_file = os.path.join(nn_dir, 'calculate.py')
+    with open(submit_file, 'w') as f:
+        f.write(code)
+    
+    td.qsub(submit_file, walltime="10:00:00")
+    print('{0} submitted.'.format(framework_str))
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_SRC python
+#!/usr/bin/env python
+from amp import Amp
+from ase.db import connect
+import os
+import shutil
+
+import twodee as td
+
+# Required arguments from template
+iteration = 0
+framework = (16, 16)
+work_dir = "/home-guest/devonw/hydrogen2D"
+load_path = "networks/iter=0/16-16/16-16-untrained-parameters.amp"
+db_path = "database/master.db"
+selection = ['iteration=0']
+
+overwrite = True
+
+cores = 1
+
+# Set working directory
+os.chdir(work_dir)
+
+# Create DB update strings
+update_str = "_".join([str(f) for f in framework])
+update_key = "nn_" + update_str + "_iter{}".format(iteration)
+
+# Load Amp object
+calc = Amp.load(load_path, cores=cores)
+
+# Get atoms from the database
+images = []
+new_db = os.path.join(os.path.dirname(load_path), "DB.db")
+shutil.copyfile(db_path, new_db)
+db = connect(new_db)
+for d in db.select(selection):
+    if not overwrite and update_key in d.key_value_pairs.keys():
+        continue
+
+    atoms = db.get_atoms(d.id)
+    atoms.set_calculator(calc)
+    energy = atoms.get_potential_energy()
+
+    update = {update_key: energy}
+    db.update(d.id, **update)
+#+END_SRC
+
+#+RESULTS:
+
+
+Copy iteration energies to master database.
+
+#+BEGIN_SRC python :results output org drawer
+from ase.db import connect
+import os
+
+import twodee as td
+
+iteration = 0
+selection = ["iteration={}".format(iteration)]
+
+db_mst = connect("database/master.db")
+frameworks = ((8, 8), (8, 8, 8))
+frameworks = ((16, 16),)
+for framework in frameworks:
+    framework_str = "-".join([str(f) for f in framework])
+    iter_dir = "networks/iter={0}".format(iteration)
+    nn_dir = os.path.join(iter_dir, framework_str)
+
+    iter_db = os.path.join(nn_dir, "DB.db")
+
+    # Create DB update strings
+    update_str = "_".join([str(f) for f in framework])
+    update_key = "nn_" + update_str + "_iter{}".format(iteration)
+    
+    db_iter = connect(iter_db)
+    for d in db_iter.select(selection):
+        energy = d.get(update_key)
+        update = {update_key: energy}
+        db_mst.update(d.id, **update)
+
+print("Done")
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+Done
+:END:
+
+*** Validate
+**** 8-8
+
+#+BEGIN_SRC python :results output org drawer
+from ase.db import connect
+import matplotlib.pyplot as plt
+import numpy as np
+
+import twodee as td
+
+iteration = 0
+framework = (8, 8)
+
+# Build key for retriving NN energy
+framework_str = "-".join([str(f) for f in framework])
+framework_key_str = "_".join([str(f) for f in framework])
+nn_key_str = "nn_" + framework_key_str + "_iter{}".format(iteration)
+
+# Get energies
+residuals = [[], []]
+db = connect("database/master.db")
+for d in db.select(["iteration={}".format(iteration)]):
+    res = abs(d.get(nn_key_str) - d.energy)
+    if d.train_set:
+        residuals[0].append(res)
+    else:
+        residuals[1].append(res)
+
+bins = np.linspace(0, 2, 50)
+plt.hist(residuals[0], bins=bins, label="Train set")
+plt.hist(residuals[1], bins=bins, label="Test set")
+plt.xlabel('Residual Error (eV)')
+plt.ylabel('Number of calculations')
+plt.title('Neural network validation - Iteration: {} - Framework: {}'.format(iteration, framework_str))
+plt.legend(loc="upper right")
+file_path = 'validate-iter={}_nn={}.png'.format(iteration, framework_str)
+td.print_image(file_path, plt)
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+[[./img/validate-iter=0_nn=8-8.png]]
+:END:
+
+
+**** 8-8-8
+
+#+BEGIN_SRC python :results output org drawer
+from ase.db import connect
+import matplotlib.pyplot as plt
+import numpy as np
+
+import twodee as td
+
+iteration = 0
+framework = (8, 8, 8)
+
+# Build key for retriving NN energy
+framework_str = "-".join([str(f) for f in framework])
+framework_key_str = "_".join([str(f) for f in framework])
+nn_key_str = "nn_" + framework_key_str + "_iter{}".format(iteration)
+
+# Get energies
+residuals = [[], []]
+db = connect("database/master.db")
+for d in db.select(["iteration={}".format(iteration)]):
+    res = abs(d.get(nn_key_str) - d.energy)
+    if d.train_set:
+        residuals[0].append(res)
+    else:
+        residuals[1].append(res)
+
+bins = np.linspace(0, 2, 50)
+plt.hist(residuals[0], bins=bins, label="Train set")
+plt.hist(residuals[1], bins=bins, label="Test set")
+plt.xlabel('Residual Error (eV)')
+plt.ylabel('Number of calculations')
+plt.title('Neural network validation - Iteration: {} - Framework: {}'.format(iteration, framework_str))
+plt.legend(loc="upper right")
+file_path = 'validate-iter={}_nn={}.png'.format(iteration, framework_str)
+td.print_image(file_path, plt)
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+[[./img/validate-iter=0_nn=8-8-8.png]]
+:END:
+
+**** Comparison
+
+#+BEGIN_SRC python :results output org drawer
+from ase.db import connect
+import matplotlib.pyplot as plt
+import numpy as np
+
+import twodee as td
+
+iteration = 0
+frameworks = ((8, 8), (8, 8, 8))
+
+# Build key for retriving NN energy
+framework_str1 = "-".join([str(f) for f in frameworks[0]])
+framework_str2 = "-".join([str(f) for f in frameworks[1]])
+framework_key_str1 = "_".join([str(f) for f in frameworks[0]])
+framework_key_str2 = "_".join([str(f) for f in frameworks[1]])
+nn_key_str1 = "nn_" + framework_key_str1 + "_iter{}".format(iteration)
+nn_key_str2 = "nn_" + framework_key_str2 + "_iter{}".format(iteration)
+
+# Get energies
+residuals = []
+db = connect("database/master.db")
+for d in db.select(["iteration={}".format(iteration)]):
+    res = abs(d.get(nn_key_str1) - d.get(nn_key_str2))
+    residuals.append(res)
+
+bins = np.linspace(0, 1, 50)
+plt.hist(residuals, bins=bins, label="Difference")
+plt.xlabel('Residual Error (eV)')
+plt.ylabel('Number of calculations')
+plt.title('Neural network comparison - Iteration: {} - Frameworks: {} and {}'.format(iteration, framework_str1, framework_str2))
+plt.legend(loc="upper right")
+file_path = 'nn-compare-iter={}_nn={}_{}.png'.format(iteration, framework_str1, framework_str2)
+td.print_image(file_path, plt)
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+[[./img/nn-compare-iter=0_nn=8-8_8-8-8.png]]
+:END:
+
+** Iteration 0
+*** Build neural networks
+
+#+BEGIN_SRC python :results code
+from jinja2 import Environment, PackageLoader
+import os
+import twodee as td
+
+######################
+# Update the iteration
+iteration = 0
+######################
+
+
+env = Environment(loader=PackageLoader('twodee', 'templates'))
+template = env.get_template("nn_build_old.py")
+
+frameworks = ((8, 8), (8, 8, 8))
+for framework in frameworks:
+    framework_str = "-".join([str(f) for f in framework])
+    iter_dir = "networks/iter_old={0}".format(iteration)
+    nn_dir = os.path.join(iter_dir, framework_str, "")
+    label = nn_dir
+    dblabel = iter_dir
+
+    args = {'iteration': iteration,
+            'framework': framework,
+            'work_dir': os.getcwd(),
+            'db_path': "database/master.db",
+            'label': label,
+            'dblabel': dblabel,
+            'cutoff': 6.5,
+            'energy_rmse': 1e-2,
+            'force_rmse': 1e-1,
+            'cores': 4}
+
+    code = template.render(**args)
+
+    #print(code)
+    #td.bp()
+    submit_file = os.path.join(nn_dir, 'nn_build.py')
+    with open(submit_file, 'w') as f:
+        f.write(code)
+    
+    td.qsub(submit_file, walltime="168:00:00", ppn=args['cores'])
+    print('{0} submitted.'.format(framework_str))
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_SRC python
+1452768.gilgamesh.cheme.cmu.edu
+Job submitted.
+8-8 submitted.
+#+END_SRC
+
+#+RESULTS:
 
 ** Iteration 1
 *** Build neural networks
+
+#+BEGIN_SRC python :results code
+from jinja2 import Environment, PackageLoader
+import os
+import twodee as td
+
+######################
+# Update the iteration
+iteration = 1
+######################
+
+env = Environment(loader=PackageLoader('twodee', 'templates'))
+template = env.get_template("nn_build.py")
+
+frameworks = ((8, 8),)# (8, 8, 8))
+for framework in frameworks:
+    framework_str = "-".join([str(f) for f in framework])
+    iter_dir = "networks/iter={0}".format(iteration)
+    nn_dir = os.path.join(iter_dir, framework_str, "")
+    label = nn_dir
+    dblabel = iter_dir
+
+    args = {'iteration': iteration,
+            'framework': framework,
+            'work_dir': os.getcwd(),
+            'db_path': "database/master.db",
+            'label': label,
+            'dblabel': dblabel,
+            'cutoff': 6.5,
+            'energy_rmse': 1e-2,
+            'force_rmse': 1e-1,
+            'cores': 4}
+
+    code = template.render(**args)
+
+    submit_file = os.path.join(nn_dir, 'nn_build.py')
+    with open(submit_file, 'w') as f:
+        f.write(code)
+    
+    td.qsub(submit_file, walltime="168:00:00", ppn=args['cores'])
+    print('{0} submitted.'.format(framework_str))
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_SRC python
+1453333.gilgamesh.cheme.cmu.edu
+Job submitted.
+8-8 submitted.
+#+END_SRC
 
 * Lammps
 ** Examples
@@ -8303,7 +9009,7 @@ Total wall time: 0:00:00
 
 *** ASE with LAMMPSRun
 
-#+BEGIN_SRC python :results output org drawer :tangle ./run_test.py
+#+BEGIN_SRC python :results output org drawer :tangle ./tmp/run_test.py
 from ase import Atoms, Atom
 from ase.calculators.lammpsrun import LAMMPS
 
@@ -8326,7 +9032,7 @@ print(NaCl.get_stress())
 
 *** ASE with lammpslib
 
-#+BEGIN_SRC python :results output org drawer :tangle ./lammpslib_test.py
+#+BEGIN_SRC python :results output org drawer :tangle ./tmp/lammpslib_test.py
 from ase import Atom, Atoms
 from lammpslib import LAMMPSlib
 import time
@@ -8354,7 +9060,7 @@ print("Energy: {}".format(energy))
 Energy: nan
 :END:
 
-** TODO Pristine Graphene
+** INPROGRESS Pristine Graphene
    
 Calculate pristine graphene using AIREBO in LAMMPS. Use this calculation for improving the parameters used in the simulation to get closer to the DFT value.
 
@@ -8433,9 +9139,90 @@ for i in ids:
 :RESULTS:
 :END:
 
-** TODO Point energy calculations
-** TODO Relaxations?
+** TODO Simulations
 * Results
+** Pore energy comparison
+
+#+BEGIN_SRC python :results drawer
+from ase import Atoms, Atom
+from ase.db import connect
+import numpy as np
+import matplotlib.pyplot as plt
+from vasp import Vasp
+
+import twodee as td
+
+sizes = [3, 4, 5]
+db = connect('database/master.db')
+
+for size in sizes:
+    energies = {}
+    pore_sizes = set()
+    for d in db.select(['type=point', 'mat=graphene', 'layers=1',
+                        'size={}'.format(size)]):
+
+        energy = d.energy / d.natoms
+        pore_size = d['pore']
+        pore_sizes.add(pore_size)
+        if pore_size not in energies:
+            energies[pore_size] = [energy]
+        else:
+            energies[pore_size] += [energy]
+
+
+    for ps in sorted(pore_sizes):
+        num_calcs = len(energies[ps])
+        if size == 3:
+            plt.plot([ps]*num_calcs, energies[ps], 'bo', label="Size=3x3")
+#            plt.boxplot(energies[ps], ps)
+        elif size == 4:
+            plt.plot([ps]*num_calcs, energies[ps], 'go', label="Size=4x4")
+#            plt.boxplot(energies[ps], ps)
+        elif size == 5:
+            plt.plot([ps]*num_calcs, energies[ps], 'ro', label="Size=5x5")
+
+file_path = 'results/pore-size-comparison.png'
+#plt.legend(['Size = 3x3', 'Size = 4x4'])
+from collections import OrderedDict
+handles, labels = plt.gca().get_legend_handles_labels()
+by_label = OrderedDict(zip(labels, handles))
+plt.legend(by_label.values(), by_label.keys())
+#plt.legend()
+plt.xlabel('Pore size (atoms)')
+plt.ylabel('Energy (eV/atom)')
+#plt.savefig(file_path)
+#print('[[' + file_path + ']]')
+fig_name = "fig:pore-size-comparison"
+caption = "An energy comparison of different pore structure for a 3x3 graphene superstructure. The calculations have not been relaxed after the pore was created. label:" + fig_name
+td.print_image(file_path, plt, caption=caption, fig_name=fig_name)
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+#+CAPTION: An energy comparison of different pore structure for a 3x3 graphene superstructure. The calculations have not been relaxed after the pore was created. label:fig:pore-size-comparison
+#+NAME: fig:fig:pore-size-comparison
+[[./img/results/pore-size-comparison.png]]
+:END:
+
+** NN cutoff distance
+The implementation of a NN based on a set of atoms requires a cutoff distance for calculating forces between interacting pairs. In order to determine the cutoff distance, we analyze the effect that different elements in the system will have on carbon atoms. In this work, those elements are comprised of the distance between carbon atoms and the absence of a carbon atom, i.e. a defect. 
+
+To determine the effect of carbon proximity in a graphene sheet, we increase the distance between neighboring carbons until the energy converges. Figure ref:fig:cutoff-self-interaction shows the DFT calculated energies for separating carbon atoms in graphene.
+
+#+caption: Energy convergence of separated carbon atoms in graphene.
+#+label: fig:cutoff-self-interaction
+[[./img/cutoff_self_interaction.png]]
+
+At a distance of 8 Å between carbon atoms, the energy has converged to -0.162 eV/atom. A cutoff of 6.0 Å will be within 10 meV of the converged value and will increase the speed of training. To determine the effect that a vacancy has on each atom in a graphene sheet, we examine the forces. Figure ref:fig:cutoff-disturbance shows the root-mean-square force on atoms of varying distances away from the center of a defect.
+
+#+caption: Force analysis of defective graphene on atoms of varying distances away from the defect center. The graphene is of size 5 and the defect was constructed by removing carbons closest to the origin of the unitcell.
+#+label: fig:cutoff-disturbance
+[[./img/cutoff_disturbance.png]]
+
+The RMS force decreases until around 7 Å, where the atoms begin to see forces from the next defect due to periodic boundary conditions. We see that the RMS force is lowest between 6 and 7 Å. In the calculation set, the lowest RMS force for a defect size of 1 was at 6.509 Å, and it was lowest for a defect size of 4 at 7.101 Å.
+
+Based on these two analyses, a cutoff distance of 6.5 Å seems most appropriate for training the NN. This distance is slightly higher than the proposed 6.0 Å in the carbon separation analysis, but it should result in better force calculations.
+
 ** Equation of state comparison
 
 #+BEGIN_SRC python :results output org drawer
@@ -8444,26 +9231,42 @@ import matplotlib.pyplot as plt
 
 import twodee as td
 
+iteration = 0
+framework = (8, 8, 8)
 db = connect("database/master.db")
+
+# Build key for retriving NN energy
+framework_str = "-".join([str(f) for f in framework])
+framework_key_str = "_".join([str(f) for f in framework])
+nn_key_str = "nn_" + framework_key_str + "_iter{}".format(iteration)
 
 lcs = []
 energies_dft = []
 energies_lmp = []
+energies_nn = []
 for d in db.select(["type=eos", "mat=graphene", "layers=1", "size=1", "lc>2.15"]):
     lcs.append(d.lc)
     energies_dft.append(d.energy/d.natoms)
     energies_lmp.append(d.lmp/d.natoms)
+    nn_energy = d.get(nn_key_str)
+    energies_nn.append(nn_energy/d.natoms)
+
 
 energies_dft = [nrg for (lc, nrg) in sorted(zip(lcs, energies_dft))]
 energies_lmp = [nrg for (lc, nrg) in sorted(zip(lcs, energies_lmp))]
+energies_nn = [nrg for (lc, nrg) in sorted(zip(lcs, energies_nn))]
 lcs = sorted(lcs)
 
-plt.plot(lcs, energies_dft, label="DFT")
-plt.plot(lcs, energies_lmp, label="AIREBO")
+plt.plot(lcs, energies_dft, 'k-', label="DFT")
+plt.plot(lcs, energies_nn, '^', markersize=6, markerfacecolor='None',
+         markeredgecolor="red", markeredgewidth=1,
+         label="NN: {}".format(framework_str))
+plt.plot(lcs, energies_lmp, 'v', markersize=6, markerfacecolor='None',
+         markeredgecolor="blue", markeredgewidth=1, label="AIREBO")
 plt.xlabel('Lattice constant ($\AA$)')
 plt.ylabel('Energy (eV/atom)')
 plt.title('Graphene Equation of State')
-plt.legend()
+plt.legend(loc="upper left")
 plt.xlim([2.15, 3.0])
 file_path = 'eos_comparison.png'
 td.print_image(file_path, plt)
@@ -8477,7 +9280,8 @@ td.print_image(file_path, plt)
 * Misc :noexport:
 ** Other code
 A brief tour of failures and deprecated workflows. This code has no guarentee to run.
-*** jasp (deprecated)
+
+*** jasp
 **** Testing
 ***** DONE nsw test
       CLOSED: [2016-06-09 Thu 09:19]
@@ -11743,7 +12547,7 @@ print('[[' + file_path + ']]')
    :END:
   
 *** Test neural network as a function of hidden layers and nodes
-
+    
 **** Copy the master database into working directory
 
  #+BEGIN_SRC python
