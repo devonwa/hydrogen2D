@@ -589,6 +589,27 @@ Result figures:
 - fcc(100) diffusion pathway residual
 - NEB for slipping barrier
 
+*** 2016-08-22 Mon
+- [X] Calculate test set energies with neural networks
+- [X] Perform cutoff distance analysis
+- [X] Plot nn energies to the EOS graph w/ dft and airebo
+- [X] Write up Gold Paper plan
+- [X] Read a paper
+*** 2016-08-24 Wed
+- [X] Change Amp to Jake's code and run a multi-core
+- [X] Restart iteration 0
+  - First test if the bug in the template caused an issue after all
+  - Restarted since the bug did cause the training group to include test
+- [X] Collect data for iteration 1
+- [-] Build iteration 1
+  - [X] 8-8
+  - [ ] 8-8-8: start after 8-8 builds fingerprints db
+- [X] Meeting at 4p
+
+*** 2016-08-25 Thu
+- [ ] Clean up NN iteration directories to work with jboes amp
+- [ ] Read papers John sent + copper cutoff
+
 * Lexicon
 - degenerate :: Identical structures, though possible viewed in a different way. Like 
 - interstitial defects :: Locations in a crystal lattice not typically occupied. Self-interstitial (same atom-type as lattice) and interstial impurities (different type of atom).
@@ -2528,7 +2549,7 @@ db_update('scripts/2016-07-19/script-20160719-4.db', 'vasp/type=base')
 #+RESULTS:
 : 2 total entries. 0 new entries added.
 
-** DONE 2016-07-19: Graphene equation of state (amp-tutorial)
+** 2016-07-19: Graphene equation of state (amp-tutorial)
 Build a neural network around the equation of state for graphene in the style of Jake's [[https://github.com/jboes/amp-tutorial][amp-tutorial]].
 
 *** Build the database.
@@ -3408,7 +3429,7 @@ print(inspect.getsource(test_func))
 
 #+RESULTS:
 
-** TODO 2016-07-24: Create a plot that shows neural network quality
+** 2016-07-24: Create a plot that shows neural network quality
 
 Thinking a 3 plot subplot in a 2x2 grid. The top row will be occupied by the errors of network vs training and test.
 1. Errors against training and test data
@@ -3899,7 +3920,7 @@ for h in h_layers:
 :END:
 
 *** TODO Iteration 3: Moving functions into twodee
-** TODO 2016-08-03: LAMMPS calculation setup
+** 2016-08-03: LAMMPS calculation setup
 
 #+BEGIN_SRC python :results output org drawer
 import lammps
@@ -3910,7 +3931,7 @@ import lammps
 :RESULTS:
 :END:
 
-** TODO 2016-08-04: Select non-degenerate calculations from the db
+** 2016-08-04: Select non-degenerate calculations from the db
 
 #+BEGIN_SRC python :results output org drawer
 from ase.db import connect
@@ -3978,6 +3999,24 @@ print("Master: {}".format(num_calcs))
 :RESULTS:
 Master: 745
 ...4added.
+:END:
+
+** 2016-08-24: Test ase db query for speed
+
+Test query for speed.
+#+BEGIN_SRC python :results output org drawer
+from ase.io import read
+import time
+
+start = time.time()
+a = read('database/master.db@type=estimate,size=4')
+runtime = time.time() - start
+print("{:0.3f} sec".format(runtime))
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+74.240 sec
 :END:
 
 * Twodee
