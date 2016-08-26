@@ -607,8 +607,22 @@ Result figures:
 - [X] Meeting at 4p
 
 *** 2016-08-25 Thu
-- [ ] Clean up NN iteration directories to work with jboes amp
+- [X] Clean up NN iteration directories to work with jboes amp
+- [X] Fix equation of state comparison graph
+
+*** 2016-08-26 Fri
+- [X] Examine curvatures of equation of state lines
+- [ ] Start Vasp calcs for size=5. Relaxations: 5 per pore size.
+- [ ] Start Vasp calcs for size=6, 7. Point calcs: 5 per pore size.
 - [ ] Read papers John sent + copper cutoff
+- [ ] LAMMPS simulation
+- [ ] Make good looking atoms images
+
+
+*** 2016-08-29 Mon
+Include in progress report:
+- [ ] Revised equation of state
+
 
 * Lexicon
 - degenerate :: Identical structures, though possible viewed in a different way. Like 

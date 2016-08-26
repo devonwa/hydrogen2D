@@ -93,11 +93,92 @@ print("{} added. {} skipped.".format(added, skipped))
 
 #+RESULTS:
 :RESULTS:
-Pore size: 1. Uniques: 1.
-Pore size: 2. Uniques: 1.
-0 added. 2 skipped.
 :END:
 
+**** AIREBO vs EMT
+
+#+BEGIN_SRC python :results output org drawer
+#!/usr/bin/env python
+from ase.db import connect
+from ase.calculators.lammpsrun import LAMMPS
+from ase.calculators.emt import EMT
+from ase.calculators.singlepoint import SinglePointCalculator
+import os
+import time
+import twodee as td
+
+
+db_path = "./estimate_3.db"
+
+mat = "graphene"
+layers = 1
+size = 4
+atoms = td.create_base(mat, layers=layers, size=size)
+cans = td.candidates(mat=mat, layers=layers, size=size)
+
+# LAMMPS header information
+potentials_path = os.getenv("LAMMPS_POTENTIALS")
+potential = os.path.join(potentials_path, "CH.airebo")
+files = [potential]
+parameters = {"mass": ["* 1.0"],
+              "pair_style": "airebo 6.5 1 1",
+              "pair_coeff": ['* * ' + potential + ' C']}
+
+db = connect(db_path)
+ids = []
+added = 0
+skipped = 0
+keys = {'type': 'estimate', 'mat': mat, 'layers': layers, 'size': size}
+for c in cans:
+    # Skip pristine graphene
+    if not c[0]:
+        continue
+
+    energies_lmp = set()
+    energies_emt = set()
+    keys['pore'] = len(c[0])
+    structures = 0
+    uniques_lmp = 0
+    uniques_emt = 0
+
+    for pore in c:
+        keys['porestr'] = 's' + td.pore_string(pore)
+        structures += 1
+
+        # Calculate AIREBO energy estimate
+        a = atoms.copy()
+        a = td.make_pore(a, pore)
+        calc = LAMMPS(parameters=parameters, files=files)
+        a.set_calculator(calc)
+        energy = round(a.get_potential_energy(), 4)
+
+        if energy not in energies_lmp:
+            energies_lmp.add(energy)
+            uniques_lmp += 1
+
+        # Calculate EMT energy estimate
+        a = atoms.copy()
+        a = td.make_pore(a, pore)
+        a.set_calculator(EMT())
+        energy = round(a.get_potential_energy(), 4)
+
+        if energy not in energies_emt:
+            energies_emt.add(energy)
+            uniques_emt += 1
+
+        #print_template = "Pore size: {}. Structures: {}. Uniques: {}. AIREBO: {:0.4f}. EMT: {:0.4f}. Diff: {:0.4f}."
+        #print(print_template.format(len(c[0]), structures, energy_lmp, energy_emt))
+
+    diff = abs(uniques_lmp - uniques_emt)
+    print_template = "Pore size: {0}. Structures: {1:2}. Uniques_lmp: {2:3}.  Uniques_emt: {3:3}. Diff: {4:2}"
+    print(print_template.format(len(c[0]), structures, uniques_lmp, uniques_emt, diff))
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+:END:
+
+LAMMPSrun has an issue with opening several files without closing them. Size=2,3 run fine, but size=4 does not.
 
 **** Delete something from the database
 
@@ -5717,6 +5798,317 @@ for p in pore_sizes:
 :RESULTS:
 :END:
 
+*** INPROGRESS Try to find 10 uniques per pore size
+
+Add 10 unique energy pore structures for each pore size in a size=5 graphene to the master database. If the algorithm will test a maximum of 50 structures for each size.
+
+#+BEGIN_SRC python :results output org drawer :tangle ./queue/database/find_uniques_5/find_uniques_5.py
+from ase.db import connect
+from ase.calculators.emt import EMT
+from ase.calculators.singlepoint import SinglePointCalculator
+from ase.neighborlist import NeighborList
+from itertools import combinations
+import random
+import time
+
+import twodee as td
+
+
+uniques_limit = 10
+attempts_limit = 50
+
+db_path = "./estimate.db"
+mat = "graphene"
+layers = 1
+size = 5
+keys = {'type': 'estimate', 'mat': mat, 'layers': layers, 'size': size}
+
+
+# Get all pore sizes
+unitcell = td.create_base(mat=mat, layers=layers)
+atoms = td.create_base(mat=mat, layers=layers, size=size)
+edge = td.edges(atoms, unitcell)
+indices = [a.index for a in atoms if a.index not in edge]
+
+
+# Get neighbors
+graphene_cutoff = 0.75  # Angstrom
+nblist = NeighborList([graphene_cutoff for i in range(len(atoms))],
+                       bothways=True,
+                       self_interaction=False)
+nblist.update(atoms)
+
+
+def constraint_check(nblist, remains, pore):
+    """Check if a structure violates the constraints."""
+    constraints = []
+    constraints.append(td.is_connected(nblist, remains))
+    if all(constraints):
+        constraints.append(td.is_connected(nblist, pore))
+    return all(constraints)
+
+# Collect uniques for each size
+db = connect(db_path)
+images = []
+image_keys = []
+for i in range(1, len(indices)):
+    # Determine length for RNG selection
+    pores = combinations(indices, i)
+    n = 0
+    for p in pores:
+        n += 1
+
+    # Get random numbers
+    random.seed(31)
+    rands = set()
+    while len(rands) < n and len(rands) < attempts_limit:
+        rands.add(random.randint(0, n))
+    rands = list(rands)
+    
+    attempts = 0
+    uniques = []
+    energies = set()
+    start = time.time()
+    while len(uniques) < uniques_limit and attempts < attempts_limit and attempts < n:
+        # Select a random pore from a generator
+        pores = combinations(indices, i)
+        index = rands[0]
+        del rands[0]
+        for p in pores:
+            if index == 0:
+                pore = p
+                break
+            else:
+                index -= 1
+        attempts += 1
+
+        # Check for duplicates
+        keys['pore'] = i
+        keys['porestr'] = 's' + td.pore_string(pore)
+        select = ['type=estimate',
+                    'mat={}'.format(keys['mat']),
+                    'layers={}'.format(keys['layers']),
+                    'size={}'.format(keys['size']),
+                    'pore={}'.format(keys['pore']),
+                    'porestr={}'.format(keys['porestr'])]
+        rows = db.select(select)
+        if any(rows):
+            continue
+
+        # Check structure against constraints
+        remains = [a.index for a in atoms if a.index not in pore]
+        if not constraint_check(nblist, remains, pore):
+            continue
+
+        # Calculate energy estimate
+        a = atoms.copy()
+        a = td.make_pore(a, pore)
+        a.set_calculator(EMT())
+        energy = round(a.get_potential_energy(), 4)
+        a.set_calculator(SinglePointCalculator(a, energy=energy))
+
+        # Check if energy is unique
+        if energy not in energies:
+            energies.add(energy)
+            keys['unique']=True
+            uniques.append(pore)
+        else:
+            keys['unique']=False
+
+        # Save image and keys for write. (See uniques_id issue below)
+        images.append(a)
+        image_keys.append(keys)
+
+    end = time.time()
+    timespan = end - start
+    print_template = "Pore size: {}. Uniques: {}. Time {:0.1f} sec."
+    print(print_template.format(i, len(uniques), timespan))
+
+# Write images with key-value pairs to the database
+random.seed()
+for a, keys in zip(images, image_keys):
+    db.write(a, **keys)
+#+END_SRC
+
+#+RESULTS:
+
+
+#+BEGIN_SRC python :results output org drawer
+import twodee as td
+size = 8
+
+td.qsub("./queue/database/find_uniques_{0}/find_uniques_{0}.py".format(size),
+         walltime="168:00:00")
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+1453713.gilgamesh.cheme.cmu.edu
+Job submitted.
+:END:
+
+**** uniques_id issue
+
+Issue: ASE database complains that unique_id is the same on write().
+Cause: Calling random.seed resets the random unique_id generator in write().
+Resolution: Write atoms at the end of the script in a batch.
+
+***** Simple
+#+BEGIN_SRC python :results output org drawer
+from ase.db import connect
+from ase.calculators.emt import EMT
+from ase.calculators.singlepoint import SinglePointCalculator
+import twodee as td
+
+atoms = td.create_base(mat="graphene", layers=1)
+for i in range(20):
+    a = atoms.copy()
+    a.set_calculator(EMT())
+    energy = round(a.get_potential_energy(), 4)
+    a.set_calculator(SinglePointCalculator(a, energy=energy))
+
+    with connect("./tmp/test_db_uniques_id.db") as db:
+        db.write(a)
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+:END:
+
+***** Test copy
+      
+#+BEGIN_SRC python :results output org drawer
+from ase.db import connect
+from ase.calculators.emt import EMT
+from ase.calculators.singlepoint import SinglePointCalculator
+from ase.neighborlist import NeighborList
+from itertools import combinations
+import random
+import time
+
+import twodee as td
+
+
+db_path = "./estimate_5.db"
+mat = "graphene"
+layers = 1
+size = 3
+keys = {'type': 'estimate', 'mat': mat, 'layers': layers, 'size': size}
+
+
+# Get all pore sizes
+unitcell = td.create_base(mat=mat, layers=layers)
+atoms = td.create_base(mat=mat, layers=layers, size=size)
+edge = td.edges(atoms, unitcell)
+indices = [a.index for a in atoms if a.index not in edge]
+
+
+
+# Get neighbors
+graphene_cutoff = 0.75  # Angstrom
+nblist = NeighborList([graphene_cutoff for i in range(len(atoms))],
+                       bothways=True,
+                       self_interaction=False)
+nblist.update(atoms)
+
+def constraint_check(nblist, remains, pore):
+    """Check if a structure violates the constraints."""
+    constraints = []
+    constraints.append(td.is_connected(nblist, remains))
+    if all(constraints):
+        constraints.append(td.is_connected(nblist, pore))
+    return all(constraints)
+
+# Collect uniques for each size
+#db = connect(db_path)
+for i in range(1, len(indices)):
+
+    # Determine length for RNG selection
+    pores = combinations(indices, i)
+    n = 0
+    for p in pores:
+        n += 1
+
+    # Seed the RNG
+    random.seed(31)
+    
+    a = atoms.copy()
+    pore = (17,)
+    a = td.make_pore(a, pore)
+    db = connect(db_path)
+    for i in range(20):
+        db.write(a)
+    td.bp()
+
+    attempts = 0
+    uniques = []
+    energies = set()
+    start = time.time()
+    while len(uniques) < 1 and attempts < 20:
+        attempts += 1
+
+        # Select a random pore from a generator
+        pores = combinations(indices, i)
+        index = random.randint(0, n)
+        for p in pores:
+            if index == 0:
+                pore = p
+            else:
+                index -= 1
+
+        td.bp(pore)
+
+
+        ## Check for duplicates
+        #keys['pore'] = i
+        #keys['porestr'] = 's' + td.pore_string(pore)
+        #select = ['type=estimate',
+        #            'mat={}'.format(keys['mat']),
+        #            'layers={}'.format(keys['layers']),
+        #            'size={}'.format(keys['size']),
+        #            'pore={}'.format(keys['pore']),
+        #            'porestr={}'.format(keys['porestr'])]
+        #rows = db.select(select)
+        #if any(rows):
+        #    continue
+
+        # Check structure against constraints
+        remains = [a.index for a in atoms if a.index not in pore]
+        if not constraint_check(nblist, remains, pore):
+            continue
+
+        # Calculate energy estimate
+        a = atoms.copy()
+        a = td.make_pore(a, pore)
+        a.set_calculator(EMT())
+        energy = round(a.get_potential_energy(), 4)
+        a.set_calculator(SinglePointCalculator(a, energy=energy))
+
+        # Check if energy is unique
+        if energy not in energies:
+            energies.add(energy)
+            keys['unique']=True
+            uniques.append(pore)
+        else:
+            keys['unique']=False
+
+        print(pore)
+        #td.bp()
+        #td.bp(a)
+        with connect("./estimate_3.db") as db:
+            #db.write(a, **keys)
+            db.write(a)
+
+    end = time.time()
+    timespan = end - start
+    print_template = "Pore size: {}. Uniques: {}. Time {:0.1f} sec."
+    print(print_template.format(i, len(uniques), timespan))
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+:END:
+
 ** Add uniques to json file
 
 #+BEGIN_SRC python :results output org drawer
@@ -6771,8 +7163,8 @@ print("Total duplicates: {}".format(dups))
 Total duplicates: 248
 :END:
 
-* Vasp
-
+* VASP
+  
 DFT calculations.
 
 ** Convergence
@@ -8330,13 +8722,14 @@ for i in ids:
 :RESULTS:
 :END:
 
+*** 
 * Neural network
 
 Methodology for iterating the neural networks:
 1. Update the master database with all current DFT data from the =vasp= directory
 2. Specify the new calculations to include in the [[*Database][Database]] header.
 3. Make a note as to what has changed in this iteration.
-   
+
 ** Templates
 *** Build
 
@@ -8447,442 +8840,6 @@ for d in db.select(selection):
     db.update(d.id, **update)
 #+END_SRC
 
-** Iteration 0_bitbucket
-
-*** Build_bitbucket template
-
-Bitbucket version that has ssh parallel processing that I don't have working.
-
-#+BEGIN_SRC python :results output org drawer :tangle ./twodee/templates/nn_build_bitbucket.py
-#!/usr/bin/env python
-from amp import Amp
-from amp.descriptor.gaussian import Gaussian
-from amp.model import LossFunction
-from amp.model.neuralnetwork import NeuralNetwork
-from amp.utilities import Annealer
-from ase.db import connect
-import os
-import twodee as td
-
-# Required arguments from template
-iteration = {{ iteration }}
-framework = {{ framework }}
-work_dir = "{{ work_dir }}"
-db_path = "{{ db_path }}"
-label = "{{ label }}"
-dblabel = "{{ dblabel }}"
-cutoff = {{ cutoff }}
-energy_rmse = {{ energy_rmse }}
-force_rmse = {{ force_rmse }}
-cores = {{ cores }}
-
-# Set working directory
-os.chdir(work_dir)
-
-# Get atoms from the database
-images = []
-db = connect(db_path)
-for d in db.select(['iteration<={}'.format(iteration), 'train_set=True']):
-    atoms = db.get_atoms(d.id)
-    del atoms.constraints
-    images.append(atoms)
-
-# Build Amp object
-framework_str = "-".join([str(f) for f in framework])
-label = label
-dblabel = dblabel
-desc = Gaussian(cutoff=cutoff)
-model = NeuralNetwork(hiddenlayers=framework)
-calc = Amp(label=label,
-           dblabel=dblabel,
-           descriptor=desc,
-           model=model,
-	   cores=cores)
-loss = LossFunction(convergence={'energy_rmse': energy_rmse,
-                                 'force_rmse': force_rmse})
-calc.model.lossfunction = loss
-           
-# Perform simulated annealing for global search
-Annealer(calc=calc, images=images)
-
-# Train the network
-calc.train(images=images)
-#+END_SRC
-
-*** Calculate template
-
-#+BEGIN_SRC python :results output org drawer :tangle ./twodee/templates/nn_calculate.py
-#!/usr/bin/env python
-from amp import Amp
-from ase.db import connect
-import os
-import shutil
-
-import twodee as td
-
-# Required arguments from template
-iteration = {{ iteration }}
-framework = {{ framework }}
-work_dir = "{{ work_dir }}"
-load_path = "{{ load_path }}"
-db_path = "{{ db_path }}"
-selection = {{ selection }}
-{% if overwrite %}
-overwrite = {{ overwrite }}
-{% else %}
-overwrite = False
-{% endif %}
-cores = {{ cores }}
-
-# Set working directory
-os.chdir(work_dir)
-
-# Create DB update strings
-update_str = "_".join([str(f) for f in framework])
-update_key = "nn_" + update_str + "_iter{}".format(iteration)
-
-# Load Amp object
-calc = Amp.load(load_path, cores=cores)
-
-# Get atoms from the database
-images = []
-new_db = os.path.join(os.path.dirname(load_path), "DB.db")
-shutil.copyfile(db_path, new_db)
-db = connect(new_db)
-for d in db.select(selection):
-    if not overwrite and update_key in d.key_value_pairs.keys():
-        continue
-
-    atoms = db.get_atoms(d.id)
-    atoms.set_calculator(calc)
-    energy = atoms.get_potential_energy()
-
-    update = {update_key: energy}
-    db.update(d.id, **update)
-#+END_SRC
-
-*** Build neural networks
-
-#+BEGIN_SRC python :results code
-from jinja2 import Environment, PackageLoader
-import os
-import twodee as td
-
-iteration = 0
-
-env = Environment(loader=PackageLoader('twodee', 'templates'))
-template = env.get_template("nn_build.py")
-
-frameworks = ((8, 8), (8, 8, 8))
-for framework in frameworks:
-    framework_str = "-".join([str(f) for f in framework])
-#    iter_dir = "networks/iter={0}".format(iteration)
-    iter_dir = "networks/iter_noforce={0}".format(iteration)
-    nn_dir = os.path.join(iter_dir, framework_str)
-    label = os.path.join(nn_dir, framework_str)
-    dblabel = os.path.join(iter_dir, os.path.basename(iter_dir))
-
-    args = {'iteration': iteration,
-            'framework': framework,
-            'work_dir': os.getcwd(),
-            'db_path': "database/master.db",
-            'label': label,
-            'dblabel': dblabel,
-            'cutoff': 6.5,
-            'energy_rmse': 1e-2,
-#            'force_rmse': 5e-2,
-            'force_rmse': None,
-            'cores': 1}
-
-    code = template.render(**args)
-
-    #print(code)
-    #submit_file = os.path.join(nn_dir, 'nn_build_bitbucket.py')
-    #with open(submit_file, 'w') as f:
-    #    f.write(code)
-    #
-    #td.qsub(submit_file, walltime="168:00:00", ppn=args['cores'])
-    #print('{0} submitted.'.format(framework_str))
-#+END_SRC
-
-#+RESULTS:
-#+BEGIN_SRC python
-1449153.gilgamesh.cheme.cmu.edu
-1449154.gilgamesh.cheme.cmu.edu
-Job submitted.
-8-8 submitted.
-Job submitted.
-8-8-8 submitted.
-#+END_SRC
-
-#+RESULTS:
-
-*** Calculate
-
-#+BEGIN_SRC python :results code
-from jinja2 import Environment, PackageLoader
-import os
-import twodee as td
-
-iteration = 0
-converged = False
-
-env = Environment(loader=PackageLoader('twodee', 'templates'))
-template = env.get_template("nn_calculate.py")
-
-#frameworks = ((8, 8), (8, 8, 8))
-frameworks = ((16, 16),)
-for framework in frameworks:
-    framework_str = "-".join([str(f) for f in framework])
-    iter_dir = "networks/iter={0}".format(iteration)
-    nn_dir = os.path.join(iter_dir, framework_str)
-    if converged:
-        pass
-    else:
-        unconvstr = '-untrained-parameters.amp'
-        load_path = os.path.join(nn_dir, framework_str + unconvstr)
-
-    args = {'iteration': iteration,
-            'framework': framework,
-            'work_dir': os.getcwd(),
-            'load_path': load_path,
-            'db_path': "database/master.db",
-            'selection': ["iteration={}".format(iteration)],
-            'overwrite': True,
-            'cores': 1}
-
-    code = template.render(**args)
-
-    td.bp(code)
-    submit_file = os.path.join(nn_dir, 'calculate.py')
-    with open(submit_file, 'w') as f:
-        f.write(code)
-    
-    td.qsub(submit_file, walltime="10:00:00")
-    print('{0} submitted.'.format(framework_str))
-#+END_SRC
-
-#+RESULTS:
-#+BEGIN_SRC python
-#!/usr/bin/env python
-from amp import Amp
-from ase.db import connect
-import os
-import shutil
-
-import twodee as td
-
-# Required arguments from template
-iteration = 0
-framework = (16, 16)
-work_dir = "/home-guest/devonw/hydrogen2D"
-load_path = "networks/iter=0/16-16/16-16-untrained-parameters.amp"
-db_path = "database/master.db"
-selection = ['iteration=0']
-
-overwrite = True
-
-cores = 1
-
-# Set working directory
-os.chdir(work_dir)
-
-# Create DB update strings
-update_str = "_".join([str(f) for f in framework])
-update_key = "nn_" + update_str + "_iter{}".format(iteration)
-
-# Load Amp object
-calc = Amp.load(load_path, cores=cores)
-
-# Get atoms from the database
-images = []
-new_db = os.path.join(os.path.dirname(load_path), "DB.db")
-shutil.copyfile(db_path, new_db)
-db = connect(new_db)
-for d in db.select(selection):
-    if not overwrite and update_key in d.key_value_pairs.keys():
-        continue
-
-    atoms = db.get_atoms(d.id)
-    atoms.set_calculator(calc)
-    energy = atoms.get_potential_energy()
-
-    update = {update_key: energy}
-    db.update(d.id, **update)
-#+END_SRC
-
-#+RESULTS:
-
-
-Copy iteration energies to master database.
-
-#+BEGIN_SRC python :results output org drawer
-from ase.db import connect
-import os
-
-import twodee as td
-
-iteration = 0
-selection = ["iteration={}".format(iteration)]
-
-db_mst = connect("database/master.db")
-frameworks = ((8, 8), (8, 8, 8))
-frameworks = ((16, 16),)
-for framework in frameworks:
-    framework_str = "-".join([str(f) for f in framework])
-    iter_dir = "networks/iter={0}".format(iteration)
-    nn_dir = os.path.join(iter_dir, framework_str)
-
-    iter_db = os.path.join(nn_dir, "DB.db")
-
-    # Create DB update strings
-    update_str = "_".join([str(f) for f in framework])
-    update_key = "nn_" + update_str + "_iter{}".format(iteration)
-    
-    db_iter = connect(iter_db)
-    for d in db_iter.select(selection):
-        energy = d.get(update_key)
-        update = {update_key: energy}
-        db_mst.update(d.id, **update)
-
-print("Done")
-#+END_SRC
-
-#+RESULTS:
-:RESULTS:
-Done
-:END:
-
-*** Validate
-**** 8-8
-
-#+BEGIN_SRC python :results output org drawer
-from ase.db import connect
-import matplotlib.pyplot as plt
-import numpy as np
-
-import twodee as td
-
-iteration = 0
-framework = (8, 8)
-
-# Build key for retriving NN energy
-framework_str = "-".join([str(f) for f in framework])
-framework_key_str = "_".join([str(f) for f in framework])
-nn_key_str = "nn_" + framework_key_str + "_iter{}".format(iteration)
-
-# Get energies
-residuals = [[], []]
-db = connect("database/master.db")
-for d in db.select(["iteration={}".format(iteration)]):
-    res = abs(d.get(nn_key_str) - d.energy)
-    if d.train_set:
-        residuals[0].append(res)
-    else:
-        residuals[1].append(res)
-
-bins = np.linspace(0, 2, 50)
-plt.hist(residuals[0], bins=bins, label="Train set")
-plt.hist(residuals[1], bins=bins, label="Test set")
-plt.xlabel('Residual Error (eV)')
-plt.ylabel('Number of calculations')
-plt.title('Neural network validation - Iteration: {} - Framework: {}'.format(iteration, framework_str))
-plt.legend(loc="upper right")
-file_path = 'validate-iter={}_nn={}.png'.format(iteration, framework_str)
-td.print_image(file_path, plt)
-#+END_SRC
-
-#+RESULTS:
-:RESULTS:
-[[./img/validate-iter=0_nn=8-8.png]]
-:END:
-
-
-**** 8-8-8
-
-#+BEGIN_SRC python :results output org drawer
-from ase.db import connect
-import matplotlib.pyplot as plt
-import numpy as np
-
-import twodee as td
-
-iteration = 0
-framework = (8, 8, 8)
-
-# Build key for retriving NN energy
-framework_str = "-".join([str(f) for f in framework])
-framework_key_str = "_".join([str(f) for f in framework])
-nn_key_str = "nn_" + framework_key_str + "_iter{}".format(iteration)
-
-# Get energies
-residuals = [[], []]
-db = connect("database/master.db")
-for d in db.select(["iteration={}".format(iteration)]):
-    res = abs(d.get(nn_key_str) - d.energy)
-    if d.train_set:
-        residuals[0].append(res)
-    else:
-        residuals[1].append(res)
-
-bins = np.linspace(0, 2, 50)
-plt.hist(residuals[0], bins=bins, label="Train set")
-plt.hist(residuals[1], bins=bins, label="Test set")
-plt.xlabel('Residual Error (eV)')
-plt.ylabel('Number of calculations')
-plt.title('Neural network validation - Iteration: {} - Framework: {}'.format(iteration, framework_str))
-plt.legend(loc="upper right")
-file_path = 'validate-iter={}_nn={}.png'.format(iteration, framework_str)
-td.print_image(file_path, plt)
-#+END_SRC
-
-#+RESULTS:
-:RESULTS:
-[[./img/validate-iter=0_nn=8-8-8.png]]
-:END:
-
-**** Comparison
-
-#+BEGIN_SRC python :results output org drawer
-from ase.db import connect
-import matplotlib.pyplot as plt
-import numpy as np
-
-import twodee as td
-
-iteration = 0
-frameworks = ((8, 8), (8, 8, 8))
-
-# Build key for retriving NN energy
-framework_str1 = "-".join([str(f) for f in frameworks[0]])
-framework_str2 = "-".join([str(f) for f in frameworks[1]])
-framework_key_str1 = "_".join([str(f) for f in frameworks[0]])
-framework_key_str2 = "_".join([str(f) for f in frameworks[1]])
-nn_key_str1 = "nn_" + framework_key_str1 + "_iter{}".format(iteration)
-nn_key_str2 = "nn_" + framework_key_str2 + "_iter{}".format(iteration)
-
-# Get energies
-residuals = []
-db = connect("database/master.db")
-for d in db.select(["iteration={}".format(iteration)]):
-    res = abs(d.get(nn_key_str1) - d.get(nn_key_str2))
-    residuals.append(res)
-
-bins = np.linspace(0, 1, 50)
-plt.hist(residuals, bins=bins, label="Difference")
-plt.xlabel('Residual Error (eV)')
-plt.ylabel('Number of calculations')
-plt.title('Neural network comparison - Iteration: {} - Frameworks: {} and {}'.format(iteration, framework_str1, framework_str2))
-plt.legend(loc="upper right")
-file_path = 'nn-compare-iter={}_nn={}_{}.png'.format(iteration, framework_str1, framework_str2)
-td.print_image(file_path, plt)
-#+END_SRC
-
-#+RESULTS:
-:RESULTS:
-[[./img/nn-compare-iter=0_nn=8-8_8-8-8.png]]
-:END:
-
 ** Iteration 0
 *** Build neural networks
 
@@ -8896,14 +8853,13 @@ import twodee as td
 iteration = 0
 ######################
 
-
 env = Environment(loader=PackageLoader('twodee', 'templates'))
-template = env.get_template("nn_build_old.py")
+template = env.get_template("nn_build.py")
 
 frameworks = ((8, 8), (8, 8, 8))
 for framework in frameworks:
     framework_str = "-".join([str(f) for f in framework])
-    iter_dir = "networks/iter_old={0}".format(iteration)
+    iter_dir = "networks/iter={0}".format(iteration)
     nn_dir = os.path.join(iter_dir, framework_str, "")
     label = nn_dir
     dblabel = iter_dir
@@ -8933,9 +8889,12 @@ for framework in frameworks:
 
 #+RESULTS:
 #+BEGIN_SRC python
-1452768.gilgamesh.cheme.cmu.edu
+1453445.gilgamesh.cheme.cmu.edu
+1453446.gilgamesh.cheme.cmu.edu
 Job submitted.
 8-8 submitted.
+Job submitted.
+8-8-8 submitted.
 #+END_SRC
 
 #+RESULTS:
@@ -8981,18 +8940,18 @@ for framework in frameworks:
     with open(submit_file, 'w') as f:
         f.write(code)
     
-    td.qsub(submit_file, walltime="168:00:00", ppn=args['cores'])
+    td.qsub(submit_file, walltime="168:00:00", ppn=args['cores'], mem="4GB")
     print('{0} submitted.'.format(framework_str))
 #+END_SRC
 
 #+RESULTS:
 #+BEGIN_SRC python
-1453333.gilgamesh.cheme.cmu.edu
+1453469.gilgamesh.cheme.cmu.edu
 Job submitted.
 8-8 submitted.
 #+END_SRC
 
-* Lammps
+* LAMMPS
 ** Examples
 *** lammps
 
@@ -9060,9 +9019,10 @@ print("Energy: {}".format(energy))
 Energy: nan
 :END:
 
-** INPROGRESS Pristine Graphene
+** DONE Pristine Graphene
+   CLOSED: [2016-08-25 Thu 14:45]
    
-Calculate pristine graphene using AIREBO in LAMMPS. Use this calculation for improving the parameters used in the simulation to get closer to the DFT value.
+Calculate pristine graphene using AIREBO in LAMMPS.
 
 #+BEGIN_SRC python :results output org drawer
 from ase.calculators.lammpsrun import LAMMPS
@@ -9071,12 +9031,12 @@ import os
 
 import twodee as td
 
+# LAMMPS header information
 potentials_path = os.getenv("LAMMPS_POTENTIALS")
 potential = os.path.join(potentials_path, "CH.airebo")
 files = [potential]
 parameters = {"mass": ["* 1.0"],
               "pair_style": "airebo 6.5 1 1",
-              #"pair_style": "rebo",
               "pair_coeff": ['* * ' + potential + ' C']}
 calc = LAMMPS(parameters=parameters, files=files, tmp_dir="/home-guest/devonw/tmp/lammpstmp")
 
@@ -9094,8 +9054,6 @@ for d in db.select(["type=base", "mat=graphene", "layers=1"]):
 
 #+RESULTS:
 :RESULTS:
-DFT:    -18.449 eV
-AIREBO: -14.816 eV
 :END:
 
 ** DONE Equation of state
@@ -9140,6 +9098,7 @@ for i in ids:
 :END:
 
 ** TODO Simulations
+
 * Results
 ** Pore energy comparison
 
@@ -9227,7 +9186,7 @@ Based on these two analyses, a cutoff distance of 6.5 Å seems most appropriate 
 
 #+BEGIN_SRC python :results output org drawer
 from ase.db import connect
-import matplotlib.pyplot as plt
+import numpy as np
 
 import twodee as td
 
@@ -9240,45 +9199,66 @@ framework_str = "-".join([str(f) for f in framework])
 framework_key_str = "_".join([str(f) for f in framework])
 nn_key_str = "nn_" + framework_key_str + "_iter{}".format(iteration)
 
+# Get energies/atom for each calculation type
 lcs = []
-energies_dft = []
-energies_lmp = []
-energies_nn = []
+energies = {"dft": [], "lmp": [], "nn": []}
 for d in db.select(["type=eos", "mat=graphene", "layers=1", "size=1", "lc>2.15"]):
     lcs.append(d.lc)
-    energies_dft.append(d.energy/d.natoms)
-    energies_lmp.append(d.lmp/d.natoms)
+    energies["dft"].append(d.energy/d.natoms)
+    energies["lmp"].append(d.lmp/d.natoms)
     nn_energy = d.get(nn_key_str)
-    energies_nn.append(nn_energy/d.natoms)
+    energies["nn"].append(nn_energy/d.natoms)
 
-
-energies_dft = [nrg for (lc, nrg) in sorted(zip(lcs, energies_dft))]
-energies_lmp = [nrg for (lc, nrg) in sorted(zip(lcs, energies_lmp))]
-energies_nn = [nrg for (lc, nrg) in sorted(zip(lcs, energies_nn))]
+# Sort by lattice constant
+for key in energies:
+    energies[key] = [nrg for (lc, nrg) in sorted(zip(lcs, energies[key]))]
 lcs = sorted(lcs)
 
-plt.plot(lcs, energies_dft, 'k-', label="DFT")
-plt.plot(lcs, energies_nn, '^', markersize=6, markerfacecolor='None',
+# Subtract minimum value for comparison base
+for key in energies:
+    e_min = min(energies[key])
+    energies[key] = [e - e_min for e in energies[key]]
+
+# Compare minimum and curvature using a cubic spline
+from scipy import interpolate
+for key in energies:
+    e_min = min(energies[key])
+    spl = interpolate.splrep(lcs, energies[key])
+    xnew = np.linspace(lcs[0], lcs[-1], 200)
+    ynew = interpolate.splev(xnew, spl, der=0)
+    curv = interpolate.splev(xnew, spl, der=2)
+    index_new = (np.abs(ynew - e_min)).argmin()
+    print("{:3}: Lattice constant: {:0.3f} \AA. Curvature: {:0.3f}.".format(key, xnew[index_new], curv[index_new]))
+
+# Plot
+import matplotlib.pyplot as plt
+plt.figure()
+plt.plot(lcs, energies["dft"], 'k-', label="DFT")
+plt.plot(lcs, energies["nn"], '^', markersize=6, markerfacecolor='None',
          markeredgecolor="red", markeredgewidth=1,
          label="NN: {}".format(framework_str))
-plt.plot(lcs, energies_lmp, 'v', markersize=6, markerfacecolor='None',
+plt.plot(lcs, energies["lmp"], 'v', markersize=6, markerfacecolor='None',
          markeredgecolor="blue", markeredgewidth=1, label="AIREBO")
 plt.xlabel('Lattice constant ($\AA$)')
 plt.ylabel('Energy (eV/atom)')
 plt.title('Graphene Equation of State')
 plt.legend(loc="upper left")
-plt.xlim([2.15, 3.0])
+plt.xlim([2.15, 3.02])
+plt.ylim([-0.1, 2.1])
 file_path = 'eos_comparison.png'
 td.print_image(file_path, plt)
 #+END_SRC
 
 #+RESULTS:
 :RESULTS:
+lmp: Lattice constant: 2.428 \AA. Curvature: 21.969.
+dft: Lattice constant: 2.466 \AA. Curvature: 20.172.
+nn : Lattice constant: 2.470 \AA. Curvature: 18.671.
 [[./img/eos_comparison.png]]
 :END:
 
 * Misc :noexport:
-** Other code
+** Past code
 A brief tour of failures and deprecated workflows. This code has no guarentee to run.
 
 *** jasp
@@ -13941,6 +13921,441 @@ td.bp(db.get_atoms(two[1]))
 :RESULTS:
 50
 :END:
+
+*** Iteration 0_bitbucket
+
+**** Build_bitbucket template
+
+ Bitbucket version that has ssh parallel processing that I don't have working.
+
+ #+BEGIN_SRC python :results output org drawer :tangle ./twodee/templates/nn_build_bitbucket.py
+#!/usr/bin/env python
+from amp import Amp
+from amp.descriptor.gaussian import Gaussian
+from amp.model import LossFunction
+from amp.model.neuralnetwork import NeuralNetwork
+from amp.utilities import Annealer
+from ase.db import connect
+import os
+import twodee as td
+
+# Required arguments from template
+iteration = {{ iteration }}
+framework = {{ framework }}
+work_dir = "{{ work_dir }}"
+db_path = "{{ db_path }}"
+label = "{{ label }}"
+dblabel = "{{ dblabel }}"
+cutoff = {{ cutoff }}
+energy_rmse = {{ energy_rmse }}
+force_rmse = {{ force_rmse }}
+cores = {{ cores }}
+
+# Set working directory
+os.chdir(work_dir)
+
+# Get atoms from the database
+images = []
+db = connect(db_path)
+for d in db.select(['iteration<={}'.format(iteration), 'train_set=True']):
+    atoms = db.get_atoms(d.id)
+    del atoms.constraints
+    images.append(atoms)
+
+# Build Amp object
+framework_str = "-".join([str(f) for f in framework])
+label = label
+dblabel = dblabel
+desc = Gaussian(cutoff=cutoff)
+model = NeuralNetwork(hiddenlayers=framework)
+calc = Amp(label=label,
+           dblabel=dblabel,
+           descriptor=desc,
+           model=model,
+	   cores=cores)
+loss = LossFunction(convergence={'energy_rmse': energy_rmse,
+                                 'force_rmse': force_rmse})
+calc.model.lossfunction = loss
+           
+# Perform simulated annealing for global search
+Annealer(calc=calc, images=images)
+
+# Train the network
+calc.train(images=images)
+ #+END_SRC
+
+**** Calculate_bitbucket template
+
+#+BEGIN_SRC python :results output org drawer :tangle ./twodee/templates/nn_calculate_bitbucket.py
+#!/usr/bin/env python
+from amp import Amp
+from ase.db import connect
+import os
+import shutil
+
+import twodee as td
+
+# Required arguments from template
+iteration = {{ iteration }}
+framework = {{ framework }}
+work_dir = "{{ work_dir }}"
+load_path = "{{ load_path }}"
+db_path = "{{ db_path }}"
+selection = {{ selection }}
+{% if overwrite %}
+overwrite = {{ overwrite }}
+{% else %}
+overwrite = False
+{% endif %}
+cores = {{ cores }}
+
+# Set working directory
+os.chdir(work_dir)
+
+# Create DB update strings
+update_str = "_".join([str(f) for f in framework])
+update_key = "nn_" + update_str + "_iter{}".format(iteration)
+
+# Load Amp object
+calc = Amp.load(load_path, cores=cores)
+
+# Get atoms from the database
+images = []
+new_db = os.path.join(os.path.dirname(load_path), "DB.db")
+shutil.copyfile(db_path, new_db)
+db = connect(new_db)
+for d in db.select(selection):
+    if not overwrite and update_key in d.key_value_pairs.keys():
+        continue
+
+    atoms = db.get_atoms(d.id)
+    atoms.set_calculator(calc)
+    energy = atoms.get_potential_energy()
+
+    update = {update_key: energy}
+    db.update(d.id, **update)
+#+END_SRC
+
+**** Build neural networks
+
+ #+BEGIN_SRC python :results code
+from jinja2 import Environment, PackageLoader
+import os
+import twodee as td
+
+iteration = 0
+
+env = Environment(loader=PackageLoader('twodee', 'templates'))
+template = env.get_template("nn_build.py")
+
+frameworks = ((8, 8), (8, 8, 8))
+for framework in frameworks:
+    framework_str = "-".join([str(f) for f in framework])
+#    iter_dir = "networks/iter={0}".format(iteration)
+    iter_dir = "networks/iter_noforce={0}".format(iteration)
+    nn_dir = os.path.join(iter_dir, framework_str)
+    label = os.path.join(nn_dir, framework_str)
+    dblabel = os.path.join(iter_dir, os.path.basename(iter_dir))
+
+    args = {'iteration': iteration,
+            'framework': framework,
+            'work_dir': os.getcwd(),
+            'db_path': "database/master.db",
+            'label': label,
+            'dblabel': dblabel,
+            'cutoff': 6.5,
+            'energy_rmse': 1e-2,
+#            'force_rmse': 5e-2,
+            'force_rmse': None,
+            'cores': 1}
+
+    code = template.render(**args)
+
+    #print(code)
+    #submit_file = os.path.join(nn_dir, 'nn_build_bitbucket.py')
+    #with open(submit_file, 'w') as f:
+    #    f.write(code)
+    #
+    #td.qsub(submit_file, walltime="168:00:00", ppn=args['cores'])
+    #print('{0} submitted.'.format(framework_str))
+ #+END_SRC
+
+ #+RESULTS:
+ #+BEGIN_SRC python
+1449153.gilgamesh.cheme.cmu.edu
+1449154.gilgamesh.cheme.cmu.edu
+Job submitted.
+8-8 submitted.
+Job submitted.
+8-8-8 submitted.
+ #+END_SRC
+
+ #+RESULTS:
+
+**** Calculate
+
+ #+BEGIN_SRC python :results code
+from jinja2 import Environment, PackageLoader
+import os
+import twodee as td
+
+iteration = 0
+converged = False
+
+env = Environment(loader=PackageLoader('twodee', 'templates'))
+template = env.get_template("nn_calculate.py")
+
+#frameworks = ((8, 8), (8, 8, 8))
+frameworks = ((16, 16),)
+for framework in frameworks:
+    framework_str = "-".join([str(f) for f in framework])
+    iter_dir = "networks/iter={0}".format(iteration)
+    nn_dir = os.path.join(iter_dir, framework_str)
+    if converged:
+        pass
+    else:
+        unconvstr = '-untrained-parameters.amp'
+        load_path = os.path.join(nn_dir, framework_str + unconvstr)
+
+    args = {'iteration': iteration,
+            'framework': framework,
+            'work_dir': os.getcwd(),
+            'load_path': load_path,
+            'db_path': "database/master.db",
+            'selection': ["iteration={}".format(iteration)],
+            'overwrite': True,
+            'cores': 1}
+
+    code = template.render(**args)
+
+    td.bp(code)
+    submit_file = os.path.join(nn_dir, 'calculate.py')
+    with open(submit_file, 'w') as f:
+        f.write(code)
+    
+    td.qsub(submit_file, walltime="10:00:00")
+    print('{0} submitted.'.format(framework_str))
+ #+END_SRC
+
+ #+RESULTS:
+ #+BEGIN_SRC python
+#!/usr/bin/env python
+from amp import Amp
+from ase.db import connect
+import os
+import shutil
+
+import twodee as td
+
+# Required arguments from template
+iteration = 0
+framework = (16, 16)
+work_dir = "/home-guest/devonw/hydrogen2D"
+load_path = "networks/iter=0/16-16/16-16-untrained-parameters.amp"
+db_path = "database/master.db"
+selection = ['iteration=0']
+
+overwrite = True
+
+cores = 1
+
+# Set working directory
+os.chdir(work_dir)
+
+# Create DB update strings
+update_str = "_".join([str(f) for f in framework])
+update_key = "nn_" + update_str + "_iter{}".format(iteration)
+
+# Load Amp object
+calc = Amp.load(load_path, cores=cores)
+
+# Get atoms from the database
+images = []
+new_db = os.path.join(os.path.dirname(load_path), "DB.db")
+shutil.copyfile(db_path, new_db)
+db = connect(new_db)
+for d in db.select(selection):
+    if not overwrite and update_key in d.key_value_pairs.keys():
+        continue
+
+    atoms = db.get_atoms(d.id)
+    atoms.set_calculator(calc)
+    energy = atoms.get_potential_energy()
+
+    update = {update_key: energy}
+    db.update(d.id, **update)
+ #+END_SRC
+
+ #+RESULTS:
+
+
+ Copy iteration energies to master database.
+
+ #+BEGIN_SRC python :results output org drawer
+from ase.db import connect
+import os
+
+import twodee as td
+
+iteration = 0
+selection = ["iteration={}".format(iteration)]
+
+db_mst = connect("database/master.db")
+frameworks = ((8, 8), (8, 8, 8))
+frameworks = ((16, 16),)
+for framework in frameworks:
+    framework_str = "-".join([str(f) for f in framework])
+    iter_dir = "networks/iter={0}".format(iteration)
+    nn_dir = os.path.join(iter_dir, framework_str)
+
+    iter_db = os.path.join(nn_dir, "DB.db")
+
+    # Create DB update strings
+    update_str = "_".join([str(f) for f in framework])
+    update_key = "nn_" + update_str + "_iter{}".format(iteration)
+    
+    db_iter = connect(iter_db)
+    for d in db_iter.select(selection):
+        energy = d.get(update_key)
+        update = {update_key: energy}
+        db_mst.update(d.id, **update)
+
+print("Done")
+ #+END_SRC
+
+ #+RESULTS:
+ :RESULTS:
+ Done
+ :END:
+
+**** Validate
+***** 8-8
+
+ #+BEGIN_SRC python :results output org drawer
+from ase.db import connect
+import matplotlib.pyplot as plt
+import numpy as np
+
+import twodee as td
+
+iteration = 0
+framework = (8, 8)
+
+# Build key for retriving NN energy
+framework_str = "-".join([str(f) for f in framework])
+framework_key_str = "_".join([str(f) for f in framework])
+nn_key_str = "nn_" + framework_key_str + "_iter{}".format(iteration)
+
+# Get energies
+residuals = [[], []]
+db = connect("database/master.db")
+for d in db.select(["iteration={}".format(iteration)]):
+    res = abs(d.get(nn_key_str) - d.energy)
+    if d.train_set:
+        residuals[0].append(res)
+    else:
+        residuals[1].append(res)
+
+bins = np.linspace(0, 2, 50)
+plt.hist(residuals[0], bins=bins, label="Train set")
+plt.hist(residuals[1], bins=bins, label="Test set")
+plt.xlabel('Residual Error (eV)')
+plt.ylabel('Number of calculations')
+plt.title('Neural network validation - Iteration: {} - Framework: {}'.format(iteration, framework_str))
+plt.legend(loc="upper right")
+file_path = 'validate-iter={}_nn={}.png'.format(iteration, framework_str)
+td.print_image(file_path, plt)
+ #+END_SRC
+
+ #+RESULTS:
+ :RESULTS:
+ [[./img/validate-iter=0_nn=8-8.png]]
+ :END:
+
+***** 8-8-8
+
+ #+BEGIN_SRC python :results output org drawer
+from ase.db import connect
+import matplotlib.pyplot as plt
+import numpy as np
+
+import twodee as td
+
+iteration = 0
+framework = (8, 8, 8)
+
+# Build key for retriving NN energy
+framework_str = "-".join([str(f) for f in framework])
+framework_key_str = "_".join([str(f) for f in framework])
+nn_key_str = "nn_" + framework_key_str + "_iter{}".format(iteration)
+
+# Get energies
+residuals = [[], []]
+db = connect("database/master.db")
+for d in db.select(["iteration={}".format(iteration)]):
+    res = abs(d.get(nn_key_str) - d.energy)
+    if d.train_set:
+        residuals[0].append(res)
+    else:
+        residuals[1].append(res)
+
+bins = np.linspace(0, 2, 50)
+plt.hist(residuals[0], bins=bins, label="Train set")
+plt.hist(residuals[1], bins=bins, label="Test set")
+plt.xlabel('Residual Error (eV)')
+plt.ylabel('Number of calculations')
+plt.title('Neural network validation - Iteration: {} - Framework: {}'.format(iteration, framework_str))
+plt.legend(loc="upper right")
+file_path = 'validate-iter={}_nn={}.png'.format(iteration, framework_str)
+td.print_image(file_path, plt)
+ #+END_SRC
+
+ #+RESULTS:
+ :RESULTS:
+ [[./img/validate-iter=0_nn=8-8-8.png]]
+ :END:
+
+***** Comparison
+
+ #+BEGIN_SRC python :results output org drawer
+from ase.db import connect
+import matplotlib.pyplot as plt
+import numpy as np
+
+import twodee as td
+
+iteration = 0
+frameworks = ((8, 8), (8, 8, 8))
+
+# Build key for retriving NN energy
+framework_str1 = "-".join([str(f) for f in frameworks[0]])
+framework_str2 = "-".join([str(f) for f in frameworks[1]])
+framework_key_str1 = "_".join([str(f) for f in frameworks[0]])
+framework_key_str2 = "_".join([str(f) for f in frameworks[1]])
+nn_key_str1 = "nn_" + framework_key_str1 + "_iter{}".format(iteration)
+nn_key_str2 = "nn_" + framework_key_str2 + "_iter{}".format(iteration)
+
+# Get energies
+residuals = []
+db = connect("database/master.db")
+for d in db.select(["iteration={}".format(iteration)]):
+    res = abs(d.get(nn_key_str1) - d.get(nn_key_str2))
+    residuals.append(res)
+
+bins = np.linspace(0, 1, 50)
+plt.hist(residuals, bins=bins, label="Difference")
+plt.xlabel('Residual Error (eV)')
+plt.ylabel('Number of calculations')
+plt.title('Neural network comparison - Iteration: {} - Frameworks: {} and {}'.format(iteration, framework_str1, framework_str2))
+plt.legend(loc="upper right")
+file_path = 'nn-compare-iter={}_nn={}_{}.png'.format(iteration, framework_str1, framework_str2)
+td.print_image(file_path, plt)
+ #+END_SRC
+
+ #+RESULTS:
+ :RESULTS:
+ [[./img/nn-compare-iter=0_nn=8-8_8-8-8.png]]
+ :END:
 
 * References
 bibliographystyle:unsrt
