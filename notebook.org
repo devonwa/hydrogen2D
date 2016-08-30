@@ -595,6 +595,7 @@ Result figures:
 - [X] Plot nn energies to the EOS graph w/ dft and airebo
 - [X] Write up Gold Paper plan
 - [X] Read a paper
+
 *** 2016-08-24 Wed
 - [X] Change Amp to Jake's code and run a multi-core
 - [X] Restart iteration 0
@@ -612,17 +613,20 @@ Result figures:
 
 *** 2016-08-26 Fri
 - [X] Examine curvatures of equation of state lines
-- [ ] Start Vasp calcs for size=5. Relaxations: 5 per pore size.
-- [ ] Start Vasp calcs for size=6, 7. Point calcs: 5 per pore size.
+- [X] Look into using AIREBO for calculating unique energies
+- [-] Start Vasp calcs for size=5. Relaxations: 5 per pore size.
+  - [X] Get uniques
+  - [ ] Start calculations
+- [-] Start Vasp calcs for size=6, 7. Point calcs: 5 per pore size.
+  - [X] Get uniques
+  - [ ] Start calculations
 - [ ] Read papers John sent + copper cutoff
 - [ ] LAMMPS simulation
 - [ ] Make good looking atoms images
 
-
 *** 2016-08-29 Mon
 Include in progress report:
-- [ ] Revised equation of state
-
+- [X] Revised equation of state
 
 * Lexicon
 - degenerate :: Identical structures, though possible viewed in a different way. Like 

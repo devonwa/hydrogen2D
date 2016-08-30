@@ -6418,6 +6418,38 @@ To add:
 - Point calculations for unique pore structures of size 2 and 3
 - Relaxation steps for size 2 and 3
 
+Size:
+#+BEGIN_SRC python :results output org drawer
+from ase.db import connect
+
+iteration = 0
+
+db = connect("database/master.db")
+print("Total: {}".format(db.count(["iteration<={}".format(iteration)])))
+print("Train: {}".format(db.count(["iteration<={}".format(iteration), "train_set=True"])))
+print("Test:  {}".format(db.count(["iteration<={}".format(iteration), "train_set=False"])))
+print("")
+print("Conv:  {}".format(db.count(["iteration<={}".format(iteration), "type=conv"])))
+print("Base:  {}".format(db.count(["iteration<={}".format(iteration), "type=base"])))
+print("EOS:   {}".format(db.count(["iteration<={}".format(iteration), "type=eos"])))
+print("Point: {}".format(db.count(["iteration<={}".format(iteration), "type=point"])))
+print("Relax: {}".format(db.count(["iteration<={}".format(iteration), "type=relax"])))
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+Total: 528
+Train: 480
+Test:  48
+
+Conv:  0
+Base:  1
+EOS:   50
+Point: 19
+Relax: 458
+:END:
+
+
 *** DONE Base
 Base calculation for pristine graphene. Use it in training.
 
@@ -6947,6 +6979,28 @@ Total duplicats: 38
 To add:
 - Point calculations for unique pore structures of size 4
 - Relaxations for size=4
+
+#+BEGIN_SRC python :results output org drawer
+from ase.db import connect
+
+iteration = 1
+
+db = connect("database/master.db")
+print("Total: {}".format(db.count(["iteration<={}".format(iteration)])))
+print("Train: {}".format(db.count(["iteration<={}".format(iteration), "train_set=True"])))
+print("Test:  {}".format(db.count(["iteration<={}".format(iteration), "train_set=False"])))
+print("")
+print("Conv:  {}".format(db.count(["iteration<={}".format(iteration), "type=conv"])))
+print("Base:  {}".format(db.count(["iteration<={}".format(iteration), "type=base"])))
+print("EOS:   {}".format(db.count(["iteration<={}".format(iteration), "type=eos"])))
+print("Point: {}".format(db.count(["iteration<={}".format(iteration), "type=point"])))
+print("Relax: {}".format(db.count(["iteration<={}".format(iteration), "type=relax"])))
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+Total: 6954
+:END:
 
 *** DONE Point
     CLOSED: [2016-08-24 Wed 15:34]
@@ -9022,7 +9076,7 @@ Energy: nan
 ** DONE Pristine Graphene
    CLOSED: [2016-08-25 Thu 14:45]
    
-Calculate pristine graphene using AIREBO in LAMMPS.
+Calculate pristine graphene using AIREBO in LAMMPS. This shouldn't match the DFT energy since LAMMPS uses a different base energy.
 
 #+BEGIN_SRC python :results output org drawer
 from ase.calculators.lammpsrun import LAMMPS
@@ -9047,7 +9101,6 @@ energy = atoms.get_potential_energy()
 
 db = connect("database/master.db")
 for d in db.select(["type=base", "mat=graphene", "layers=1"]):
-    print("DFT:    {:0.3f} eV".format(d.energy))
     print("AIREBO: {:0.3f} eV".format(energy))
     db.update(d.id, lmp=energy)
 #+END_SRC 
@@ -9098,6 +9151,30 @@ for i in ids:
 :END:
 
 ** TODO Simulations
+
+*** Graphene healing a crack
+
+#+BEGIN_SRC python :results output org drawer
+from ase.calculators.lammpsrun import LAMMPS
+from ase.db import connect
+import os
+
+import twodee as td
+
+# LAMMPS header information
+potentials_path = os.getenv("LAMMPS_POTENTIALS")
+potential = os.path.join(potentials_path, "CH.airebo")
+files = [potential]
+parameters = {"mass": ["* 1.0"],
+              "pair_style": "airebo 6.5 1 1",
+              "pair_coeff": ['* * ' + potential + ' C']}
+calc = LAMMPS(parameters=parameters, files=files, tmp_dir="/home-guest/devonw/tmp/lammpstmp")
+
+atoms = td.create_base(mat="graphene", layers=1, size=1)
+atoms.set_calculator(calc)
+
+energy = atoms.get_potential_energy()
+#+END_SRC
 
 * Results
 ** Pore energy comparison
@@ -9214,26 +9291,25 @@ for key in energies:
     energies[key] = [nrg for (lc, nrg) in sorted(zip(lcs, energies[key]))]
 lcs = sorted(lcs)
 
-# Subtract minimum value for comparison base
-for key in energies:
-    e_min = min(energies[key])
-    energies[key] = [e - e_min for e in energies[key]]
-
 # Compare minimum and curvature using a cubic spline
+# Subtract minimum value for comparison base
 from scipy import interpolate
 for key in energies:
-    e_min = min(energies[key])
     spl = interpolate.splrep(lcs, energies[key])
     xnew = np.linspace(lcs[0], lcs[-1], 200)
     ynew = interpolate.splev(xnew, spl, der=0)
     curv = interpolate.splev(xnew, spl, der=2)
+
+    e_min = min(ynew)
+    energies[key] = [e - e_min for e in energies[key]]
     index_new = (np.abs(ynew - e_min)).argmin()
     print("{:3}: Lattice constant: {:0.3f} \AA. Curvature: {:0.3f}.".format(key, xnew[index_new], curv[index_new]))
 
 # Plot
 import matplotlib.pyplot as plt
 plt.figure()
-plt.plot(lcs, energies["dft"], 'k-', label="DFT")
+plt.plot([lcs[0], lcs[-1]], [0, 0], 'k--', linewidth=0.5)
+plt.plot(lcs, energies["dft"], 'ko-', markersize = 2, label="DFT")
 plt.plot(lcs, energies["nn"], '^', markersize=6, markerfacecolor='None',
          markeredgecolor="red", markeredgewidth=1,
          label="NN: {}".format(framework_str))
@@ -9251,7 +9327,7 @@ td.print_image(file_path, plt)
 
 #+RESULTS:
 :RESULTS:
-lmp: Lattice constant: 2.428 \AA. Curvature: 21.969.
+lmp: Lattice constant: 2.420 \AA. Curvature: 24.067.
 dft: Lattice constant: 2.466 \AA. Curvature: 20.172.
 nn : Lattice constant: 2.470 \AA. Curvature: 18.671.
 [[./img/eos_comparison.png]]
