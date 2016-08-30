@@ -8969,7 +8969,8 @@ iteration = 1
 env = Environment(loader=PackageLoader('twodee', 'templates'))
 template = env.get_template("nn_build.py")
 
-frameworks = ((8, 8),)# (8, 8, 8))
+#frameworks = ((8, 8),)# (8, 8, 8))
+frameworks = ((8, 8, 8),)# (8, 8, 8))
 for framework in frameworks:
     framework_str = "-".join([str(f) for f in framework])
     iter_dir = "networks/iter={0}".format(iteration)
@@ -9000,9 +9001,9 @@ for framework in frameworks:
 
 #+RESULTS:
 #+BEGIN_SRC python
-1453469.gilgamesh.cheme.cmu.edu
+1456897.gilgamesh.cheme.cmu.edu
 Job submitted.
-8-8 submitted.
+8-8-8 submitted.
 #+END_SRC
 
 * LAMMPS
