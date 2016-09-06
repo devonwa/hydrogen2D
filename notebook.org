@@ -620,13 +620,21 @@ Result figures:
 - [-] Start Vasp calcs for size=6, 7. Point calcs: 5 per pore size.
   - [X] Get uniques
   - [ ] Start calculations
-- [ ] Read papers John sent + copper cutoff
-- [ ] LAMMPS simulation
-- [ ] Make good looking atoms images
 
 *** 2016-08-29 Mon
 Include in progress report:
 - [X] Revised equation of state
+- [X] Read papers John sent + copper cutoff
+
+** September
+*** 2016-09-01 Thu
+
+*** 2016-09-02 Fri
+- [ ] LAMMPS simulation
+- [X] Restart 8-8 simulation when I get home
+- [ ] Add check for initial-parameters / checkpoints files the the nn_build.py template. Faster restarts.
+- [ ] Make good looking atoms images
+- [ ] Start writing paper (intro and methods)
 
 * Lexicon
 - degenerate :: Identical structures, though possible viewed in a different way. Like 

@@ -8954,6 +8954,11 @@ Job submitted.
 #+RESULTS:
 
 ** Iteration 1
+
+There are 6954 calculations in this iteration and approximately 90% of them are in the training set that AMP will use. The =fingerprint-derivatives.db= file generated is 2.4 GB in size, which causes issues when running on the cluster. The code generates subprocesses which can lead to energy requirements updwards of 11 GB when run in parallel over 2 cores.
+
+If the memory requirements continue to scale in this way, we may have to look into operating on a single core and other methods to reduce the amount of information from the database files that is loaded into memory. Hopefully the AMP package will have something to work with this.
+
 *** Build neural networks
 
 #+BEGIN_SRC python :results code
@@ -9086,10 +9091,10 @@ import os
 import twodee as td
 
 # LAMMPS header information
-potentials_path = os.getenv("LAMMPS_POTENTIALS")
-potential = os.path.join(potentials_path, "CH.airebo")
+lmp_path = os.getenv("LAMMPSPATH")
+potential = os.path.join(lmp_path, "potentials/CH.airebo")
 files = [potential]
-parameters = {"mass": ["* 1.0"],
+parameters = {"mass": ["* 12.0107"],
               "pair_style": "airebo 6.5 1 1",
               "pair_coeff": ['* * ' + potential + ' C']}
 calc = LAMMPS(parameters=parameters, files=files, tmp_dir="/home-guest/devonw/tmp/lammpstmp")
@@ -9152,29 +9157,63 @@ for i in ids:
 
 ** TODO Simulations
 
+cite:boes-2016-neural-networ
+
 *** Graphene healing a crack
+cite:debroy-2015-graph-heals Main fracture healing
+cite:dewapriya-2014-molec-dynam Fracture simulation
+cite:ansari-2012-mechan-proper Fracture simulations
+cite:liu-2007-ab-initio DFT analysis
+
+Potential:
+- AIREBO
+- cutoff: 2 Å (authors: eliminating non-physical ductile behaviour in stretching process and to get accurate fracture behaviour)
+
+Structure:
+- 1008 carbons (5 nm x 5 nm sheet)
+- z = 100 nm vacuum
+- repeated x, y. Not z
+
+Crack forming simulation:
+- 300 K. Nose–Hoover thermostat
+- Time step of 0.0005 ps. authors: Velocity-Verlet time integrating scheme
+- Held at equilibrium for 30 ps.
+- authors: Applying strain loading with an increment of 0.001/ps
+
+Healing simulation:
+- authors: All the forces acting on the deformed graphene sheet were removed and the sheet was allowed to relax for a period of 150 ps
+
+**** Stucture
 
 #+BEGIN_SRC python :results output org drawer
+from ase import Atoms, Atom
+from ase.build import graphene_nanoribbon
 from ase.calculators.lammpsrun import LAMMPS
 from ase.db import connect
 import os
+import numpy as np
 
 import twodee as td
 
-# LAMMPS header information
-potentials_path = os.getenv("LAMMPS_POTENTIALS")
-potential = os.path.join(potentials_path, "CH.airebo")
-files = [potential]
-parameters = {"mass": ["* 1.0"],
-              "pair_style": "airebo 6.5 1 1",
-              "pair_coeff": ['* * ' + potential + ' C']}
-calc = LAMMPS(parameters=parameters, files=files, tmp_dir="/home-guest/devonw/tmp/lammpstmp")
+atoms = graphene_nanoribbon(22, 11, vacuum=16, type='armchair')#, saturated=False)
 
-atoms = td.create_base(mat="graphene", layers=1, size=1)
-atoms.set_calculator(calc)
+a = 2.46
+a1 = a * np.array([3.0**0.5/2., -1./2., 0.])
+a2 = a * np.array([3.0**0.5/2., 1./2., 0.])
+a3 = np.array([0., 0., 18.])
 
-energy = atoms.get_potential_energy()
+atoms = Atoms([Atom('C', 1./2. * a3),
+               Atom('C', 1./3. * a1 + 1./3. * a2 + 1./2. * a3)],
+               cell=[a1, a2, a3], pbc=True)
+atoms = atoms.repeat((22,22,1))
+
+td.bp(atoms)
 #+END_SRC
+
+#+RESULTS:
+:RESULTS:
+882
+:END:
 
 * Results
 ** Pore energy comparison
