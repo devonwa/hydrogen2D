@@ -8822,14 +8822,25 @@ for d in db.select(['iteration<={}'.format(iteration), 'train_set=True']):
 
 # Build Amp object
 framework_str = "-".join([str(f) for f in framework])
-label = label
-dblabel = dblabel
-desc = Gaussian(cutoff=cutoff)
-model = NeuralNetwork(hiddenlayers=framework)
-calc = Amp(label=label,
-           dblabel=dblabel,
-           descriptor=desc,
-           regression=model)
+
+init_params = "initial-parameters.json"
+checkpoints = "checkpoint-parameters.json"
+import twodee as td
+td.bp(label)
+td.bp(os.listdir(label))
+
+if load:
+    calc = Amp(load=load)
+
+else:
+    label = label
+    dblabel = dblabel
+    desc = Gaussian(cutoff=cutoff)
+    model = NeuralNetwork(hiddenlayers=framework)
+    calc = Amp(label=label,
+            dblabel=dblabel,
+            descriptor=desc,
+            regression=model)
            
 # Train the network
 calc.train(images=images,
@@ -8969,8 +8980,8 @@ iteration = 1
 env = Environment(loader=PackageLoader('twodee', 'templates'))
 template = env.get_template("nn_build.py")
 
-#frameworks = ((8, 8),)# (8, 8, 8))
-frameworks = ((8, 8, 8),)# (8, 8, 8))
+#frameworks = ((8, 8), (8, 8, 8))
+frameworks = ((8, 8),)# (8, 8, 8))
 for framework in frameworks:
     framework_str = "-".join([str(f) for f in framework])
     iter_dir = "networks/iter={0}".format(iteration)
@@ -8987,7 +8998,7 @@ for framework in frameworks:
             'cutoff': 6.5,
             'energy_rmse': 1e-2,
             'force_rmse': 1e-1,
-            'cores': 4}
+            'cores': 2}
 
     code = template.render(**args)
 
@@ -8995,15 +9006,15 @@ for framework in frameworks:
     with open(submit_file, 'w') as f:
         f.write(code)
     
-    td.qsub(submit_file, walltime="168:00:00", ppn=args['cores'], mem="4GB")
+    td.qsub(submit_file, walltime="168:00:00", ppn=args['cores'], mem="12GB")
     print('{0} submitted.'.format(framework_str))
 #+END_SRC
 
 #+RESULTS:
 #+BEGIN_SRC python
-1456897.gilgamesh.cheme.cmu.edu
+1460301.gilgamesh.cheme.cmu.edu
 Job submitted.
-8-8-8 submitted.
+8-8 submitted.
 #+END_SRC
 
 * LAMMPS
@@ -9074,6 +9085,85 @@ print("Energy: {}".format(energy))
 Energy: nan
 :END:
 
+*** Local test
+
+#+BEGIN_SRC python :results output org drawer
+from ase import Atoms, Atom
+from ase.calculators.lammpsrun import LAMMPS
+import numpy as np
+import os
+
+# LAMMPS header information
+potentials_path = os.getenv("LAMMPS_POTENTIALS")
+potential = os.path.join(potentials_path, "CH.airebo")
+files = [potential]
+parameters = {"mass": ["* 1.0"],
+              "pair_style": "airebo 6.5 1 1",
+              "pair_coeff": ['* * ' + potential + ' C']}
+calc = LAMMPS(parameters=parameters, files=files)
+
+
+# Graphene structure
+a = 2.46
+a1 = a * np.array([3.0**0.5/2., -1./2., 0.])
+a2 = a * np.array([3.0**0.5/2., 1./2., 0.])
+a3 = np.array([0., 0., 18.])
+atoms = Atoms([Atom('C', 1./2. * a3),
+                  Atom('C', 1./3. * a1 + 1./3. * a2 + 1./2. * a3)],
+                  cell=[a1, a2, a3])
+
+# Calculate the energy
+atoms.set_calculator(calc)
+energy = atoms.get_potential_energy()
+
+print("Energy: {:0.3f} eV".format(energy))
+#+END_SRC 
+
+#+RESULTS:
+:RESULTS:
+:END:
+
+
+#+BEGIN_SRC python :results output org drawer
+from ase import Atoms, Atom
+from ase.calculators.lammpsrun import LAMMPS
+import numpy as np
+import os
+
+import twodee as td
+
+# LAMMPS header information
+potentials_path = os.getenv("LAMMPS_POTENTIALS")
+potential = os.path.join(potentials_path, "CH.airebo")
+files = [potential]
+parameters = {"mass": ["* 1.0"],
+              "pair_style": "airebo 6.5 1 1",
+              "pair_coeff": ['* * ' + potential + ' C']}
+calc = LAMMPS(parameters=parameters, files=files, tmp_dir="/home-guest/devonw/tmp/lammpstmp")
+
+atoms = td.create_base(mat="graphene", layers=1, size=1)
+# Graphene structure
+a = 2.46
+a1 = a * np.array([3.0**0.5/2., -1./2., 0.])
+a2 = a * np.array([3.0**0.5/2., 1./2., 0.])
+a3 = np.array([0., 0., 18.])
+atoms = Atoms([Atom('C', 1./2. * a3),
+                  Atom('C', 1./3. * a1 + 1./3. * a2 + 1./2. * a3)],
+                  cell=[a1, a2, a3])
+#atoms = atoms.repeat([5, 5, 1])
+
+atoms.set_calculator(calc)
+
+energy = atoms.get_potential_energy()
+print(energy)
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+-14.816236
+:END:
+
+
 ** DONE Pristine Graphene
    CLOSED: [2016-08-25 Thu 14:45]
    
@@ -9103,12 +9193,16 @@ energy = atoms.get_potential_energy()
 db = connect("database/master.db")
 for d in db.select(["type=base", "mat=graphene", "layers=1"]):
     print("AIREBO: {:0.3f} eV".format(energy))
+    print("DFT: {:0.3f} eV".format(d.energy))
     db.update(d.id, lmp=energy)
 #+END_SRC 
 
 #+RESULTS:
 :RESULTS:
+AIREBO: -14.816 eV
+DFT: -18.449 eV
 :END:
+
 
 ** DONE Equation of state
    CLOSED: [2016-08-21 Sun 22:34]
