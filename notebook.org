@@ -627,14 +627,45 @@ Include in progress report:
 - [X] Read papers John sent + copper cutoff
 
 ** September
-*** 2016-09-01 Thu
-
 *** 2016-09-02 Fri
 - [ ] LAMMPS simulation
 - [X] Restart 8-8 simulation when I get home
 - [ ] Add check for initial-parameters / checkpoints files the the nn_build.py template. Faster restarts.
 - [ ] Make good looking atoms images
 - [ ] Start writing paper (intro and methods)
+
+*** 2016-09-06 Tue
+
+Due next progress report:
+- Outline draft with figures for paper
+
+Simulations:
+- NEB of vacancy shift
+  - Stone-Wales formation
+  - Long crack to conglomerated vacancy structure
+
+*** 2016-09-08 Thu
+Quick objectives:
+- [X] Start NNs of larger frameworks
+  - [X] iter=0 annealed
+  - [X] iter=1 annealed
+
+Main objective:
+- [X] [[*Manuscript outline][Outline draft for the paper]]
+
+*** 2016-09-09 Fri
+Quick objectives:
+- [ ] Create a script that makes it easier to analyze the NN results quickly.
+- [ ] Make histogram show stacked bins
+
+*** 2016-09-12 Mon
+- [ ] Start EOS calculations on high residuals from comparison
+- [ ] Start large size calculations for extrapolation
+- [ ] Vacancy movement NEB calculation?
+- [ ] [[airebo-use][What is AIREBO good for?]]
+
+*** 2016-09-13 Tue
+- [ ] Larger structure comparison plot
 
 * Lexicon
 - degenerate :: Identical structures, though possible viewed in a different way. Like 
@@ -2065,6 +2096,38 @@ Use the following works to generate a table with comparisons of H2 transport
 - cite:koenig-2012-selec-molec 
 - cite:jiang-2009-porous-graph 
 - cite:blankenburg-2010-porous-graph
+
+** What is AIREBO good for?
+<<airebo-use>>
+
+- AIREBO (2000) cite:stuart-2000-react-poten
+  - Adaptive Intermolecular Reactive Empirical Bond Order
+  - This is another iteration of the REBO potential that includes LJ and torsional interactions. In LAMMPS, this has been updated to use the REBO2 (below) potential as its base.
+  - Notable works:
+    - Graphene self-healing of a crack cite:debroy-2015-graph-heals
+    - Gas separation through functionalized graphene pores cite:sun-2015-applic-nanop
+    - CO2 separation with porous graphene cite:schrier-2012-carbon-dioxid
+
+*** Weekly report
+This was a question of last time, since I mentioned that AIREBO was constructed for hydrocarbons. The short answer is *yes*.
+
+In the original AIREBO paper cite:stuart-2000-react-poten, the authors include a comparison of diamond and graphite structures between AIREBO, REBO, experiment and DFT. AIREBO did not perform as well as REBO, mainly because the REBO potential was constructed around solid carbon structures. The difference was often not very large (see Table IV).
+
+AIREBO is built on top of REBO and adds torsion and LJ interactions. In the discussion, the authors address the performance vs. the REBO potential for diamond and graphite. Because they did not adjust the original parameters used in the REBO potential, the additional interaction terms cause the increased error in for the solid carbon structures. They postulated that adjusting these terms could lead to improving AIREBO while still maintaining it's advantages (modeling liquid hydrocarbons and chemical reactions).
+
+A revision of REBO was released by the Brenner group, dubbed REBO2 cite:brenner-2002-secon-gener. It significantly improved upon the REBO potential for some key aspects for our work, such as vacancy formation in diamond.
+
+The LAMMPS documentation also provides a brief history of these potentials. It notes that turning off the LJ and torsional interactions for AIREBO will give result in a potential that is very close to the REBO2 potential. Figure ref:fig:eos_compare shows a comparison of potentials for the equation of state for graphene calculated in LAMMPS.
+
+#+caption: A comparison between DFT (PBE), AIREBO, and REBO for the equation of state for graphene.
+#+label: fig:eos_compare
+[[./img/eos_comparison_airebo_rebo.png]]
+
+DFT:    Lattice constant: 2.466 \AA. Curvature: 20.172.
+AIREBO: Lattice constant: 2.420 \AA. Curvature: 24.067.
+REBO:   Lattice constant: 2.420 \AA. Curvature: 24.135.
+
+Both MD potentials under-predict the lattice constant, compared to DFT. There are also only slight differences in the curvature. 
 
 * Scripts
 ** 2016-03-07: Remote copying
@@ -4563,6 +4626,58 @@ td.qsub("./queue/candidates/7/cans=7.py")
 
 #+RESULTS:
 : 1428315.gilgamesh.cheme.cmu.edu
+
+* Manuscript outline
+** Introduction
+- 2D materials intro into graphene
+  - Variety of uses
+- Graphene as a membrane
+  - How porous graphene is made
+  - Current gas transport results
+- Healing of graphene
+- Motivation for current work
+  - MD simulations don't match transport experiment
+  - Need to find lowest energy structures for graphene healing
+- Brief results summary
+
+** Methods
+- DFT calculations with VASP
+  - Relaxations
+  - NEB
+- NN training and convergence
+  - Training set generation
+- LAMMPS calculations
+- MD simulation
+
+** Results
+What is a logical structure for results?
+- [X] The NN is properly fit from a machine learning standpoint
+- [X] A comparison between DFT, NN, & AIREBO within the trained data set
+- [ ] A comparison outside of the trained data set
+- [ ] An NEB energy barrier comparison showing usefulness
+- [ ] An MD simulation outside of DFT capability?
+
+*** DONE NN fit
+    CLOSED: [2016-09-12 Mon 15:01]
+**** Comparison to DFT
+The following figure shows the comparison of one NN to its training and test set. This is probably unnecessary, as it should suffice to say that the network was converged to an average RMSE of X eV/atom and no residual was larger than Y eV/atom.
+
+[[./img/validate-iter=1_nn=8-8-8.png]]
+
+**** Comparison of two NNs
+[[./img/nn-compare-iter=1_nn=8-8_8-8-8.png]]
+
+*** DONE EOS (Comparison inside trained data set)
+    CLOSED: [2016-09-12 Mon 15:01]
+[[./img/eos_comparison.png]]
+
+*** INPROGRESS Larger structures (Comparison outside of trained data set)
+*** INPROGRESS Vacancy shifting (NEB energy barrier comparison)
+*** TODO Graphene crack healing (MD simulation)
+- Basically the end result of the work, but hard to prove usefulness to show in the paper. We expect they will be slightly different but we can't show a comparison to DFT because the system is too big.
+- We can only say that the NN has been close to DFT thus far, so this should be no different
+
+** Conclusions
 
 * References
 bibliographystyle:unsrt
