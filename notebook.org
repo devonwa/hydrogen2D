@@ -2103,10 +2103,6 @@ Use the following works to generate a table with comparisons of H2 transport
 - AIREBO (2000) cite:stuart-2000-react-poten
   - Adaptive Intermolecular Reactive Empirical Bond Order
   - This is another iteration of the REBO potential that includes LJ and torsional interactions. In LAMMPS, this has been updated to use the REBO2 (below) potential as its base.
-  - Notable works:
-    - Graphene self-healing of a crack cite:debroy-2015-graph-heals
-    - Gas separation through functionalized graphene pores cite:sun-2015-applic-nanop
-    - CO2 separation with porous graphene cite:schrier-2012-carbon-dioxid
 
 *** Weekly report
 This was a question of last time, since I mentioned that AIREBO was constructed for hydrocarbons. The short answer is *yes*.
